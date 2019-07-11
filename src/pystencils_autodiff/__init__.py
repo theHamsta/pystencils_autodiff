@@ -1,11 +1,23 @@
-# -*- coding: utf-8 -*-
-from pkg_resources import get_distribution, DistributionNotFound
+import pystencils_autodiff.backends
+import pystencils_autodiff.lbm
+from pystencils_autodiff._field_to_tensors import (
+    tf_constant_from_field, tf_placeholder_from_field,
+    tf_scalar_variable_from_field, tf_variable_from_field,
+    torch_tensor_from_field)
+from pystencils_autodiff.adjoint_field import AdjointField
+from pystencils_autodiff.autodiff import (AutoDiffAstPair, AutoDiffOp,
+                                          create_backward_assignments,
+                                          get_jacobian_of_assignments)
 
-try:
-    # Change here if project is renamed and does not equal the package name
-    dist_name = __name__
-    __version__ = get_distribution(dist_name).version
-except DistributionNotFound:
-    __version__ = 'unknown'
-finally:
-    del get_distribution, DistributionNotFound
+__all__ = ['backends',
+           'lbm',
+           'tf_constant_from_field',
+           'tf_placeholder_from_field',
+           'tf_scalar_variable_from_field',
+           'tf_variable_from_field',
+           'torch_tensor_from_field',
+           'AdjointField',
+           'get_jacobian_of_assignments',
+           'create_backward_assignments',
+           'AutoDiffOp',
+           'AutoDiffAstPair']
