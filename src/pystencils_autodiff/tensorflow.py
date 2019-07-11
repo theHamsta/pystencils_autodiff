@@ -4,10 +4,6 @@ try:
     import tensorflow as tf
 except ImportError:
     pass
-try:
-    import torch
-except ImportError:
-    pass
 
 
 def tf_constant_from_field(field, init_val=0):
@@ -30,8 +26,3 @@ def tf_placeholder_from_field(field):
     return tf.placeholder(dtype=field.dtype.numpy_dtype, name=field.name + '_placeholder', shape=field.shape)
 
 
-def torch_tensor_from_field(field, init_val=0, cuda=True, requires_grad=False):
-    if isinstance(init_val, (int, float)):
-        init_val *= np.ones(field.shape, field.dtype.numpy_dtype)
-    device = torch.device('cuda' if cuda else 'cpu')
-    return torch.tensor(init_val, requires_grad=requires_grad, device=device)
