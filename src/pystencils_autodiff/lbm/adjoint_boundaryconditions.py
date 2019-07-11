@@ -5,7 +5,7 @@ from lbmpy.boundaries.boundaryhandling import BoundaryOffsetInfo
 
 
 class AdjointBoundaryCondition(Boundary):
-    """ Creates adjoint boundary condition from forward boundary condition """
+    """ Creates adjoint LBM boundary condition from forward boundary condition """
 
     def __init__(self, forward_boundary_condition, time_constant_fields=[], constant_fields=[]):
         super().__init__("Adjoint" + forward_boundary_condition.name)
@@ -20,14 +20,17 @@ class AdjointBoundaryCondition(Boundary):
             forward_field = pystencils.Field.new_field_with_different_name(pdf_field, pdf_field.name[len('diff'):])
             pdf_field = pystencils_autodiff.AdjointField(forward_field)
 
-        assert isinstance(
-            pdf_field, pystencils_autodiff.AdjointField), '%s should be a pystencils_autodiff.AdjointField to use AdjointBoundaryCondition' % pdf_field
+        assert isinstance(pdf_field, pystencils_autodiff.AdjointField), \
+            '%s should be a pystencils_autodiff.AdjointField to use AdjointBoundaryCondition' % pdf_field
 
         forward_field = pdf_field.corresponding_forward_field
         forward_assignments = self._forward_condition(forward_field, direction_symbol, lb_method, **kwargs)
 
         backward_assignments = pystencils_autodiff.create_backward_assignments(
-            forward_assignments, diff_fields_prefix=pdf_field.name_prefix, time_constant_fields=self._time_constant_fields, constant_fields=self._constant_fields)
+            forward_assignments,
+            diff_fields_prefix=pdf_field.name_prefix,
+            time_constant_fields=self._time_constant_fields,
+            constant_fields=self._constant_fields)
 
         return backward_assignments
 
@@ -42,7 +45,8 @@ class AdjointBoundaryCondition(Boundary):
 
 
 class AdjointNoSlip(Boundary):
-    """ Bug-safe implementation of AdjointBoundaryCondition for NoSlip. Should be also safe to use AdjointBoundaryCondition(NoSlip()) """
+    """ Bug-safe implementation of AdjointBoundaryCondition for NoSlip.
+    Should be also safe to use AdjointBoundaryCondition(NoSlip()) """
 
     def __init__(self, name=None):
         """Set an optional name here, to mark boundaries, for example for force evaluations"""
