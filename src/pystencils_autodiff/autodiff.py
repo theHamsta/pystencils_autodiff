@@ -94,6 +94,13 @@ class AutoDiffOp:
     def __hash__(self):
         return hash(self.forward_assignments, self.backward_assignments)
 
+    def __repr__(self):
+        return f"Forward:\n" + "{'\t'.join(str(self.forward_assignments).splitlines(keepends=True))}" + \
+            "Backward:\n" + "{'\t'.join(str(self.backward_assignments).splitlines(keepends=True))}"
+
+    def __str__(self):
+        return self.__repr__()
+
     def _create_backward_assignments(self, diff_fields_prefix):
         """
         Performs automatic differentiation in the traditional adjoint/tangent way.
