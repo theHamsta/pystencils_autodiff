@@ -1,10 +1,10 @@
 import numpy as np
 import pystencils as ps
-from pystencils_autodiff.backends import AVAILABLE_BACKENDS
+from pystencils.autodiff.backends import AVAILABLE_BACKENDS
 
 
 def fix_layout(array, target_field, backend):
-    assert array.shape == target_field.shape, "Array {}'s shape should be {} but is {}".format(
+    assert array.shape == target_field.shape, "Array %s's shape should be %s but is %s" % (
         target_field.name, target_field.shape, array.shape)
     assert backend.lower() in AVAILABLE_BACKENDS
 

@@ -7,10 +7,10 @@ import jinja2
 import torch
 from appdirs import user_cache_dir
 
-import pystencils_autodiff
-import pystencils_autodiff.backends._pytorch
+import pystencils.autodiff
+import pystencils.autodiff.backends._pytorch
 from pystencils.astnodes import FieldShapeSymbol
-from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
+from pystencils.autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils.backends.cbackend import generate_c
 from pystencils.backends.cuda_backend import CudaSympyPrinter, generate_cuda
 from pystencils.cpu.kernelcreation import create_kernel
@@ -29,14 +29,14 @@ def _write_file(filename, content):
 
 
 def generate_torch(destination_folder,
-                   autodiff: pystencils_autodiff.AutoDiffOp,
+                   autodiff: pystencils.autodiff.AutoDiffOp,
                    is_cuda,
                    dtype,
                    forward_ast=None,
                    backward_ast=None):
     shape = autodiff.forward_output_fields[0].spatial_shape
     operation_hash = abs(hash(autodiff) + hash(shape) + hash(str(dtype)))
-    operation_string = "{}_native_{}_{}_{:x}".format(
+    operation_string = "%s_native_%s_%s_%x" % (
         autodiff.op_name, 'cuda' if is_cuda else 'cpu', 'x'.join(str(s) for s in shape), operation_hash)
 
     cpp_file = join(destination_folder, operation_string + '.cpp')
@@ -131,7 +131,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
         is_cuda = all(t.is_cuda for t in inputfield_to_tensor_dict.values())
         assert all(t.is_cuda for t in inputfield_to_tensor_dict.values()) or \
             all(not t.is_cuda for t in inputfield_to_tensor_dict.values()), "All tensor should be on GPU or all on CPU"
-        dtype = pystencils_autodiff.backends._pytorch.torch_dtype_to_numpy(
+        dtype = pystencils.autodiff.backends._pytorch.torch_dtype_to_numpy(
             list(inputfield_to_tensor_dict.values())[0].dtype)
 
         cache_dir = user_cache_dir('pystencils')
@@ -166,7 +166,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
         cls.backward = backward
         return cls
     else:
-        op = pystencils_autodiff.backends._pytorch.create_autograd_function(autodiff_obj,
+        op = pystencils.autodiff.backends._pytorch.create_autograd_function(autodiff_obj,
                                                                             inputfield_to_tensor_dict,
                                                                             forward_loop,
                                                                             backward_loop,

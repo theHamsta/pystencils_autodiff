@@ -21,7 +21,7 @@ class AdjointBoundaryCondition(Boundary):
             pdf_field = pystencils_autodiff.AdjointField(forward_field)
 
         assert isinstance(pdf_field, pystencils_autodiff.AdjointField), \
-            '%s should be a pystencils_autodiff.AdjointField to use AdjointBoundaryCondition' % pdf_field
+            f'{pdf_field} should be a pystencils_autodiff.AdjointField to use AdjointBoundaryCondition'
 
         forward_field = pdf_field.corresponding_forward_field
         forward_assignments = self._forward_condition(forward_field, direction_symbol, lb_method, **kwargs)

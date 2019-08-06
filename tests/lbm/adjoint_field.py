@@ -1,8 +1,8 @@
 import pystencils
 from pystencils.astnodes import FieldShapeSymbol, FieldStrideSymbol
 
-r"""Determines how adjoint fields will be denoted in LaTeX output in terms of the forward field representation %s
-Default: r'\hat{%s}' """
+"""Determines how adjoint fields will be denoted in LaTeX output in terms of the forward field representation %s
+Default: r"\hat{%s}" """
 ADJOINT_FIELD_LATEX_HIGHLIGHT = r"\hat{%s}"
 
 
@@ -11,7 +11,7 @@ class AdjointField(pystencils.Field):
 
     def __init__(self, forward_field, name_prefix='diff'):
         new_name = name_prefix + forward_field.name
-        super().__init__(new_name, forward_field.field_type, forward_field._dtype,
+        super(AdjointField, self).__init__(new_name, forward_field.field_type, forward_field._dtype,
                                            forward_field._layout, forward_field.shape, forward_field.strides)
         self.corresponding_forward_field = forward_field
         self.name_prefix = name_prefix

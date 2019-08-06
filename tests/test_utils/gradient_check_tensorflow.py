@@ -8,7 +8,6 @@ except Exception:
     tf = None
 
 
-
 def compute_gradient_error_without_border(x,
                                           x_shape,
                                           y,
