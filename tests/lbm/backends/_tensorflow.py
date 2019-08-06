@@ -3,6 +3,8 @@ import pystencils.autodiff
 import numpy as np
 from pystencils.utils import DotDict
 
+from tf.compat.v1 import get_default_graph
+
 _num_generated_ops = 0
 
 
@@ -29,7 +31,7 @@ def _py_func(func, inp, Tout, stateful=False, name=None, grad=None):
     tf.RegisterGradient(rnd_name)(grad)
 
     # Get current graph
-    g = tf.get_default_graph()
+    g = get_default_graph()
 
     # Add gradient override map
     with g.gradient_override_map({"PyFunc": rnd_name, "PyFuncStateless": rnd_name}):
