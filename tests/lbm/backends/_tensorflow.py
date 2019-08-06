@@ -1,5 +1,5 @@
 import tensorflow as tf
-import pystencils.autodiff
+import pystencils_autodiff
 import numpy as np
 from pystencils.utils import DotDict
 
@@ -38,7 +38,7 @@ def _py_func(func, inp, Tout, stateful=False, name=None, grad=None):
         return tf.py_func(func, inp, Tout, stateful=stateful, name=name)
 
 
-def tensorflowop_from_autodiffop(autodiffop: pystencils.autodiff.AutoDiffOp, inputfield_tensor_dict, forward_function, backward_function):
+def tensorflowop_from_autodiffop(autodiffop: pystencils_autodiff.AutoDiffOp, inputfield_tensor_dict, forward_function, backward_function):
 
     def helper_forward(*args):
         kwargs = dict()

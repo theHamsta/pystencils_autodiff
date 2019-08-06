@@ -1,21 +1,21 @@
 import os
-import types
 import uuid
+from itertools import chain
 from os.path import dirname, isdir, isfile, join
 
 import jinja2
 import torch
 from appdirs import user_cache_dir
 
+import pystencils
 import pystencils_autodiff
 import pystencils_autodiff.backends._pytorch
 from pystencils.astnodes import FieldShapeSymbol
-from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils.backends.cbackend import generate_c
 from pystencils.backends.cuda_backend import CudaSympyPrinter, generate_cuda
 from pystencils.cpu.kernelcreation import create_kernel
 from pystencils.gpucuda.kernelcreation import create_cuda_kernel
-from itertools import chain
+from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 
 
 def _read_file(file):

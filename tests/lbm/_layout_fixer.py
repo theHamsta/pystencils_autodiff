@@ -1,6 +1,6 @@
 import numpy as np
 import pystencils as ps
-from pystencils.autodiff.backends import AVAILABLE_BACKENDS
+from pystencils_autodiff.backends import AVAILABLE_BACKENDS
 
 
 def fix_layout(array, target_field, backend):
