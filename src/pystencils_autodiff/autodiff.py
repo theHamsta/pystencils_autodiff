@@ -2,6 +2,7 @@ import collections
 from enum import Enum
 from typing import List
 
+import jinja2
 import numpy as np
 import sympy as sp
 
@@ -38,6 +39,12 @@ def get_jacobian_of_assignments(assignments, diff_variables):
 
 
 class AutoDiffOp:
+    _REPR_TEMPLATE = jinja2.Template(
+        """Forward:
+    {{ forward_assignments | indent(4) }}
+Backward:
+    {{ backward_assignments | indent(4) }}
+""")
 
     def __init__(self,
                  forward_assignments: List[ps.Assignment],
@@ -95,8 +102,8 @@ class AutoDiffOp:
         return hash(self.forward_assignments, self.backward_assignments)
 
     def __repr__(self):
-        return f"Forward:\n" + "{'\t'.join(str(self.forward_assignments).splitlines(keepends=True))}" + \
-            "Backward:\n" + "{'\t'.join(str(self.backward_assignments).splitlines(keepends=True))}"
+        return self._REPR_TEMPLATE.render(forward_assignments=str(self.forward_assignments),
+                                          backward_assignments=str(self.backward_assignments))
 
     def __str__(self):
         return self.__repr__()
