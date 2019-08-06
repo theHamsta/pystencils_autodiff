@@ -1,18 +1,23 @@
 import collections
+from enum import Enum
 from typing import List
 
 import numpy as np
 import sympy as sp
 
 import pystencils as ps
-import pystencils_autodiff
 import pystencils_autodiff._assignment_transforms
 import pystencils_autodiff._layout_fixer
 from pystencils_autodiff.backends import AVAILABLE_BACKENDS
 
+
 """Mode of backward differentiation
 (see https://autodiff-workshop.github.io/slides/Hueckelheim_nips_autodiff_CNN_PDE.pdf)"""
-AVAILABLE_DIFFMODES = ['transposed', 'transposed-forward']
+
+
+class DiffModes(str, Enum):
+    TRANSPOSED = 'transposed'
+    TF_MAD = 'transposed-forward'
 
 
 def get_jacobian_of_assignments(assignments, diff_variables):
@@ -42,11 +47,11 @@ class AutoDiffOp(object):
                  constant_fields: List[ps.Field] = [],
                  diff_fields_prefix='diff',  # TODO: remove!
                  do_common_subexpression_elimination=True,
-                 diff_mode='transposed',  # TODO: find good default
+                 diff_mode=DiffModes.TF_MAD,
                  backward_assignments=None,
                  **kwargs):
         diff_mode = diff_mode.lower()
-        assert diff_mode in AVAILABLE_DIFFMODES, "Please select a valid differentiation mode: %s" % AVAILABLE_DIFFMODES
+        assert diff_mode in DiffModes, "Please select a valid differentiation mode: %s" % DiffModes.__members__.items()
         self._additional_symbols = []
 
         if 'target' in kwargs:
@@ -55,9 +60,9 @@ class AutoDiffOp(object):
             del kwargs['target']
 
         if isinstance(forward_assignments, list):
-            main_assignments = [a for a in forward_assignments if isinstance(a.lhs, pystencils.Field.Access)]
-            subexpressions = [a for a in forward_assignments if not isinstance(a.lhs, pystencils.Field.Access)]
-            forward_assignments = pystencils.AssignmentCollection(main_assignments, subexpressions)
+            main_assignments = [a for a in forward_assignments if isinstance(a.lhs, ps.Field.Access)]
+            subexpressions = [a for a in forward_assignments if not isinstance(a.lhs, ps.Field.Access)]
+            forward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
 
         self._forward_assignments = forward_assignments
         self._constant_fields = constant_fields
@@ -94,8 +99,10 @@ class AutoDiffOp(object):
     def _create_backward_assignments(self, diff_fields_prefix):
         """
         Performs automatic differentiation in the traditional adjoint/tangent way.
-        Forward writes become backward reads and vice-versa. This can lead to problems when parallel reads lead to parallel writes,
-        and therefore to race conditions. Therefore, theres is also _create_backward_assignments_tf_mad that can circumvent that problem in the case of stencils that have only one output
+        Forward writes become backward reads and vice-versa. This can lead to problems when
+        parallel reads lead to parallel writes, and therefore to race conditions.
+        Therefore, theres is also _create_backward_assignments_tf_mad that
+        can circumvent that problem in the case of stencils that have only one output
         """
 
         forward_assignments = self._forward_assignments
@@ -113,8 +120,8 @@ class AutoDiffOp(object):
             a for a in forward_assignments.free_symbols if isinstance(a, ps.Field.Access)]
         write_field_accesses = [a.lhs for a in forward_assignments]
 
-        assert all(isinstance(w, ps.Field.Access)
-                   for w in write_field_accesses), "Please assure that you only assign to fields in your main_assignments!"
+        assert all(isinstance(w, ps.Field.Access) for w in write_field_accesses), \
+            "Please assure that you only assign to fields in your main_assignments!"
 
         read_fields = set(s.field for s in read_field_accesses)
         write_fields = set(s.field for s in write_field_accesses)
@@ -152,14 +159,14 @@ class AutoDiffOp(object):
             if self._do_common_subexpression_elimination:
                 backward_assignments = ps.simp.sympy_cse_on_assignment_list(
                     backward_assignments)
-        except:
+        except Exception:
             pass
 
             # print("Common subexpression elimination failed")
             # print(err)
-        main_assignments = [a for a in backward_assignments if isinstance(a.lhs, pystencils.Field.Access)]
-        subexpressions = [a for a in backward_assignments if not isinstance(a.lhs, pystencils.Field.Access)]
-        backward_assignments = pystencils.AssignmentCollection(main_assignments, subexpressions)
+        main_assignments = [a for a in backward_assignments if isinstance(a.lhs, ps.Field.Access)]
+        subexpressions = [a for a in backward_assignments if not isinstance(a.lhs, ps.Field.Access)]
+        backward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
         assert backward_assignments.has_exclusive_writes, "Backward assignments don't have exclusive writes." + \
             " You should consider using 'transposed-forward' mode for resolving those conflicts"
 
@@ -176,13 +183,14 @@ class AutoDiffOp(object):
             self._backward_field_map[f] for f in self._forward_input_fields]
 
     def _create_backward_assignments_tf_mad(self, diff_fields_prefix):
-        """ Performs the automatic backward differentiation in a more fancy way with write accesses like in the forward pass (only flipped).
+        """
+        Performs the automatic backward differentiation in a more fancy way with write accesses
+        like in the forward pass (only flipped).
         It is called "transposed-mode forward-mode algorithmic differentiation" (TF-MAD).
 
         See this presentation https://autodiff-workshop.github.io/slides/Hueckelheim_nips_autodiff_CNN_PDE.pdf or that
         paper https://www.tandfonline.com/doi/full/10.1080/10556788.2018.1435654?scroll=top&needAccess=true
         for more information
-
         """
 
         forward_assignments = self._forward_assignments
@@ -290,7 +298,7 @@ class AutoDiffOp(object):
                     else:
                         backward_assignment_dict[assignment.lhs] = [assignment.rhs]
                 else:
-                    raise NotImplementedException()
+                    raise NotImplementedError()
 
         backward_assignments = [ps.Assignment(
             k, sp.Add(*v)) for k, v in backward_assignment_dict.items()]
@@ -304,9 +312,9 @@ class AutoDiffOp(object):
             pass
             # print("Common subexpression elimination failed")
             # print(err)
-        main_assignments = [a for a in backward_assignments if isinstance(a.lhs, pystencils.Field.Access)]
-        subexpressions = [a for a in backward_assignments if not isinstance(a.lhs, pystencils.Field.Access)]
-        backward_assignments = pystencils.AssignmentCollection(main_assignments, subexpressions)
+        main_assignments = [a for a in backward_assignments if isinstance(a.lhs, ps.Field.Access)]
+        subexpressions = [a for a in backward_assignments if not isinstance(a.lhs, ps.Field.Access)]
+        backward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
 
         assert backward_assignments.has_exclusive_writes, "Backward assignments don't have exclusive writes!"
 
@@ -428,7 +436,11 @@ class AutoDiffOp(object):
     def time_constant_fields(self):
         return self._time_constant_fields
 
-    def create_tensorflow_op(self, inputfield_tensor_dict, forward_loop=None, backward_loop=None, backend='tensorflow'):
+    def create_tensorflow_op(self,
+                             inputfield_tensor_dict,
+                             forward_loop=None,
+                             backward_loop=None,
+                             backend='tensorflow'):
         """
         Creates custom differentiable Tensorflow Op from assignments.
         Will return either a single output tensor or a OrderedDict[field_name -> tf.Tensor] in case of multiple outputs
@@ -457,7 +469,10 @@ class AutoDiffOp(object):
                 # TODO: check dangerous function `as_strided`
                 for s in self._additional_symbols:
                     kwargs[s.name] = getattr(self, s.name)
-                rtn = {f.name: np.lib.stride_tricks.as_strided(np.zeros(f.shape, dtype=f.dtype.numpy_dtype), f.shape, [f.dtype.numpy_dtype.itemsize * a for a in f.strides])
+                rtn = {f.name: np.lib.stride_tricks.as_strided(np.zeros(f.shape,
+                                                                        dtype=f.dtype.numpy_dtype),
+                                                               f.shape,
+                                                               [f.dtype.numpy_dtype.itemsize * a for a in f.strides])
                        for f in self.forward_output_fields}
 
                 kwargs.update(rtn)
@@ -476,7 +491,10 @@ class AutoDiffOp(object):
                 for s in self._additional_symbols:
                     kwargs[s.name] = getattr(self, s.name)
 
-                rtn = {f.name: np.lib.stride_tricks.as_strided(np.zeros(f.shape, dtype=f.dtype.numpy_dtype), f.shape, [f.dtype.numpy_dtype.itemsize * a for a in f.strides])
+                rtn = {f.name: np.lib.stride_tricks.as_strided(np.zeros(f.shape,
+                                                                        dtype=f.dtype.numpy_dtype),
+                                                               f.shape,
+                                                               [f.dtype.numpy_dtype.itemsize * a for a in f.strides])
                        for f in self.backward_output_fields}
 
                 kwargs.update(rtn)
@@ -515,7 +533,12 @@ class AutoDiffOp(object):
             return op
 
 
-def create_backward_assignments(forward_assignments, diff_fields_prefix="diff", time_constant_fields=[], constant_fields=[], diff_mode=AVAILABLE_DIFFMODES[0], do_common_sub_expression_elimination=True):
+def create_backward_assignments(forward_assignments,
+                                diff_fields_prefix="diff",
+                                time_constant_fields=[],
+                                constant_fields=[],
+                                diff_mode=DiffModes.TF_MAD,
+                                do_common_sub_expression_elimination=True):
     auto_diff = AutoDiffOp(forward_assignments,
                            diff_fields_prefix=diff_fields_prefix,
                            time_constant_fields=time_constant_fields,
@@ -535,12 +558,12 @@ class AutoDiffAstPair:
         self.forward_ast = forward_ast
         self.backward_ast = backward_ast
         self._target = compilation_target
-        self._forward_kernel = pystencils.make_python_function(self.forward_ast, target=self._target)
+        self._forward_kernel = self.forward_ast.compile(target=self._target)
         self._backward_kernel = None
 
     def backward(self, *args, **kwargs):
         if not self._backward_kernel:
-            self._backward_kernel = pystencils.make_python_function(self.backward_ast, target=self._target)
+            self._backward_kernel = self.backward_ast.compile(target=self._target)
 
         return self._backward_kernel(*args, **kwargs)
 
