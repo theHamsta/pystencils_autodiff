@@ -53,6 +53,8 @@ def test_tfmad_two_stencils():
     print('Forward output fields (to check order)')
     print(auto_diff.forward_input_fields)
 
+    print(auto_diff)
+
 
 @pytest.mark.skipif("NO_TENSORFLOW_TEST" in os.environ, reason="Requires Tensorflow")
 def test_tfmad_gradient_check():
