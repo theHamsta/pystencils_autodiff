@@ -153,7 +153,7 @@ def test_tfmad_vector_input_data():
     check_tfmad_vector_input_data(args)
 
 
-@pytest.mark.skipif("NO_TENSORFLOW_TEST" in os.environ, reason="Requires Tensorflow")
+@pytest.mark.skipif("NO_TORCH_TEST" in os.environ, reason="Requires PyTorch")
 def test_tfmad_gradient_check_torch():
     a, b, out = ps.fields("a, b, out: float[21,13]")
 
@@ -248,6 +248,8 @@ def test_tfmad_two_outputs():
 def main():
     test_tfmad_stencil()
     test_tfmad_two_stencils()
+    test_tfmad_gradient_check_torch()
+    test_tfmad_gradient_check()
     test_tfmad_vector_input_data()
     test_tfmad_two_outputs()
 
