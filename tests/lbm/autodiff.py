@@ -5,10 +5,10 @@ import numpy as np
 import sympy as sp
 
 import pystencils as ps
-import pystencils.autodiff
-import pystencils.autodiff._assignment_transforms
-import pystencils.autodiff._layout_fixer
-from pystencils.autodiff.backends import AVAILABLE_BACKENDS
+import pystencils_autodiff
+import pystencils_autodiff._assignment_transforms
+import pystencils_autodiff._layout_fixer
+from pystencils_autodiff.backends import AVAILABLE_BACKENDS
 
 """Mode of backward differentiation
 (see https://autodiff-workshop.github.io/slides/Hueckelheim_nips_autodiff_CNN_PDE.pdf)"""
@@ -212,9 +212,9 @@ class AutoDiffOp(object):
         write_field_accesses = [a.lhs for a in forward_assignments]
 
         # for every field create a corresponding diff field
-        diff_read_fields = {f: pystencils.autodiff.AdjointField(f, diff_fields_prefix)
+        diff_read_fields = {f: pystencils_autodiff.AdjointField(f, diff_fields_prefix)
                             for f in read_fields}
-        diff_write_fields = {f: pystencils.autodiff.AdjointField(f, diff_fields_prefix)
+        diff_write_fields = {f: pystencils_autodiff.AdjointField(f, diff_fields_prefix)
                              for f in write_fields}
 
         assert all(isinstance(w, ps.Field.Access)
@@ -452,7 +452,7 @@ class AutoDiffOp(object):
 
             def forward_function(**kwargs):
                 for field in self.forward_input_fields:
-                    kwargs[field.name] = pystencils.autodiff._layout_fixer.fix_layout(
+                    kwargs[field.name] = pystencils_autodiff._layout_fixer.fix_layout(
                         kwargs[field.name], field, backend)
                 # TODO: check dangerous function `as_strided`
                 for s in self._additional_symbols:
@@ -471,7 +471,7 @@ class AutoDiffOp(object):
 
             def backward_function(**kwargs):
                 for field in self.backward_input_fields + self.forward_input_fields:
-                    kwargs[field.name] = pystencils.autodiff._layout_fixer.fix_layout(
+                    kwargs[field.name] = pystencils_autodiff._layout_fixer.fix_layout(
                         kwargs[field.name], field, backend)
                 for s in self._additional_symbols:
                     kwargs[s.name] = getattr(self, s.name)
@@ -487,16 +487,16 @@ class AutoDiffOp(object):
             backward_loop = backward_function
 
         if backend == 'tensorflow':
-            import pystencils.autodiff.backends._tensorflow
-            op = pystencils.autodiff.backends._tensorflow.tensorflowop_from_autodiffop(
+            import pystencils_autodiff.backends._tensorflow
+            op = pystencils_autodiff.backends._tensorflow.tensorflowop_from_autodiffop(
                 self, inputfield_tensor_dict, forward_loop, backward_loop)
         elif backend == 'torch':
-            import pystencils.autodiff.backends._pytorch
-            op = pystencils.autodiff.backends._pytorch.create_autograd_function(
+            import pystencils_autodiff.backends._pytorch
+            op = pystencils_autodiff.backends._pytorch.create_autograd_function(
                 self, inputfield_tensor_dict, forward_loop, backward_loop)
         elif backend == 'torch_native':
-            import pystencils.autodiff.backends._torch_native
-            op = pystencils.autodiff.backends._torch_native.create_autograd_function(
+            import pystencils_autodiff.backends._torch_native
+            op = pystencils_autodiff.backends._torch_native.create_autograd_function(
                 self, inputfield_tensor_dict, None, None)
         else:
             raise NotImplementedError()

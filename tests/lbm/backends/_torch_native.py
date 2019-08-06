@@ -1,21 +1,22 @@
 import os
 import types
 import uuid
+from itertools import chain
 from os.path import dirname, isdir, isfile, join
 
 import jinja2
 import torch
 from appdirs import user_cache_dir
 
-import pystencils.autodiff
-import pystencils.autodiff.backends._pytorch
+import pystencils
+import pystencils_autodiff
+import pystencils_autodiff.backends._pytorch
 from pystencils.astnodes import FieldShapeSymbol
-from pystencils.autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils.backends.cbackend import generate_c
 from pystencils.backends.cuda_backend import CudaSympyPrinter, generate_cuda
 from pystencils.cpu.kernelcreation import create_kernel
 from pystencils.gpucuda.kernelcreation import create_cuda_kernel
-from itertools import chain
+from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 
 
 def _read_file(file):
@@ -29,7 +30,7 @@ def _write_file(filename, content):
 
 
 def generate_torch(destination_folder,
-                   autodiff: pystencils.autodiff.AutoDiffOp,
+                   autodiff: pystencils_autodiff.AutoDiffOp,
                    is_cuda,
                    dtype,
                    forward_ast=None,
@@ -74,8 +75,8 @@ def generate_torch(destination_folder,
             block_and_thread_numbers = backward_ast.indexing.call_parameters(backward_shape)
             backward_block = ', '.join(printer.doprint(i) for i in block_and_thread_numbers['block'])
             backward_grid = ', '.join(printer.doprint(i) for i in block_and_thread_numbers['grid'])
-            cuda_globals = pystencils.backends.cuda_backend.get_global_declarations(forward_ast) | \
-                pystencils.backends.cuda_backend.get_global_declarations(backward_ast)
+            cuda_globals = pystencils.backends.cbackend.get_global_declarations(forward_ast) | \
+                pystencils.backends.cbackend.get_global_declarations(backward_ast)
             cuda_globals = [generate_cuda(g) for g in cuda_globals]
         else:
             backward_block = forward_block = "INVALID"
@@ -131,7 +132,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
         is_cuda = all(t.is_cuda for t in inputfield_to_tensor_dict.values())
         assert all(t.is_cuda for t in inputfield_to_tensor_dict.values()) or \
             all(not t.is_cuda for t in inputfield_to_tensor_dict.values()), "All tensor should be on GPU or all on CPU"
-        dtype = pystencils.autodiff.backends._pytorch.torch_dtype_to_numpy(
+        dtype = pystencils_autodiff.backends._pytorch.torch_dtype_to_numpy(
             list(inputfield_to_tensor_dict.values())[0].dtype)
 
         cache_dir = user_cache_dir('pystencils')
@@ -166,7 +167,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
         cls.backward = backward
         return cls
     else:
-        op = pystencils.autodiff.backends._pytorch.create_autograd_function(autodiff_obj,
+        op = pystencils_autodiff.backends._pytorch.create_autograd_function(autodiff_obj,
                                                                             inputfield_to_tensor_dict,
                                                                             forward_loop,
                                                                             backward_loop,

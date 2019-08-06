@@ -13,12 +13,11 @@ import numpy as np
 import torch
 
 import pystencils
-import pystencils.autodiff
-from pystencils.autodiff.backends._torch_native import (
-    create_autograd_function, generate_torch)
+import pystencils_autodiff
 # from pystencils.cpu.kernelcreation import create_kernel
 from pystencils.backends.cbackend import generate_c
 from pystencils.gpucuda.kernelcreation import create_cuda_kernel
+from pystencils_autodiff.backends._torch_native import create_autograd_function, generate_torch
 
 PROJECT_ROOT = dirname
 
@@ -43,7 +42,7 @@ def test_jit():
     from torch.utils.cpp_extension import load
 
     lltm_cuda = load(
-        join(dirname(__file__), 'lltm_cuda'), [cpp_file, cuda_file], verbose=True, extra_cuda_cflags=["-ccbin=g++-6"])
+        join(dirname(__file__), 'lltm_cuda'), [cpp_file, cuda_file], verbose=True, extra_cuda_cflags=[])
     assert lltm_cuda is not None
     print('hallo')
 
@@ -54,7 +53,7 @@ def test_torch_native_compilation():
     assignments = pystencils.AssignmentCollection({
         y.center(): x.center()**2
     }, {})
-    autodiff = pystencils.autodiff.AutoDiffOp(assignments)
+    autodiff = pystencils_autodiff.AutoDiffOp(assignments)
     backward_assignments = autodiff.backward_assignments
 
     print(assignments)
@@ -136,7 +135,7 @@ def test_generate_torch():
     assignments = pystencils.AssignmentCollection({
         y.center(): x.center()**2
     }, {})
-    autodiff = pystencils.autodiff.AutoDiffOp(assignments)
+    autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
     op_cuda = generate_torch(appdirs.user_cache_dir('pystencils'), autodiff, is_cuda=True, dtype=np.float32)
     assert op_cuda is not None
@@ -150,10 +149,10 @@ def test_execute_torch():
     assignments = pystencils.AssignmentCollection({
         y.center(): 5 + x.center()
     }, {})
-    autodiff = pystencils.autodiff.AutoDiffOp(assignments)
+    autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
-    x_tensor = pystencils.autodiff.torch_tensor_from_field(x, 1, cuda=False)
-    y_tensor = pystencils.autodiff.torch_tensor_from_field(y, 1, cuda=False)
+    x_tensor = pystencils_autodiff.torch_tensor_from_field(x, 1, cuda=False)
+    y_tensor = pystencils_autodiff.torch_tensor_from_field(y, 1, cuda=False)
 
     op_cpp = create_autograd_function(autodiff, {x: x_tensor, y: y_tensor})
     foo = op_cpp.forward(x_tensor)
@@ -167,10 +166,10 @@ def test_execute_torch_gpu():
     assignments = pystencils.AssignmentCollection({
         y.center(): 5 + x.center()
     }, {})
-    autodiff = pystencils.autodiff.AutoDiffOp(assignments)
+    autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
-    x_tensor = pystencils.autodiff.torch_tensor_from_field(x, 3, cuda=True)
-    y_tensor = pystencils.autodiff.torch_tensor_from_field(y, 4, cuda=True)
+    x_tensor = pystencils_autodiff.torch_tensor_from_field(x, 3, cuda=True)
+    y_tensor = pystencils_autodiff.torch_tensor_from_field(y, 4, cuda=True)
     assert y_tensor.is_cuda
     assert torch.cuda.is_available()
 

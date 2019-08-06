@@ -99,7 +99,7 @@ Backward:
                 raise NotImplementedError()
 
     def __hash__(self):
-        return hash((self.forward_assignments, self.backward_assignments))
+        return hash(str(self.forward_assignments), str(self.backward_assignments))
 
     def __repr__(self):
         return self._REPR_TEMPLATE.render(forward_assignments=str(self.forward_assignments),
