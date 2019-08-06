@@ -92,8 +92,7 @@ class AutoDiffOp:
                 raise NotImplementedError()
 
     def __hash__(self):
-        # TODO make more precise
-        return hash(str(self.forward_assignments)) + hash(str(self.backward_assignments))
+        return hash(self.forward_assignments, self.backward_assignments)
 
     def _create_backward_assignments(self, diff_fields_prefix):
         """
