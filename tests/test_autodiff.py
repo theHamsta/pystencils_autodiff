@@ -2,15 +2,7 @@ import pytest
 import sympy as sp
 
 import pystencils as ps
-import pystencils.autodiff
-
-<< << << < HEAD
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-__author__ = "Stephan Seitz"
-__copyright__ = "Stephan Seitz"
-__license__ = "GPL-v3"
+import pystencils_autodiff
 
 
 def test_simple_2d_check_assignment_collection():
@@ -20,7 +12,7 @@ def test_simple_2d_check_assignment_collection():
     forward_assignments = ps.AssignmentCollection([ps.Assignment(
         z[0, 0], x[0, 0]*sp.log(x[0, 0]*y[0, 0]))], [])
 
-    jac = pystencils.autodiff.get_jacobian_of_assignments(
+    jac = pystencils_autodiff.get_jacobian_of_assignments(
         forward_assignments, [x[0, 0], y[0, 0]])
 
     assert jac.shape == (len(forward_assignments.bound_symbols),
@@ -28,10 +20,10 @@ def test_simple_2d_check_assignment_collection():
     print(repr(jac))
     assert repr(jac) == 'Matrix([[log(x_C*y_C) + 1, y_C/x_C]])'
 
-    pystencils.autodiff.create_backward_assignments(
+    pystencils_autodiff.create_backward_assignments(
         forward_assignments)
-    pystencils.autodiff.create_backward_assignments(
-        pystencils.autodiff.create_backward_assignments(forward_assignments))
+    pystencils_autodiff.create_backward_assignments(
+        pystencils_autodiff.create_backward_assignments(forward_assignments))
 
 
 def test_simple_2d_check_raw_assignments():
@@ -41,13 +33,13 @@ def test_simple_2d_check_raw_assignments():
     forward_assignments = \
         [ps.Assignment(z[0, 0], x[0, 0]*sp.log(x[0, 0]*y[0, 0]))]
 
-    jac = pystencils.autodiff.get_jacobian_of_assignments(
+    jac = pystencils_autodiff.get_jacobian_of_assignments(
         forward_assignments, [x[0, 0], y[0, 0]])
 
     assert jac.shape == (1, 2)
     assert repr(jac) == 'Matrix([[log(x_C*y_C) + 1, y_C/x_C]])'
 
-    pystencils.autodiff.create_backward_assignments(
+    pystencils_autodiff.create_backward_assignments(
         forward_assignments)
 
 
