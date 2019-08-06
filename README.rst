@@ -1,4 +1,7 @@
-===================
+.. image:: https://readthedocs.org/projects/pystencils-autodiff/badge/?version=latest
+    :target: https://pystencils-autodiff.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status===================
+
 pystencils_autodiff
 ===================
 
