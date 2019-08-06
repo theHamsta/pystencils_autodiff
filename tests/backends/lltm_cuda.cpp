@@ -1,9 +1,3 @@
-/*
- * lltm_cuda.cpp
- * Copyright (C) 2019 seitz_local <seitz_local@lmeXX>
- *
- * Distributed under terms of the GPLv3 license.
- */
 #include <torch/extension.h>
 
 #include <vector>

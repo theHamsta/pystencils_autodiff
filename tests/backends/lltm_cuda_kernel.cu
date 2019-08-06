@@ -26,7 +26,7 @@ __device__ __forceinline__ scalar_t d_tanh(scalar_t z) {
 template <typename scalar_t>
 __device__ __forceinline__ scalar_t elu(scalar_t z, scalar_t alpha = 1.0) {
   /*return fmax(0.0, z) + fmin(0.0, alpha * (exp(z) - 1.0));*/
-  return 0.;
+  return 0.0;
 }
 
 template <typename scalar_t>
