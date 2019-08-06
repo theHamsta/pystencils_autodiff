@@ -6,16 +6,15 @@ import numpy as np
 import sympy as sp
 
 import pystencils as ps
-import pystencils_autodiff._assignment_transforms
 import pystencils_autodiff._layout_fixer
 from pystencils_autodiff.backends import AVAILABLE_BACKENDS
 
 
-"""Mode of backward differentiation
-(see https://autodiff-workshop.github.io/slides/Hueckelheim_nips_autodiff_CNN_PDE.pdf)"""
-
-
 class DiffModes(str, Enum):
+    """
+    Mode of backward differentiation
+    (see https://autodiff-workshop.github.io/slides/Hueckelheim_nips_autodiff_CNN_PDE.pdf)
+    """
     TRANSPOSED = 'transposed'
     TF_MAD = 'transposed-forward'
 
