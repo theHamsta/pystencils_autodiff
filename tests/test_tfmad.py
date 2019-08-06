@@ -1,14 +1,15 @@
 import argparse
+import os
 
 import numpy as np
+import pytest
 import sympy as sp
 import tensorflow as tf
 import torch
 
 import pystencils as ps
 import pystencils_autodiff
-from test_utils.gradient_check_tensorflow import \
-    compute_gradient_error_without_border
+from test_utils.gradient_check_tensorflow import compute_gradient_error_without_border
 
 
 def test_tfmad_stencil():
@@ -53,11 +54,11 @@ def test_tfmad_two_stencils():
     print(auto_diff.forward_input_fields)
 
 
+@pytest.mark.skipif("NO_TENSORFLOW_TEST" in os.environ, reason="Requires Tensorflow")
 def test_tfmad_gradient_check():
     a, b, out = ps.fields("a, b, out: double[21,13]")
 
-    cont = ps.fd.Diff(a, 0) - ps.fd.Diff(a, 1) - \
-        ps.fd.Diff(b, 0) + ps.fd.Diff(b, 1)
+    cont = ps.fd.Diff(a, 0) - ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + ps.fd.Diff(b, 1)
     discretize = ps.fd.Discretization2ndOrder(dx=1)
     discretization = discretize(cont)
 
@@ -146,11 +147,13 @@ def test_tfmad_vector_input_data():
         '--dtype', default=np.float64, type=np.dtype)
     parser.add_argument(
         '--num_optimization_steps', default=2000, type=int)
+    parser.add_argument('vargs', nargs='*')
 
     args = parser.parse_args()
     check_tfmad_vector_input_data(args)
 
 
+@pytest.mark.skipif("NO_TENSORFLOW_TEST" in os.environ, reason="Requires Tensorflow")
 def test_tfmad_gradient_check_torch():
     a, b, out = ps.fields("a, b, out: float[21,13]")
 
