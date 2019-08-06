@@ -489,7 +489,7 @@ Backward:
                        for f in self.forward_output_fields}
 
                 kwargs.update(rtn)
-                self.forward_kernel_cpu
+                self.forward_kernel_cpu(**kwargs)
                 return rtn
 
             forward_loop = forward_function

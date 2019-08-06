@@ -7,7 +7,7 @@ try:
     import pycuda.autoinit
     import pycuda.gpuarray
     import pycuda.driver
-except:
+except Exception:
     pass
 
 
@@ -41,14 +41,16 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
 
                 try:
                     arrays[lookup_dict[a].name] = array
-                except:
-                    pass
+                except Exception as e:
+                    raise e
+
             else:
                 array = a
                 try:
                     arrays[lookup_dict[a].name] = array
-                except:
-                    pass
+                except Exception as e:
+                    raise e
+
         return arrays
 
     def forward(self, *input_tensors):
@@ -68,7 +70,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
 
         is_cuda = all(a.is_cuda for a in all_tensors)
         arrays = _tensors_to_dict(is_cuda, all_tensors, additional_dict={
-            f.name: grad_outputs[i] for i, f in enumerate(backward_input_fields)})
+            grad_outputs[i]: f for i, f in enumerate(backward_input_fields)})
         backward_loop(**arrays, is_cuda=is_cuda)
         return tuple(field_to_tensor_dict[f] for f in autodiff_obj.backward_output_fields)
 
