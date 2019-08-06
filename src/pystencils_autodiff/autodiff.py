@@ -377,6 +377,7 @@ Backward:
     def backward_read_accesses(self):
         return [a for a in self.backward_assignments.free_symbols if isinstance(a, ps.Field.Access)]
 
+    @property
     def forward_kernel_cpu(self):
         if not self._forward_kernel_cpu:
             self._forward_kernel_cpu = ps.create_kernel(
