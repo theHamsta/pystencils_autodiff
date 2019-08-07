@@ -7,8 +7,9 @@ try:
     import pycuda.autoinit
     import pycuda.gpuarray
     import pycuda.driver
+    HAS_PYCUDA = True
 except Exception:
-    pass
+    HAS_PYCUDA = False
 
 
 def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_loop, backward_loop,
@@ -94,12 +95,12 @@ def numpy_dtype_to_torch(dtype):
 
 
 # Fails if different context/thread
-# def tensor_to_gpuarray(tensor):
-#     if not tensor.is_cuda:
-#         raise ValueError(
-#             'Cannot convert CPU tensor to GPUArray (call `cuda()` on it)')
-#     else:
-#         return pycuda.gpuarray.GPUArray(tensor.shape, dtype=torch_dtype_to_numpy(tensor.dtype), gpudata=tensor.data_ptr())
+def tensor_to_gpuarray(tensor):
+    if not tensor.is_cuda:
+        raise ValueError(
+            'Cannot convert CPU tensor to GPUArray (call `cuda()` on it)')
+    else:
+        return pycuda.gpuarray.GPUArray(tensor.shape, dtype=torch_dtype_to_numpy(tensor.dtype), gpudata=tensor.data_ptr())
 
 
 def gpuarray_to_tensor(gpuarray, context=None):
@@ -125,20 +126,23 @@ def gpuarray_to_tensor(gpuarray, context=None):
     return out
 
 
-class GpuPointerHolder(pycuda.driver.PointerHolderBase):
+if HAS_PYCUDA:
+    class GpuPointerHolder(pycuda.driver.PointerHolderBase):
 
-    def __init__(self, tensor):
-        super().__init__()
-        self.tensor = tensor
-        self.gpudata = tensor.data_ptr()
+        def __init__(self, tensor):
+            super().__init__()
+            self.tensor = tensor
+            self.gpudata = tensor.data_ptr()
 
-    def get_pointer(self):
-        return self.tensor.data_ptr()
+        def get_pointer(self):
+            return self.tensor.data_ptr()
 
-    def __int__(self):
-        return self.__index__()
+        def __int__(self):
+            return self.__index__()
 
-    # without an __index__ method, arithmetic calls to the GPUArray backed by this pointer fail
-    # not sure why, this needs to return some integer, apparently
-    def __index__(self):
-        return self.gpudata
+        # without an __index__ method, arithmetic calls to the GPUArray backed by this pointer fail
+        # not sure why, this needs to return some integer, apparently
+        def __index__(self):
+            return self.gpudata
+else:
+    GpuPointerHolder = None

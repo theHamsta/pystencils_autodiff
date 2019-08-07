@@ -11,6 +11,18 @@ try:
 except Exception:
     HAS_PYCUDA = False
 
+# Fails if different context/thread
+
+
+def tensor_to_gpuarray(tensor):
+    if not tensor.is_cuda:
+        raise ValueError(
+            'Cannot convert CPU tensor to GPUArray (call `cuda()` on it)')
+    else:
+        return pycuda.gpuarray.GPUArray(tensor.shape,
+                                        dtype=torch_dtype_to_numpy(tensor.dtype),
+                                        gpudata=tensor.data_ptr())
+
 
 def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_loop, backward_loop,
                              convert_tensors_to_arrays=True):
@@ -92,17 +104,9 @@ def numpy_dtype_to_torch(dtype):
     return getattr(torch, dtype_name)
 
 
-# Fails if different context/thread
-# def tensor_to_gpuarray(tensor):
-#     if not tensor.is_cuda:
-#         raise ValueError(
-#             'Cannot convert CPU tensor to GPUArray (call `cuda()` on it)')
-#     else:
-#         return pycuda.gpuarray.GPUArray(tensor.shape, dtype=torch_dtype_to_numpy(tensor.dtype), gpudata=tensor.data_ptr())
-
-
 def gpuarray_to_tensor(gpuarray, context=None):
-    '''Convert a :class:`pycuda.gpuarray.GPUArray` to a :class:`torch.Tensor`. The underlying
+    """
+    Convert a :class:`pycuda.gpuarray.GPUArray` to a :class:`torch.Tensor`. The underlying
     storage will NOT be shared, since a new copy must be allocated.
     Parameters
     ----------
@@ -110,7 +114,7 @@ def gpuarray_to_tensor(gpuarray, context=None):
     Returns
     -------
     torch.Tensor
-    '''
+    """
     if not context:
         context = pycuda.autoinit.context
     shape = gpuarray.shape
