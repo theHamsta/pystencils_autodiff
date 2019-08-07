@@ -7,6 +7,7 @@ using namespace pybind11::literals;
 using scalar_t = {{ dtype }};
 
 
+#define RESTRICT __restrict
 
 std::vector<at::Tensor> {{ kernel_name }}_forward(
 {%- for tensor in forward_tensors -%}

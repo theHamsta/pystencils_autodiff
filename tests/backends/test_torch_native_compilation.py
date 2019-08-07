@@ -132,10 +132,9 @@ def test_torch_native_compilation():
     print(output)
 
 
-def test_generate_torch():
+def test_generate_torch_gpu():
     x, y = pystencils.fields('x, y: float32[2d]')
 
-    os.environ['CUDA_HOME'] = "/usr/local/cuda-10.0"
     assignments = pystencils.AssignmentCollection({
         y.center(): x.center()**2
     }, {})
@@ -143,6 +142,16 @@ def test_generate_torch():
 
     op_cuda = generate_torch(appdirs.user_cache_dir('pystencils'), autodiff, is_cuda=True, dtype=np.float32)
     assert op_cuda is not None
+
+
+def test_generate_torch_cpu():
+    x, y = pystencils.fields('x, y: float32[2d]')
+
+    assignments = pystencils.AssignmentCollection({
+        y.center(): x.center()**2
+    }, {})
+    autodiff = pystencils_autodiff.AutoDiffOp(assignments)
+
     op_cpp = generate_torch(appdirs.user_cache_dir('pystencils'), autodiff, is_cuda=False, dtype=np.float32)
     assert op_cpp is not None
 
@@ -165,7 +174,6 @@ def test_execute_torch():
 
 
 @pytest.mark.skipif('NO_GPU_EXECUTION' in os.environ, reason='Skip GPU execution tests')
-
 def test_execute_torch_gpu():
     x, y = pystencils.fields('x, y: float64[32,32]')
 
