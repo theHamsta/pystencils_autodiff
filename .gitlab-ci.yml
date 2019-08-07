@@ -1,0 +1,68 @@
+# Minimal tests in windows environment
+minimal-windows:
+  stage: test
+  except:
+    variables:
+      - $ENABLE_NIGHTLY_BUILDS
+  tags:
+    - win
+  script:
+    - source /cygdrive/c/Users/build/Miniconda3/Scripts/activate
+    - source activate pystencils_dev
+    - env
+    - conda env list
+    - python -c "import numpy"
+    - pytest
+
+minimal-ubuntu:
+  stage: test
+  except:
+    variables:
+      - $ENABLE_NIGHTLY_BUILDS
+  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_ubuntu
+  script:
+    - pytest
+  tags:
+    - docker
+
+minimal-conda:
+  stage: test
+  except:
+    variables:
+      - $ENABLE_NIGHTLY_BUILDS
+  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
+  script:
+    - pytest
+  tags:
+    - docker
+
+
+# -------------------- Linter & Documentation --------------------------------------------------------------------------
+
+
+flake8-lint:
+  stage: test
+  except:
+    variables:
+      - $ENABLE_NIGHTLY_BUILDS
+  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/full
+  script:
+    - flake8 pystencils
+  tags:
+    - docker
+    - cuda
+
+
+build-documentation:
+  stage: test
+  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/full
+  script:
+    - export PYTHONPATH=`pwd`
+    - mkdir html_doc
+    - sphinx-build -W -b html doc  html_doc
+  tags:
+    - docker
+    - cuda
+  artifacts:
+    paths:
+      - html_doc
