@@ -41,8 +41,8 @@ def test_jit():
 
     from torch.utils.cpp_extension import CUDAExtension
 
-    lltm_cuda = CUDAExtension(
-        join(dirname(__file__), 'lltm_cuda'), [cpp_file, cuda_file], verbose=True, extra_cuda_cflags=[])
+    lltm_cuda = CUDAExtension(join(dirname(__file__), 'lltm_cuda'),
+                              [cpp_file, cuda_file])
     assert lltm_cuda is not None
     print('hallo')
 
