@@ -5,6 +5,9 @@
 .. image:: https://travis-ci.org/theHamsta/pystencils_autodiff.svg?branch=master
     :target: https://travis-ci.org/theHamsta/pystencils_autodiff
 
+.. image:: https://codecov.io/gh/theHamsta/pystencils_autodiff/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/theHamsta/pystencils_autodiff
+
 pystencils_autodiff
 ===================
 
