@@ -12,6 +12,8 @@ minimal-windows:
     - env
     - conda env list
     - python -c "import numpy"
+    - pip install -e .
+    - pip install pytest
     - pytest
 
 minimal-ubuntu:
@@ -32,6 +34,8 @@ minimal-conda:
       - $ENABLE_NIGHTLY_BUILDS
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
   script:
+    - pip install -e .
+    - pip install pytest
     - pytest
   tags:
     - docker
@@ -57,6 +61,7 @@ build-documentation:
   stage: test
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/full
   script:
+    - pip install -e .
     - export PYTHONPATH=`pwd`
     - mkdir html_doc
     - sphinx-build -W -b html doc  html_doc
