@@ -121,9 +121,9 @@ Backward:
         write_fields = {s.field for s in write_field_accesses}
 
         # for every field create a corresponding diff field
-        diff_read_fields = {f: f.new_field_with_different_name(diff_fields_prefix + f.name)
+        diff_read_fields = {f: pystencils_autodiff.AdjointField(f, diff_fields_prefix)
                             for f in read_fields}
-        diff_write_fields = {f: f.new_field_with_different_name(diff_fields_prefix + f.name)
+        diff_write_fields = {f: pystencils_autodiff.AdjointField(f, diff_fields_prefix)
                              for f in write_fields}
 
         # Translate field accesses from standard to diff fields
