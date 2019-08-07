@@ -57,6 +57,7 @@ def test_tfmad_two_stencils():
 
 
 @pytest.mark.skipif("NO_TENSORFLOW_TEST" in os.environ, reason="Requires Tensorflow")
+@pytest.mark.skipif("TRAVIS" in os.environ, reason="Temporary skip")
 def test_tfmad_gradient_check():
     a, b, out = ps.fields("a, b, out: double[21,13]")
     print(a.shape)

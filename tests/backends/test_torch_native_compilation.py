@@ -132,6 +132,7 @@ def test_torch_native_compilation():
     print(output)
 
 
+@pytest.mark.skipif("TRAVIS" in os.environ, reason="Temporary skip")
 def test_generate_torch_gpu():
     x, y = pystencils.fields('x, y: float32[2d]')
 
