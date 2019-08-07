@@ -1,3 +1,7 @@
+.. image:: https://badge.fury.io/py/pystencils-autodiff.svg
+   :target: https://badge.fury.io/py/pystencils-autodiff
+   :alt: PyPI version
+
 .. image:: https://readthedocs.org/projects/pystencils-autodiff/badge/?version=latest
     :target: https://pystencils-autodiff.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status===================
@@ -20,7 +24,7 @@ Install via pip :
 
    pip install pyconrad
 
-or if you downloaded this `repository <https://github.com/theHamsta/pystencils_autodiff>\`_ using:
+or if you downloaded this `repository <https://github.com/theHamsta/pystencils_autodiff>`_ using:
 
 .. code-block:: bash
 
