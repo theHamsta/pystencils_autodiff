@@ -7,7 +7,7 @@ try:
     import pycuda.autoinit
     import pycuda.gpuarray
     import pycuda.driver
-except:
+except Exception:
     pass
 
 
