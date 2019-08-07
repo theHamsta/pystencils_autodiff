@@ -20,7 +20,7 @@ Install via pip :
 
    pip install pyconrad
 
-or if you downloaded this repository (https://github.com/theHamsta/pystencils_autodiff) using:
+or if you downloaded this `repository <https://github.com/theHamsta/pystencils_autodiff>\`_ using:
 
 .. code-block:: bash
 
