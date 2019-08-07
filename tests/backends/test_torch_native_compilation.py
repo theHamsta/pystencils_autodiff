@@ -10,6 +10,7 @@ from os.path import dirname, isfile, join
 import appdirs
 import jinja2
 import numpy as np
+import pytest
 import torch
 
 import pystencils
@@ -163,6 +164,7 @@ def test_execute_torch():
     assert op_cpp is not None
 
 
+@pytest.skip('NO_GPU_EXECUTION' in os.environ, reason='Skip GPU execution tests')
 def test_execute_torch_gpu():
     x, y = pystencils.fields('x, y: float64[32,32]')
 
