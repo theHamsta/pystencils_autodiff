@@ -44,6 +44,7 @@ fi
 pip install -U pip setuptools
 pip install tox
 pip install codecov
+pip install sphinx
 # use newest pystencils
 pip install git+https://github.com/mabau/pystencils.git
 pip install flake8
