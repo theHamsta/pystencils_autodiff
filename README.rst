@@ -11,18 +11,17 @@
 pystencils_autodiff
 ===================
 
+Installation
+------------
 
-Add a short description here!
+Install via pip :
 
+.. code-block:: bash
 
-Description
-===========
+   pip install pyconrad
 
-A longer description of your project goes here...
+or if you downloaded this repository (https://github.com/theHamsta/pystencils_autodiff) using:
 
+.. code-block:: bash
 
-Note
-====
-
-This project has been set up using PyScaffold 3.2. For details and usage
-information on PyScaffold see https://pyscaffold.org/.
+   pip install -e .
