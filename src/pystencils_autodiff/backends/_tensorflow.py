@@ -62,12 +62,12 @@ def tensorflowop_from_autodiffop(autodiffop: pystencils_autodiff.AutoDiffOp,
         return [rtn_dict[o.name] for o in autodiffop._backward_output_fields]
 
     def backward(op, *grad):
-        return tf.py_func(helper_backward,
-                          [*op.inputs,
+        return py_func(helper_backward,
+                       [*op.inputs,
                            *grad],
-                          [f.dtype.numpy_dtype for f in autodiffop._backward_output_fields],
-                          name=autodiffop.op_name + '_backward',
-                          stateful=False)
+                       [f.dtype.numpy_dtype for f in autodiffop._backward_output_fields],
+                       name=autodiffop.op_name + '_backward',
+                       stateful=False)
 
     output_tensors = _py_func(helper_forward,
                               [inputfield_tensor_dict[f]
