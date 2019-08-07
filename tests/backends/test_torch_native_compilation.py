@@ -168,7 +168,7 @@ def test_execute_torch():
     y_tensor = pystencils_autodiff.torch_tensor_from_field(y, 1, cuda=False)
 
     op_cpp = create_autograd_function(autodiff, {x: x_tensor, y: y_tensor})
-    foo = op_cpp.forward(x_tensor)
+    foo = op_cpp.forward()
     print(foo)
     assert op_cpp is not None
 
@@ -189,7 +189,7 @@ def test_execute_torch_gpu():
 
     op_cuda = create_autograd_function(autodiff, {x: x_tensor, y: y_tensor})
     assert op_cuda is not None
-    rtn = op_cuda.forward(y_tensor, x_tensor)
+    rtn = op_cuda.forward()
     print(y_tensor)
     print(rtn)
 

@@ -139,8 +139,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
             os.mkdir(cache_dir)
         # TODO: create function and stuff
 
-        compiled_operation = generate_torch(cache_dir, autodiff_obj, is_cuda,
-                                            dtype)
+        compiled_operation = generate_torch(cache_dir, autodiff_obj, is_cuda, dtype)
         field_to_tensor_dict = inputfield_to_tensor_dict
         # Allocate output tensor for forward and backward pass
         for field in chain(autodiff_obj.forward_output_fields, autodiff_obj.backward_output_fields):
@@ -164,7 +163,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
         cls.saved = None
         cls.forward = forward
         cls.backward = backward
-        return cls
+        return cls()
     else:
         op = pystencils_autodiff.backends._pytorch.create_autograd_function(autodiff_obj,
                                                                             inputfield_to_tensor_dict,
