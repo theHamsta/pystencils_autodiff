@@ -100,7 +100,9 @@ def tensor_to_gpuarray(tensor):
         raise ValueError(
             'Cannot convert CPU tensor to GPUArray (call `cuda()` on it)')
     else:
-        return pycuda.gpuarray.GPUArray(tensor.shape, dtype=torch_dtype_to_numpy(tensor.dtype), gpudata=tensor.data_ptr())
+        return pycuda.gpuarray.GPUArray(tensor.shape,
+                                        dtype=torch_dtype_to_numpy(tensor.dtype),
+                                        gpudata=tensor.data_ptr())
 
 
 def gpuarray_to_tensor(gpuarray, context=None):

@@ -24,5 +24,3 @@ def tf_variable_from_field(field, init_val=0, constraint=None):
 
 def tf_placeholder_from_field(field):
     return tf.placeholder(dtype=field.dtype.numpy_dtype, name=field.name + '_placeholder', shape=field.shape)
-
-

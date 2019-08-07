@@ -6,7 +6,8 @@ Advantages:
 - Custom Ops will be serializable
 
 Disadavantages:
-- C++ Code has to be build with correct parameters and ABI for present Tensorflow version (best integrated into Tensorflow build)
+- C++ Code has to be build with correct parameters and ABI
+for present Tensorflow version (best integrated into Tensorflow build)
 
 """
 
