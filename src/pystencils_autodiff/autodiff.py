@@ -21,11 +21,12 @@ class DiffModes(str, Enum):
 
 
 def get_jacobian_of_assignments(assignments, diff_variables):
-    """ Calculates the Jacobian of iterable of assignments wrt. to diff_variables
+    """
+    Calculates the Jacobian of iterable of assignments wrt. diff_variables
 
     Arguments:
-        assignments {[type]} -- [description]
-        diff_variables {[type]} -- [description]
+        assignments (List[pystencils.Assignment]): A collection of assignments or a AssignmentCollection
+        diff_variables (List[sympy.Symbol]): List of variables used to differentiate
 
     Returns:
         sp.Matrix -- Jacobian of statements

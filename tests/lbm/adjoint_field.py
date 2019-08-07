@@ -1,8 +1,10 @@
 import pystencils
 from pystencils.astnodes import FieldShapeSymbol, FieldStrideSymbol
 
-"""Determines how adjoint fields will be denoted in LaTeX output in terms of the forward field representation %s
-Default: r"\hat{%s}" """
+"""
+Determines how adjoint fields will be denoted in LaTeX output in terms of the forward field representation %s
+Default: "\\hat{%s}"
+"""
 ADJOINT_FIELD_LATEX_HIGHLIGHT = r"\hat{%s}"
 
 
