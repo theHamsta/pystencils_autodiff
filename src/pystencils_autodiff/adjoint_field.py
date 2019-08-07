@@ -12,7 +12,7 @@ class AdjointField(pystencils.Field):
     def __init__(self, forward_field, name_prefix='diff'):
         new_name = name_prefix + forward_field.name
         super().__init__(new_name, forward_field.field_type, forward_field._dtype,
-                                           forward_field._layout, forward_field.shape, forward_field.strides)
+                         forward_field._layout, forward_field.shape, forward_field.strides)
         self.corresponding_forward_field = forward_field
         self.name_prefix = name_prefix
 

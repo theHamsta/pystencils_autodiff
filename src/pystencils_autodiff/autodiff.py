@@ -281,7 +281,8 @@ Backward:
                         if forward_read_field in self._time_constant_fields:
                             # Accumulate in case of time_constant_fields
                             assignment = ps.Assignment(
-                                diff_read_field.center_vector[index], diff_read_field.center_vector[index] + diff_read_field_sum[index])
+                                diff_read_field.center_vector[index],
+                                diff_read_field.center_vector[index] + diff_read_field_sum[index])
                         else:
                             # If time dependent, we just need to assign the sum for the current time step
                             assignment = ps.Assignment(
@@ -302,7 +303,7 @@ Backward:
             if self._do_common_subexpression_elimination:
                 backward_assignments = ps.simp.sympy_cse_on_assignment_list(
                     backward_assignments)
-        except:
+        except Exception:
             pass
             # print("Common subexpression elimination failed")
             # print(err)

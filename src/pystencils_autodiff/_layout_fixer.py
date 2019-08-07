@@ -1,5 +1,4 @@
 import numpy as np
-import pystencils as ps
 from pystencils_autodiff.backends import AVAILABLE_BACKENDS
 
 
@@ -10,7 +9,9 @@ def fix_layout(array, target_field, backend):
 
     # Just index coordinate wrong?
     swapped_array = np.swapaxes(array, 0, -1)
-    if swapped_array.strides == target_field.strides and swapped_array.shape == target_field.shade and target_field.index_dimensions == 1:
+    if (swapped_array.strides == target_field.strides and 
+            swapped_array.shape == target_field.shade and 
+            target_field.index_dimensions == 1):
         array = swapped_array
 
     # Everything ok

@@ -13,8 +13,7 @@ minimal-windows:
     - conda env list
     - python -c "import numpy"
     - pip install -e .
-    - pip install pytest
-    - pytest
+    - python3 setup.py test
 
 minimal-ubuntu:
   stage: test
@@ -23,7 +22,8 @@ minimal-ubuntu:
       - $ENABLE_NIGHTLY_BUILDS
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_ubuntu
   script:
-    - pytest
+    - pip install -e .
+    - python3 setup.py test
   tags:
     - docker
 
@@ -35,8 +35,7 @@ minimal-conda:
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
   script:
     - pip install -e .
-    - pip install pytest
-    - pytest
+    - python3 setup.py test
   tags:
     - docker
 
