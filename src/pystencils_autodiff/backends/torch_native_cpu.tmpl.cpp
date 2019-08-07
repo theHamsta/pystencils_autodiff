@@ -18,15 +18,14 @@ std::vector<at::Tensor> {{ kernel_name }}_forward(
     //auto {{tensor}} = at::zeros_like({{ forward_input_tensors[0] }});
     //{% endfor %}
 
-    {% for i in dimensions -%}
-    int _size_{{ forward_tensors[0] }}_{{ i }} = {{ forward_tensors[0] }}.size({{ i }});
-    {% endfor %}
-
     {% for tensor in forward_tensors -%}
     {%- set last = loop.last -%}
     scalar_t* _data_{{ tensor }} = {{ tensor }}.data<scalar_t>();
     {% for i in dimensions -%}
     int _stride_{{tensor}}_{{i}} = {{tensor}}.strides()[{{ i }}];
+    {% endfor -%}
+    {% for i in dimensions -%}
+    int _size_{{tensor}}_{{i}} = {{tensor}}.size({{ i }});
     {% endfor -%}
     {% endfor -%}
 
@@ -53,6 +52,9 @@ std::vector<at::Tensor> {{ kernel_name }}_backward(
     scalar_t* _data_{{ tensor }} = {{ tensor }}.data<scalar_t>();
     {% for i in dimensions -%}
     int _stride_{{ tensor }}_{{i}} = {{ tensor }}.strides()[{{ i }}];
+    {% endfor -%}
+    {% for i in dimensions -%}
+    int _size_{{tensor}}_{{i}} = {{tensor}}.size({{ i }});
     {% endfor -%}
     {% endfor -%}
 
