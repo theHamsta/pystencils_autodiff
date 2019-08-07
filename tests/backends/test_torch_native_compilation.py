@@ -44,7 +44,6 @@ def test_jit():
     lltm_cuda = CUDAExtension(join(dirname(__file__), 'lltm_cuda'),
                               [cpp_file, cuda_file])
     assert lltm_cuda is not None
-    print('hallo')
 
 
 def test_torch_native_compilation():

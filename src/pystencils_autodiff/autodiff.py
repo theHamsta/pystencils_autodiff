@@ -20,48 +20,6 @@ class DiffModes(str, Enum):
     TF_MAD = 'transposed-forward'
 
 
-def _has_exclusive_writes(assignment_collection):
-    """
-    Simple check for exclusive (non-overlapping) writes.
-    I.e. AssignmentCollection can be executed safely in parallel without caring about race conditions.
-    No writes on same spatial location (considering all possible shifts).
-
-    The checked condition might be violated if using DiffModes.TRANSPOSED
-    """
-
-    assignments = assignment_collection.main_assignments
-    write_field_accesses = [a.lhs for a in assignments if isinstance(a.lhs, ps.Field.Access)]
-
-    exclusive_writes = set()
-    for a in write_field_accesses:
-
-        if (a.field, a.index) in exclusive_writes:
-            return False
-        else:
-            exclusive_writes.add((a.field, a.index))
-
-    return True
-
-
-def get_jacobian_of_assignments(assignments, diff_variables):
-    """
-    Calculates the Jacobian of iterable of assignments wrt. diff_variables
-
-    Arguments:
-        assignments (List[pystencils.Assignment]): A collection of assignments or a AssignmentCollection
-        diff_variables (List[sympy.Symbol]): List of variables used to differentiate
-
-    Returns:
-        sp.Matrix -- Jacobian of statements
-    """
-
-    if hasattr(assignments, 'main_assignments'):
-        assignments = assignments.main_assignments
-
-    rhs = sp.Matrix([e.rhs for e in assignments])
-    return rhs.jacobian(diff_variables)
-
-
 class AutoDiffOp:
     _REPR_TEMPLATE = jinja2.Template(
         """Forward:
@@ -588,8 +546,11 @@ def create_backward_assignments(forward_assignments,
 
 
 class AutoDiffAstPair:
-    """A pair of ASTs of forward and backward kernel.
-    Just needed, if compilation from AssignmentCollection is not sufficient and you want to manipulate the ASTs"""
+    """
+    A pair of ASTs of forward and backward kernel.
+
+    Just needed, if compilation from AssignmentCollection is not sufficient and you want to manipulate the ASTs
+    """
 
     def __init__(self, forward_ast, backward_ast, compilation_target='cpu'):
         self.forward_ast = forward_ast
@@ -609,3 +570,45 @@ class AutoDiffAstPair:
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
+
+
+def _has_exclusive_writes(assignment_collection):
+    """
+    Simple check for exclusive (non-overlapping) writes.
+    I.e. AssignmentCollection can be executed safely in parallel without caring about race conditions.
+    No writes on same spatial location (considering all possible shifts).
+
+    The checked condition might be violated if using DiffModes.TRANSPOSED
+    """
+
+    assignments = assignment_collection.main_assignments
+    write_field_accesses = [a.lhs for a in assignments if isinstance(a.lhs, ps.Field.Access)]
+
+    exclusive_writes = set()
+    for a in write_field_accesses:
+
+        if (a.field, a.index) in exclusive_writes:
+            return False
+        else:
+            exclusive_writes.add((a.field, a.index))
+
+    return True
+
+
+def get_jacobian_of_assignments(assignments, diff_variables):
+    """
+    Calculates the Jacobian of iterable of assignments wrt. diff_variables
+
+    Arguments:
+        assignments (List[pystencils.Assignment]): A collection of assignments or a AssignmentCollection
+        diff_variables (List[sympy.Symbol]): List of variables used to differentiate
+
+    Returns:
+        sp.Matrix -- Jacobian of statements
+    """
+
+    if hasattr(assignments, 'main_assignments'):
+        assignments = assignments.main_assignments
+
+    rhs = sp.Matrix([e.rhs for e in assignments])
+    return rhs.jacobian(diff_variables)
