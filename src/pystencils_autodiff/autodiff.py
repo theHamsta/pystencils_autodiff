@@ -25,6 +25,8 @@ def _has_exclusive_writes(assignment_collection):
     Simple check for exclusive (non-overlapping) writes.
     I.e. AssignmentCollection can be executed safely in parallel without caring about race conditions.
     No writes on same spatial location (considering all possible shifts).
+
+    The checked condition might be violated if using DiffModes.TRANSPOSED
     """
 
     assignments = assignment_collection.main_assignments
