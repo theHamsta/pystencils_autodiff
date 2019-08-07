@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 import pystencils_autodiff
-from tf.compat.v1 import get_default_graph
+from tensorflow.compat.v1 import get_default_graph
 
 _num_generated_ops = 0
 
