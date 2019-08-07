@@ -17,6 +17,7 @@ matrix:
     - python: 3.6
       env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="true"
     - env: DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false"
+    - env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="false" LINT="true"
 install:
   - source tests/travis_install.sh
 before_script:
@@ -26,6 +27,7 @@ script:
   - export NO_GPU_EXECUTION=1
   - pip install -e .
   - python setup.py test
+  - if [[ "$LINT" == "true" ]]; then flake8 src; fi
 after_success:
   - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; codecov; fi
 after_script:
