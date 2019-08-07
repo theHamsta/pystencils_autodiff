@@ -22,7 +22,7 @@ Install via pip :
 
 .. code-block:: bash
 
-   pip install pyconrad
+   pip install pystencils-autodiff
 
 or if you downloaded this `repository <https://github.com/theHamsta/pystencils_autodiff>`_ using:
 
