@@ -6,6 +6,8 @@
 
 #include <vector>
 
+#define RESTRICT __restrict__
+
 {% for g in cuda_globals -%}
 {{ g }}
 {% endfor %}
