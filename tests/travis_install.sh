@@ -43,6 +43,9 @@ fi
 # for all
 pip install -U pip setuptools
 pip install tox
+pip install codecov
+# use newest pystencils
+pip install git+https://github.com/mabau/pystencils.git
 
 if [[ "$COVERAGE" == "true" ]]; then
     pip install -U pytest-cov pytest-virtualenv coverage coveralls flake8

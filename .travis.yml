@@ -7,7 +7,7 @@ language: python
 virtualenv:
   system_site_packages: false
 before_install:
-  - sudo apt-get install -y ninja build-essential
+  - sudo apt-get install -y ninja-build build-essential
 addons:
   apt:
     update: true
@@ -24,8 +24,7 @@ before_script:
   - git config --global user.name "Your Name"
 script:
   - pip install -e .
-  - tox
-  - |
+  - python setup.py test
 after_success:
   - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 after_script:
