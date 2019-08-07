@@ -2,6 +2,9 @@
     :target: https://pystencils-autodiff.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status===================
 
+.. image:: https://travis-ci.org/theHamsta/pystencils_autodiff.svg?branch=master
+    :target: https://travis-ci.org/theHamsta/pystencils_autodiff
+
 pystencils_autodiff
 ===================
 
