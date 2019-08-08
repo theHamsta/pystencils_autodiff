@@ -179,12 +179,10 @@ def test_tfmad_gradient_check_torch():
     print('Forward output fields (to check order)')
     print(auto_diff.forward_input_fields)
 
-    a_tensor = torch.zeros(
-        *a.shape, dtype=torch.float64, requires_grad=True)
-    b_tensor = torch.zeros(
-        *b.shape, dtype=torch.float64, requires_grad=True)
-    function = auto_diff.create_tensorflow_op(
-        {a: a_tensor, b: b_tensor}, backend='torch')
+    a_tensor = torch.zeros(*a.shape, dtype=torch.float64, requires_grad=True)
+    b_tensor = torch.zeros(*b.shape, dtype=torch.float64, requires_grad=True)
+
+    function = auto_diff.create_tensorflow_op({a: a_tensor, b: b_tensor}, backend='torch')
 
     torch.autograd.gradcheck(function.apply, [a_tensor, b_tensor])
 
