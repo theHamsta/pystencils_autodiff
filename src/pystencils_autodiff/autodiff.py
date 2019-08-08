@@ -21,6 +21,11 @@ class DiffModes(str, Enum):
 
 
 class AutoDiffOp:
+    """
+    Class to generate code for forward and backward kernels for automatic
+    differentiation operators.
+    """
+
     _REPR_TEMPLATE = jinja2.Template(
         """Forward:
     {{ forward_assignments | indent(4) }}
@@ -431,6 +436,9 @@ Backward:
     @property
     def time_constant_fields(self):
         return self._time_constant_fields
+
+    def create_torch_op(self, *args, **kwags):
+        return self.create_tensorflow_op(*args, backend='torch_native', **kwags)
 
     def create_tensorflow_op(self,
                              inputfield_tensor_dict,

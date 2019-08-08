@@ -1,9 +1,10 @@
 ===================
-pystencils_autodiff
+pystencils-autodiff
 ===================
 
-This is the documentation of **pystencils_autodiff**.
+This is the documentation of **pystencils-autodiff**.
 
+.. include:: ../README.rst
 
 
 Contents
