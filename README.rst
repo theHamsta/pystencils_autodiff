@@ -36,7 +36,7 @@ Usage
 
 Create a :class:`pystencils.AssignmentCollection` with pystencils:
 
-.. testcode::
+.. code-block:: python
 
     import sympy
     import pystencils
@@ -50,8 +50,7 @@ Create a :class:`pystencils.AssignmentCollection` with pystencils:
     print(forward_assignments)
 
 
-.. testoutput::
-    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+.. code-block:: python
 
     Subexpressions:
     Main Assignments:
@@ -59,7 +58,7 @@ Create a :class:`pystencils.AssignmentCollection` with pystencils:
    
 You can then obtain the corresponding backward assignments:
 
-.. testcode::
+.. code-block:: python
 
     from pystencils.autodiff import AutoDiffOp, create_backward_assignments
     backward_assignments = create_backward_assignments(forward_assignments)
@@ -68,7 +67,7 @@ You can then obtain the corresponding backward assignments:
 
 You can see the derivatives with respective to the two inputs multiplied by the gradient `diffz_C` of the output `z_C`.
 
-.. testoutput::
+.. code-block:: python
     :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
     Subexpressions:
@@ -78,7 +77,7 @@ You can see the derivatives with respective to the two inputs multiplied by the 
 
 You can also use the class :class:`.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 
-.. testcode::
+.. code-block:: python
 
     op = AutoDiffOp(forward_assignments)
     backward_assignments = op.backward_assignments   
@@ -89,7 +88,7 @@ You can also use the class :class:`.AutoDiffOp` to obtain both the assignments (
 
 ... or Torch:
 
-.. testcode::
+.. code-block:: python
 
     x_tensor = pystencils.autodiff.torch_tensor_from_field(x, cuda=False, requires_grad=True)
     y_tensor = pystencils.autodiff.torch_tensor_from_field(y, cuda=False, requires_grad=True)
