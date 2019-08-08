@@ -66,7 +66,7 @@ You can then obtain the corresponding backward assignments:
 
     print(backward_assignments)
 
-You can see the derivatives with respective to the two inputs multiplied by the gradient diffz_C of the output z_C.
+You can see the derivatives with respective to the two inputs multiplied by the gradient `diffz_C` of the output `z_C`.
 
 .. testoutput::
     :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
@@ -76,7 +76,7 @@ You can see the derivatives with respective to the two inputs multiplied by the 
         \hat{y}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
         \hat{x}[0,0] ← diffz_C*y_C/x_C
 
-You can also use the class :class:`AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
+You can also use the class :class:`.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 
 .. testcode::
 
