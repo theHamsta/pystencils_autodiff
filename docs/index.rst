@@ -22,12 +22,14 @@ or if you downloaded this `repository <https://github.com/theHamsta/pystencils_a
 
    pip install -e .
 
+Then, you can access the submodule `pystencils.autodiff`.
+
+.. code-block:: python
+
+    import pystencils.autodiff
 
 Usage
 -----
-
-This tutorial assumes that you are already familiar with pystencils.
-If not here is a good point to `start <http://pycodegen.pages.walberla.net/pystencils/notebooks/01_tutorial_getting_started.html>`_.
 
 Create a :class:`pystencils.AssignmentCollection` with pystencils:
 
