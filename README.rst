@@ -34,7 +34,7 @@ or if you downloaded this `repository <https://github.com/theHamsta/pystencils_a
 Usage
 -----
 
-Create a :class:`pystencils.AssignmentCollection` with pystencils:
+Create a `pystencils.AssignmentCollection` with pystencils:
 
 .. code-block:: python
 
@@ -74,7 +74,7 @@ You can see the derivatives with respective to the two inputs multiplied by the 
         \hat{y}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
         \hat{x}[0,0] ← diffz_C*y_C/x_C
 
-You can also use the class :class:`.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
+You can also use the class `AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 
 .. code-block:: python
 
