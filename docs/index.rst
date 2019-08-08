@@ -53,7 +53,7 @@ You can then obtain the corresponding backward assignments:
     from pystencils.autodiff import AutoDiffOp, create_backward_assignments
     backward_assignments = create_backward_assignments(forward_assignments)
 
-    # Sorting for reprducible outputs
+    # Sorting for reprudcible outputs
     backward_assignments.main_assignments = sorted(backward_assignments.main_assignments, key=lambda a: str(a))
 
     print(backward_assignments)
@@ -68,7 +68,7 @@ You can see the derivatives with respective to the two inputs multiplied by the 
         \hat{x}[0,0] ← diffz_C*y_C/x_C
         \hat{y}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
 
-You can also use the class :class:`.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
+You can also use the class :class:`.autodiff.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 
 .. testcode::
 
