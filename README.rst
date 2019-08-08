@@ -15,10 +15,12 @@
 pystencils_autodiff
 ===================
 
+This repo add automatic differentiation to `pystencils <https://i10git.cs.fau.de/seitz/pystencils>`_.
+
 Installation
 ------------
 
-Install via pip :
+Install via pip:
 
 .. code-block:: bash
 
@@ -30,6 +32,11 @@ or if you downloaded this `repository <https://github.com/theHamsta/pystencils_a
 
    pip install -e .
 
+Then, you can access the submodule `pystencils.autodiff`.
+
+.. code-block:: python
+
+    import pystencils.autodiff
 
 Usage
 -----

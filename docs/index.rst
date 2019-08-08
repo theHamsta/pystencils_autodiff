@@ -4,8 +4,11 @@ pystencils-autodiff
 
 This is the documentation of **pystencils-autodiff**.
 
-Installation
-------------
+This document assumes that you are already familiar with `pystencils <https://i10git.cs.fau.de/seitz/pystencils>`_.
+If not, here is a good `tutorial to start <http://pycodegen.pages.walberla.net/pystencils/notebooks/01_tutorial_getting_started.html>`_.
+
+Installation of this Auto-Diff Extension
+----------------------------------------
 
 Install via pip :
 
@@ -22,6 +25,9 @@ or if you downloaded this `repository <https://github.com/theHamsta/pystencils_a
 
 Usage
 -----
+
+This tutorial assumes that you are already familiar with pystencils.
+If not here is a good point to `start <http://pycodegen.pages.walberla.net/pystencils/notebooks/01_tutorial_getting_started.html>`_.
 
 Create a :class:`pystencils.AssignmentCollection` with pystencils:
 
