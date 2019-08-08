@@ -68,7 +68,6 @@ You can then obtain the corresponding backward assignments:
 You can see the derivatives with respective to the two inputs multiplied by the gradient `diffz_C` of the output `z_C`.
 
 .. code-block:: python
-    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
     Subexpressions:
     Main Assignments:
