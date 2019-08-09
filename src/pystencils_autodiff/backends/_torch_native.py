@@ -122,6 +122,7 @@ def generate_torch(destination_folder,
     from torch.utils.cpp_extension import load
     compiled_operation = load(operation_string, required_files, verbose=True,
                               extra_cuda_cflags=[] if is_cuda else [])
+    compiled_operation.code = output
     return compiled_operation
 
 
@@ -163,6 +164,7 @@ def create_autograd_function(autodiff_obj, inputfield_to_tensor_dict, forward_lo
         cls.saved = None
         cls.forward = forward
         cls.backward = backward
+        cls.code = compiled_operation.code
         return cls()
     else:
         op = pystencils_autodiff.backends._pytorch.create_autograd_function(autodiff_obj,
