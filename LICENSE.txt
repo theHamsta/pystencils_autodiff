@@ -1,5 +1,6 @@
 pystencils_autodiff -- Adds automatic differentation and generation of 
 Tensorflow/PyTorch operations to pystencils
+
 Copyright © 2019 Stephan Seitz
 
 This program is free software: you can redistribute it and/or modify
