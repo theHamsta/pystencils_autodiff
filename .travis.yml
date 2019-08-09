@@ -26,6 +26,7 @@ before_script:
 script:
   - export NO_GPU_EXECUTION=1
   - pip install -e .
+  - pip install tensorflow torch
   - if [[ "$LINT" == "false" ]]; then python setup.py test; fi
   - if [[ "$LINT" == "true" ]]; then flake8 src;python setup.py doctest; fi
 after_success:
