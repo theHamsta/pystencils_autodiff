@@ -2,7 +2,8 @@ import sympy as sp
 
 import pystencils as ps
 import pystencils_autodiff
-from pystencils_autodiff.autodiff import DiffModes
+from pystencils_autodiff import DiffModes
+
 
 
 def test_simple_2d_check_assignment_collection():
