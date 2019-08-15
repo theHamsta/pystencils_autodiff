@@ -18,7 +18,8 @@ from pystencils.astnodes import (
 from pystencils.backends.cbackend import get_headers
 from pystencils.framework_intergration_astnodes import (
     FrameworkIntegrationPrinter, WrapperFunction, generate_kernel_call)
-from pystencils_autodiff._io import _read_template_from_file
+from pystencils_autodiff._file_io import _read_template_from_file
+from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
 
 # Torch
 
@@ -49,46 +50,6 @@ class TensorflowTensorDestructuring(DestructuringBindingsForFieldClass):
                ]
 
 
-class JinjaCppFile(Node):
-    TEMPLATE: jinja2.Template = None
-
-    def __init__(self, ast_dict):
-        self.ast_dict = ast_dict
-        self.printer = MachineLearningBackend()
-        Node.__init__(self)
-
-    @property
-    def args(self):
-        """Returns all arguments/children of this node."""
-        return self.ast_dict.values()
-
-    @property
-    def symbols_defined(self):
-        """Set of symbols which are defined by this node."""
-        return set()
-
-    @property
-    def undefined_symbols(self):
-        """Symbols which are used but are not defined inside this node."""
-        return set()
-
-    def _print(self, node):
-        if isinstance(node, Node):
-            return self.printer(node)
-        else:
-            return str(node)
-
-    def __str__(self):
-        assert self.TEMPLATE, f"Template of {self.__class__} must be set"
-        render_dict = {k: self._print(v) for k, v in self.ast_dict.items()}
-        render_dict.update({"headers": get_headers(self)})
-
-        return self.TEMPLATE.render(render_dict)
-
-    def __repr__(self):
-        return self.TEMPLATE.render(self.ast_dict)
-
-
 class TorchCudaModule(JinjaCppFile):
     TEMPLATE = _read_template_from_file(join(dirname(__file__), 'torch_native_cuda.tmpl.cu'))
     DESTRUCTURING_CLASS = TorchTensorDestructuring
@@ -115,31 +76,3 @@ class TensorCudaModule(TorchCudaModule):
 
 # Generic
 class MachineLearningBackend(FrameworkIntegrationPrinter):
-
-    def _print_JinjaCppFile(self, node):
-        return str(node)
-
-    # def _print_DestructuringBindingsForFieldClass(self, node):
-        # """
-        # Can be deleted if supported by CBackend
-        # """
-        # # Define all undefined symbols
-        # undefined_field_symbols = node.symbols_defined
-        # destructuring_bindings = ["%s %s = %s.%s;" %
-        # (u.dtype,
-        # u.name,
-        # u.field_name if hasattr(u, 'field_name') else u.field_names[0],
-        # node.CLASS_TO_MEMBER_DICT[u.__class__].format(
-        # dtype=(u.dtype.base_type if type(u) == FieldPointerSymbol else ""),
-        # field_name=(u.field_name if hasattr(u, "field_name") else ""),
-        # dim=("" if type(u) == FieldPointerSymbol else (u.coordinate,))
-        # )
-        # )
-        # for u in undefined_field_symbols
-        # ]
-        # destructuring_bindings.sort()  # only for code aesthetics
-        # return "{\n" + self._indent + \
-        # ("\n" + self._indent).join(destructuring_bindings) + \
-        # "\n" + self._indent + \
-        # ("\n" + self._indent).join(self._print(node.body).splitlines()) + \
-        # "\n}"
