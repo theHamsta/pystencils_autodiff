@@ -24,7 +24,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
             prefix = '#define FUNC_PREFIX __global__\n'
             kernel_code = pystencils.backends.cbackend.generate_c(node, dialect='cuda')
         else:
-            prefix = '#define FUNC_PREFIX\n"'
+            prefix = '#define FUNC_PREFIX\n'
             kernel_code = pystencils.backends.cbackend.generate_c(node, dialect='c')
         return prefix + kernel_code
 
