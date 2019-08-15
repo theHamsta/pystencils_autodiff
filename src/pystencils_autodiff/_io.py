@@ -7,6 +7,11 @@
 """
 
 """
+import jinja2
+
+
+def _read_template_from_file(file):
+    return jinja2.Template(_read_file(file))
 
 
 def _read_file(file):

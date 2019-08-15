@@ -18,14 +18,6 @@ from pystencils.gpucuda.kernelcreation import create_cuda_kernel
 from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 
 
-def _read_file(file):
-    with open(file, 'r') as f:
-        return f.read()
-
-
-def _write_file(filename, content):
-    with open(filename, 'w') as f:
-        return f.write(content)
 
 
 def generate_torch(destination_folder,
