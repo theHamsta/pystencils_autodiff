@@ -11,7 +11,7 @@ import sympy
 
 import pystencils
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff.backends.astnodes import TensorCudaModule, TorchCudaModule
+from pystencils_autodiff.backends.astnodes import PybindModule, TensorflowModule, TorchModule
 
 TARGET_TO_DIALECT = {
     'cpu': 'c',
@@ -34,11 +34,17 @@ def test_module_printing():
         forward_ast.function_name = 'forward'
         backward_ast = pystencils.create_kernel(backward_assignments, target)
         backward_ast.function_name = 'backward'
-        module = TorchCudaModule(forward_ast, backward_ast)
+        module = TorchModule([forward_ast, backward_ast])
         print(module)
 
-        module = TensorCudaModule(forward_ast, backward_ast)
+        module = TensorflowModule({forward_ast: backward_ast})
         print(module)
+
+        if target == 'cpu':
+            module = PybindModule([forward_ast, backward_ast])
+            print(module)
+            module = PybindModule(forward_ast)
+            print(module)
 
 
 def test_module_printing_parameter():
@@ -57,16 +63,22 @@ def test_module_printing_parameter():
         forward_ast.function_name = 'forward'
         backward_ast = pystencils.create_kernel(backward_assignments, target)
         backward_ast.function_name = 'backward'
-        module = TorchCudaModule(forward_ast, backward_ast)
+        module = TorchModule([forward_ast, backward_ast])
         print(module)
 
-        module = TensorCudaModule(forward_ast, backward_ast)
+        module = TensorflowModule({forward_ast: backward_ast})
         print(module)
+
+        if target == 'cpu':
+            module = PybindModule([forward_ast, backward_ast])
+            print(module)
+            module = PybindModule(forward_ast)
+            print(module)
 
 
 def main():
     test_module_printing()
-    test_module_printing_parameter()
+    # test_module_printing_parameter()
 
 
 if __name__ == '__main__':

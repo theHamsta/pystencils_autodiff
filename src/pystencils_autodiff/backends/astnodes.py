@@ -8,18 +8,15 @@
 
 """
 
+from collections.abc import Iterable
 from os.path import dirname, join
 
-import jinja2
-
 from pystencils.astnodes import (
-    DestructuringBindingsForFieldClass, FieldPointerSymbol, FieldShapeSymbol,
-    FieldStrideSymbol, Node)
-from pystencils.backends.cbackend import get_headers
-from pystencils.framework_intergration_astnodes import (
-    FrameworkIntegrationPrinter, WrapperFunction, generate_kernel_call)
+    DestructuringBindingsForFieldClass, FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol)
 from pystencils_autodiff._file_io import _read_template_from_file
 from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
+from pystencils_autodiff.framework_integration.astnodes import (
+    WrapperFunction, generate_kernel_call)
 
 # Torch
 
@@ -50,17 +47,34 @@ class TensorflowTensorDestructuring(DestructuringBindingsForFieldClass):
                ]
 
 
-class TorchCudaModule(JinjaCppFile):
-    TEMPLATE = _read_template_from_file(join(dirname(__file__), 'torch_native_cuda.tmpl.cu'))
+class PybindArrayDestructuring(DestructuringBindingsForFieldClass):
+    CLASS_TO_MEMBER_DICT = {
+        FieldPointerSymbol: "mutable_data()",
+        FieldShapeSymbol: "shape({dim})",
+        FieldStrideSymbol: "strides({dim})"
+    }
+
+    CLASS_NAME_TEMPLATE = "pybind11::array_t<{dtype}>"
+
+    headers = ["<pybind11/numpy.h>"]
+
+
+class TorchModule(JinjaCppFile):
+    TEMPLATE = _read_template_from_file(join(dirname(__file__), 'module.tmpl.cpp'))
     DESTRUCTURING_CLASS = TorchTensorDestructuring
 
-    def __init__(self, forward_kernel_ast, backward_kernel_ast):
+    def __init__(self, kernel_asts):
+        """Create a C++ module with forward and optional backward_kernels
+
+        :param forward_kernel_ast: one or more kernel ASTs (can have any C dialect)
+        :param backward_kernel_ast:
+        """
+        if not isinstance(kernel_asts, Iterable):
+            kernel_asts = [kernel_asts]
 
         ast_dict = {
-            'forward_kernel': forward_kernel_ast,
-            'backward_kernel': backward_kernel_ast,
-            'forward_wrapper': self.generate_wrapper_function(forward_kernel_ast),
-            'backward_wrapper': self.generate_wrapper_function(backward_kernel_ast),
+            'kernels': kernel_asts,
+            'kernel_wrappers': [self.generate_wrapper_function(k) for k in kernel_asts],
         }
 
         super().__init__(ast_dict)
@@ -70,9 +84,9 @@ class TorchCudaModule(JinjaCppFile):
                                function_name='call_' + kernel_ast.function_name)
 
 
-class TensorCudaModule(TorchCudaModule):
+class TensorflowModule(TorchModule):
     DESTRUCTURING_CLASS = TensorflowTensorDestructuring
 
 
-# Generic
-class MachineLearningBackend(FrameworkIntegrationPrinter):
+class PybindModule(TorchModule):
+    DESTRUCTURING_CLASS = PybindArrayDestructuring

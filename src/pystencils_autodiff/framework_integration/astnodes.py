@@ -9,6 +9,7 @@ Astnodes useful for the generations of C modules for frameworks (apart from waLB
 
 waLBerla currently uses `pystencils-walberla <https://pypi.org/project/pystencils-walberla/>`_.
 """
+from collections.abc import Iterable
 from typing import Any, List, Set
 
 import jinja2
@@ -19,6 +20,7 @@ import pystencils
 from pystencils.astnodes import Node, NodeOrExpr, ResolvedFieldAccess
 from pystencils.data_types import TypedSymbol
 from pystencils.kernelparameters import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
+from pystencils_autodiff.framework_integration.printer import FrameworkIntegrationPrinter
 
 
 class DestructuringBindingsForFieldClass(Node):
@@ -221,6 +223,7 @@ class JinjaCppFile(Node):
 
     def __init__(self, ast_dict):
         self.ast_dict = ast_dict
+        self.printer = FrameworkIntegrationPrinter()
         Node.__init__(self)
 
     @property
@@ -246,8 +249,9 @@ class JinjaCppFile(Node):
 
     def __str__(self):
         assert self.TEMPLATE, f"Template of {self.__class__} must be set"
-        render_dict = {k: self._print(v) for k, v in self.ast_dict.items()}
-        render_dict.update({"headers": pystencils.backend.cbackend.get_headers(self)})
+        render_dict = {k: self._print(v) if not isinstance(v, Iterable) else [self._print(a) for a in v]
+                       for k, v in self.ast_dict.items()}
+        render_dict.update({"headers": pystencils.backends.cbackend.get_headers(self)})
 
         return self.TEMPLATE.render(render_dict)
 
