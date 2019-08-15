@@ -1,5 +1,7 @@
 import sys
 
+import pystencils_autodiff._backport
+
 import pystencils_autodiff.backends  # NOQA
 from pystencils_autodiff._adjoint_field import AdjointField
 from pystencils_autodiff._autodiff import (

@@ -200,12 +200,15 @@ class WrapperFunction(pystencils.astnodes.KernelFunction):
 
 
 def generate_kernel_call(kernel_function):
-    from pystencils.interpolation_astnodes import TextureAccess
-    from pystencils.kernelparameters import FieldPointerSymbol
+    try:
+        from pystencils.interpolation_astnodes import TextureAccess
+        from pystencils.kernelparameters import FieldPointerSymbol
 
-    textures = {a.texture for a in kernel_function.atoms(TextureAccess)}
-    texture_uploads = [NativeTextureBinding(t, FieldPointerSymbol(
-        t.field.name, t.field.dtype, const=True)) for t in textures]
+        textures = {a.texture for a in kernel_function.atoms(TextureAccess)}
+        texture_uploads = [NativeTextureBinding(t, FieldPointerSymbol(
+            t.field.name, t.field.dtype, const=True)) for t in textures]
+    except ImportError:
+        texture_uploads = []
 
     if texture_uploads:
         block = pystencils.astnodes.Block([
