@@ -17,8 +17,14 @@ matrix:
   include:
     - python: 3.6
       env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="true" LINT="false"
-    - env: DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false" LINT="false"
-    - env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="false" LINT="true"
+      before_install:
+        - sudo apt-get install -y ninja-build build-essential nvidia-cuda-toolkit
+    - name: "Conda"
+      env: DISTRIB="conda" PYTHON_VERSION="3.6" COVERAGE="false" LINT="false"
+      before_install:
+        - sudo apt-get install -y ninja-build build-essential nvidia-cuda-toolkit
+    - name: "Documentation test"
+      env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="false" LINT="true"
 install:
   - source tests/travis_install.sh
 before_script:
