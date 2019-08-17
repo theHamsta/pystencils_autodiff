@@ -61,7 +61,7 @@ You can then obtain the corresponding backward assignments:
     from pystencils.autodiff import AutoDiffOp, create_backward_assignments
     backward_assignments = create_backward_assignments(forward_assignments)
 
-    # Sorting for reprudcible outputs
+    # Sorting for reproducible outputs
     backward_assignments.main_assignments = sorted(backward_assignments.main_assignments, key=lambda a: str(a))
 
     print(backward_assignments)
