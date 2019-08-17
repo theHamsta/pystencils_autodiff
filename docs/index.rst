@@ -38,7 +38,7 @@ Create a :class:`pystencils.AssignmentCollection` with pystencils:
     import sympy
     import pystencils
 
-    z, x, y = pystencils.fields("z, y, x: [20,30]")
+    z, y, x = pystencils.fields("z, y, x: [20,30]")
 
     forward_assignments = pystencils.AssignmentCollection({
         z[0, 0]: x[0, 0] * sympy.log(x[0, 0] * y[0, 0])
