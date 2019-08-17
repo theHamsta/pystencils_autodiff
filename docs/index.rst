@@ -52,7 +52,7 @@ Create a :class:`pystencils.AssignmentCollection` with pystencils:
 
     Subexpressions:
     Main Assignments:
-         z[0,0] ← y_C*log(x_C*y_C)
+         z[0,0] ← x_C*log(x_C*y_C)
    
 You can then obtain the corresponding backward assignments:
 
