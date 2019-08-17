@@ -78,8 +78,8 @@ You can see the derivatives with respective to the two inputs multiplied by the 
 
     Subexpressions:
     Main Assignments:
-        \hat{y}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
-        \hat{x}[0,0] ← diffz_C*y_C/x_C
+        \hat{x}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
+        \hat{y}[0,0] ← diffz_C*x_C/y_C
 
 You can also use the class `AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 
