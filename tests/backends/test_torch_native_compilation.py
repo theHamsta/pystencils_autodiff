@@ -194,12 +194,3 @@ def test_execute_torch_gpu():
     print(y_tensor)
     print(rtn)
 
-
-def main():
-    test_jit()
-    test_torch_native_compilation()
-    # test_generate_torch()
-    # test_execute_torch()
-
-
-main()

@@ -50,11 +50,3 @@ def test_simple_2d_check_raw_assignments():
         pystencils_autodiff.create_backward_assignments(
             forward_assignments, diff_mode=diff_mode)
 
-
-def main():
-    test_simple_2d_check_assignment_collection()
-    test_simple_2d_check_raw_assignments()
-
-
-if __name__ == '__main__':
-    main()

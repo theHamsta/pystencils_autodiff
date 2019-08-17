@@ -247,14 +247,3 @@ def test_tfmad_two_outputs():
     print(curl_op.backward_assignments)
 
 
-def main():
-    # test_tfmad_stencil()
-    # test_tfmad_two_stencils()
-    # test_tfmad_gradient_check_torch()
-    test_tfmad_gradient_check()
-    # test_tfmad_vector_input_data()
-    # test_tfmad_two_outputs()
-
-
-if __name__ == '__main__':
-    main()

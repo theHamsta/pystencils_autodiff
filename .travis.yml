@@ -14,9 +14,16 @@ addons:
     update: true
 matrix:
   fast_finish: true
+  allow_failures:
+    - name: "Pystencils from pip"
   include:
     - python: 3.6
       env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="true" LINT="false"
+      before_install:
+        - sudo apt-get install -y ninja-build build-essential nvidia-cuda-toolkit
+    - python: 3.6
+      name: "Pystencils from pip"
+      env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="true" LINT="false" PYSTENCIL_FROM_PIP="true"
       before_install:
         - sudo apt-get install -y ninja-build build-essential nvidia-cuda-toolkit
     - name: "Conda"
