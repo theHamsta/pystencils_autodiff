@@ -206,8 +206,8 @@ def generate_kernel_call(kernel_function):
         from pystencils.kernelparameters import FieldPointerSymbol
 
         textures = {a.texture for a in kernel_function.atoms(TextureAccess)}
-        texture_uploads = [NativeTextureBinding(t, FieldPointerSymbol(
-            t.field.name, t.field.dtype, const=True)) for t in textures]
+        texture_uploads = [NativeTextureBinding(t, FieldPointerSymbol(t.field.name, t.field.dtype, const=True))
+                           for t in textures]
     except ImportError:
         texture_uploads = []
 
