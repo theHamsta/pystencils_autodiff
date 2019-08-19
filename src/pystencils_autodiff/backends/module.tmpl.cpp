@@ -1,7 +1,3 @@
-#include <cuda.h>
-#include <vector>
-
-// Most compilers don't care whether it's __restrict or __restrict__
 #define RESTRICT __restrict__
 
 {% for header in headers -%}

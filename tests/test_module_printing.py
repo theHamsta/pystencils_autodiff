@@ -8,11 +8,12 @@
 
 """
 import pytest
-
 import sympy
+
 import pystencils
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff.backends.astnodes import PybindModule, TensorflowModule, TorchModule
+from pystencils_autodiff.backends.astnodes import (
+    PybindFunctionWrapping, PybindModule, PybindPythonBindings, TensorflowModule, TorchModule)
 
 try:
     from pystencils.interpolation_astnodes import TextureCachedField
@@ -22,6 +23,7 @@ except ImportError:
 
 
 def test_module_printing():
+    module_name = "my_module"
     for target in ('cpu', 'gpu'):
 
         z, y, x = pystencils.fields("z, y, x: [2d]")
@@ -36,20 +38,22 @@ def test_module_printing():
         forward_ast.function_name = 'forward'
         backward_ast = pystencils.create_kernel(backward_assignments, target)
         backward_ast.function_name = 'backward'
-        module = TorchModule([forward_ast, backward_ast])
+        module = TorchModule(module_name, [forward_ast, backward_ast])
         print(module)
 
-        module = TensorflowModule({forward_ast: backward_ast})
+        module = TensorflowModule(module_name, {forward_ast: backward_ast})
         print(module)
 
         if target == 'cpu':
-            module = PybindModule([forward_ast, backward_ast])
+            module = PybindModule(module_name, [forward_ast, backward_ast])
             print(module)
-            module = PybindModule(forward_ast)
+            module = PybindModule(module_name, forward_ast)
             print(module)
 
 
 def test_module_printing_parameter():
+    module_name = "Ololol"
+
     for target in ('cpu', 'gpu'):
 
         z, y, x = pystencils.fields("z, y, x: [20,40]")
@@ -65,16 +69,16 @@ def test_module_printing_parameter():
         forward_ast.function_name = 'forward'
         backward_ast = pystencils.create_kernel(backward_assignments, target)
         backward_ast.function_name = 'backward'
-        module = TorchModule([forward_ast, backward_ast])
+        module = TorchModule(module_name, [forward_ast, backward_ast])
         print(module)
 
-        module = TensorflowModule({forward_ast: backward_ast})
+        module = TensorflowModule(module_name, {forward_ast: backward_ast})
         print(module)
 
         if target == 'cpu':
-            module = PybindModule([forward_ast, backward_ast])
+            module = PybindModule(module_name, [forward_ast, backward_ast])
             print(module)
-            module = PybindModule(forward_ast)
+            module = PybindModule(module_name, forward_ast)
             print(module)
 
 
@@ -94,7 +98,7 @@ def test_module_printing_globals():
         forward_ast.function_name = 'forward'
         backward_ast = pystencils.create_kernel(backward_assignments, target)
         backward_ast.function_name = 'backward'
-        module = TorchModule([forward_ast, backward_ast])
+        module = TorchModule("hallo", [forward_ast, backward_ast])
         print(module)
 
 

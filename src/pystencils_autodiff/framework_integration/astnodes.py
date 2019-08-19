@@ -9,6 +9,7 @@ Astnodes useful for the generations of C modules for frameworks (apart from waLB
 
 waLBerla currently uses `pystencils-walberla <https://pypi.org/project/pystencils-walberla/>`_.
 """
+import itertools
 from collections.abc import Iterable
 from typing import Any, List, Set
 
@@ -232,7 +233,9 @@ class JinjaCppFile(Node):
     @property
     def args(self):
         """Returns all arguments/children of this node."""
-        return self.ast_dict.values()
+        ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, str))]
+        ast_nodes_iterables = [a for a in self.ast_dict.values() if not isinstance(a, (Node, str))]
+        return ast_nodes + list(itertools.chain.from_iterable(ast_nodes_iterables))
 
     @property
     def symbols_defined(self):
@@ -252,9 +255,12 @@ class JinjaCppFile(Node):
 
     def __str__(self):
         assert self.TEMPLATE, f"Template of {self.__class__} must be set"
-        render_dict = {k: self._print(v) if not isinstance(v, Iterable) else [self._print(a) for a in v]
+        render_dict = {k: self._print(v)
+                       if not isinstance(v, Iterable) or isinstance(v, str)
+                       else [self._print(a) for a in v]
                        for k, v in self.ast_dict.items()}
         render_dict.update({"headers": pystencils.backends.cbackend.get_headers(self)})
+        render_dict.update({"globals": pystencils.backends.cbackend.get_global_declarations(self)})
 
         return self.TEMPLATE.render(render_dict)
 
