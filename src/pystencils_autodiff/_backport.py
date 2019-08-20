@@ -8,16 +8,19 @@
 
 """
 
-from pystencils.astnodes import KernelFunction, ResolvedFieldAccess, SympyAssignment
+import itertools
+
+from pystencils.astnodes import KernelFunction, SympyAssignment
 
 
 def compatibility_hacks():
 
-    def fields_written(self):
-        assigments = self.atoms(SympyAssignment)
-        return {a.lhs.field for a in assigments if isinstance(a.lhs, ResolvedFieldAccess)}
+    def fields_read(self):
+        assignments = self.atoms(SympyAssignment)
+        return set().union(itertools.chain.from_iterable([f.field for f in a.rhs.free_symbols if hasattr(f, 'field')]
+                                                         for a in assignments))
 
-    KernelFunction.fields_written = property(fields_written)
+    KernelFunction.fields_read = property(fields_read)
 
 
 compatibility_hacks()
