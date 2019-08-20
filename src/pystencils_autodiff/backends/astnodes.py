@@ -96,12 +96,14 @@ class TensorflowModule(TorchModule):
     PYTHON_BINDINGS_CLASS = TensorflowPythonBindings
     PYTHON_FUNCTION_WRAPPING_CLASS = TensorflowFunctionWrapping
 
-    def __init__(self, module_name, kernel_asts):
+    def __init__(self, module_name, kernel_asts, use_cuda=False):
         """Create a C++ module with forward and optional backward_kernels
 
         :param forward_kernel_ast: one or more kernel ASTs (can have any C dialect)
         :param backward_kernel_ast:
         """
+        if use_cuda:
+            self.TEMPLATE = _read_template_from_file(join(dirname(__file__), 'tensorflow.cuda.tmpl.cu'))
 
         super().__init__(module_name, kernel_asts)
 

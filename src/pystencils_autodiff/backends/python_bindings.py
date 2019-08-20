@@ -12,9 +12,8 @@ import itertools
 import jinja2
 import stringcase
 
-import pystencils
-from pystencils.astnodes import KernelFunction
-from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile, KernelFunctionCall
+from pystencils.astnodes import KernelFunction, Node
+from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
 
 
 class PybindPythonBindings(JinjaCppFile):
@@ -90,9 +89,18 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         """  # noqa
     )
 
-    required_global_declarations = ["using namespace tensorflow;"]
-    headers = ['"tensorflow/core/framework/op.h"',
-               '"tensorflow/core/framework/op_kernel.h"']
+    _required_global_declarations = ["using namespace tensorflow;"]
+    _headers = ['"tensorflow/core/framework/op.h"',
+                '"tensorflow/core/framework/op_kernel.h"']
+
+    @property
+    def headers(self):
+        return self._headers  # + ['"tensorflow/core/util/gpu_kernel_helper.h"'] if self.is_cuda else self._headers
+
+    @property
+    def required_global_declarations(self):
+        return self._required_global_declarations  # + ['#define EIGEN_USE_GPU'] \
+        # if self.is_cuda else self._required_global_declarations
 
     def __init__(self, function_node: KernelFunction):
         input_fields = list(function_node.fields_read)
@@ -101,6 +109,8 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         output_field_names = [f.name for f in output_fields]
         parameters = function_node.get_parameters()
         output_shape = str(output_fields[0].shape).replace('(', '{').replace(')', '}')  # noqa,  TODO make work for flexible sizes
+
+        print([f for f in function_node.atoms(Node)])
 
         docstring = "TODO"  # TODO
 
@@ -112,6 +122,7 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         self.input_fields = input_fields
         self.output_fields = output_fields
         self.other_symbols = other_symbols
+        self.is_cuda = any(f.backend == 'gpucuda' for f in function_node.atoms(KernelFunction))
 
         render_dict = {'python_name': stringcase.pascalcase(function_node.function_name),  # tf wants PascalCase!
                        'cpp_name': function_node.function_name,
@@ -121,8 +132,7 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
                        'output_fields': output_fields,
                        'other_symbols': other_symbols,
                        'docstring': docstring,
-                       'device': 'DEVICE_GPU' if any(f.backend == 'gpucuda'
-                                                     for f in function_node.atoms(KernelFunction)) else 'DEVICE_CPU',
+                       'device': 'DEVICE_GPU' if self.is_cuda else 'DEVICE_CPU',
                        'constructor': '',
                        'output_shape': output_shape}
         # TODO dtype -> tf dtype mapping

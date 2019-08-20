@@ -8,10 +8,13 @@
 
 """
 
+import os
 import subprocess
 import tempfile
+from os.path import join
 from sysconfig import get_paths
 
+import pytest
 import sympy
 
 import pystencils
@@ -21,8 +24,25 @@ from pystencils_autodiff._file_io import _write_file
 from pystencils_autodiff.backends.astnodes import TensorflowModule
 
 
+def test_detect_cpu_vs_cpu():
+
+    for target in ('cpu', 'gpu'):
+
+        z, y, x = pystencils.fields("z, y, x: [20,40]")
+        a = sympy.Symbol('a')
+
+        assignments = pystencils.AssignmentCollection({
+            z[0, 0]: x[0, 0] * sympy.log(a * x[0, 0] * y[0, 0])
+        })
+        kernel_ast = pystencils.create_kernel(assignments, target=target)
+
+        module = TensorflowModule('my_module', [kernel_ast])
+        print(module)
+        assert 'DEVICE_' + target.upper() in str(module)
+
+
 def test_native_tensorflow_compilation_cpu():
-    import tensorflow as tf
+    tf = pytest.importorskip('tensorflow')
 
     extra_flags = ['-I' + get_paths()['include'], '-I' + get_pystencils_include_path()]
 
@@ -54,18 +74,18 @@ def test_native_tensorflow_compilation_cpu():
     _write_file(temp_file.name, str(module))
     _write_file('/tmp/foo.cpp', str(module))
 
-    command = ['c++', '-c', '-fPIC', temp_file.name] + compile_flags + link_flags + extra_flags
+    command = ['c++', '-fPIC', temp_file.name, '-O2', '-shared',
+               '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
     print(command)
     subprocess.check_call(command)
-    # _pyronn_layers_module = tf.load_op_library(os.path.dirname(__file__)+'/pyronn_layers.so')
-    # torch_extension = load(module_name, [temp_file.name])
-    # assert torch_extension is not None
-    # assert 'call_forward' in dir(torch_extension)
-    # assert 'call_backward' in dir(torch_extension)
+
+    lib = tf.load_op_library(join(os.getcwd(), 'foo.so'))
+    assert 'call_forward' in dir(lib)
+    assert 'call_backward' in dir(lib)
 
 
 def test_native_tensorflow_compilation_gpu():
-    import tensorflow as tf
+    tf = pytest.importorskip('tensorflow')
 
     extra_flags = ['-I' + get_paths()['include'], '-I' + get_pystencils_include_path()]
 
@@ -89,7 +109,7 @@ def test_native_tensorflow_compilation_gpu():
     forward_ast.function_name = 'forward'
     backward_ast = pystencils.create_kernel(backward_assignments, target)
     backward_ast.function_name = 'backward'
-    module = TensorflowModule(module_name, [forward_ast])
+    module = TensorflowModule(module_name, [forward_ast, backward_ast], use_cuda=True)
     print(module)
 
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
@@ -97,11 +117,32 @@ def test_native_tensorflow_compilation_gpu():
     _write_file(temp_file.name, str(module))
     _write_file('/tmp/foo.cpp', str(module))
 
-    command = ['nvcc', '--expt-relaxed-constexpr', '-DGOOGLE_CUDA=0', '-x', 'cu',
-               '-Xcompiler', '-fPIC', '-c', temp_file.name] + compile_flags + link_flags + extra_flags
+    command = ['nvcc',
+               temp_file.name,
+               '-lcudart',
+               '--expt-relaxed-constexpr',
+               '-ccbin',
+               'clang-7',
+               '-lcudart',
+               '-std=c++14',
+               '-x',
+               'cu',
+               '-Xcompiler',
+               '-fPIC',
+               '-c',
+               '-o',
+               'foo_gpu.o'] + link_flags + compile_flags + extra_flags
     print(command)
     subprocess.check_call(command)
 
+    # command = ['clang-7', '-shared', temp_file.name, '--cuda-path=/usr/include',  '-std=c++14',
+    # '-fPIC', '-lcudart', '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
+    command = ['clang-7', '-v', '-std=c++14', '-fPIC', '-lcudart', 'foo_gpu.o',
+               '-shared', '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
+    print(command)
+    subprocess.check_call(command)
+    lib = tf.load_op_library(join(os.getcwd(), 'foo.so'))
 
-def main():
-    test_native_tensorflow_compilation_gpu()
+    print(dir(lib))
+    assert 'call_forward' in dir(lib)
+    assert 'call_backward' in dir(lib)

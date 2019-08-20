@@ -185,10 +185,6 @@ class KernelFunctionCall(Node):
     def func(self):
         return self.__class__
 
-    def atoms(self, arg_type) -> Set[Any]:
-        """Returns a set of all descendants recursively, which are an instance of the given type."""
-        return self.kernel_function.body.atoms(arg_type)
-
     def __repr__(self):
         return f"call {self.kernel_function.function_name}{self.kernel_function.get_parameters()}"
 
@@ -217,7 +213,7 @@ def generate_kernel_call(kernel_function):
             KernelFunctionCall(kernel_function)
         ])
     else:
-        return KernelFunctionCall(kernel_function)
+        return pystencils.astnodes.Block([KernelFunctionCall(kernel_function)])
 
     return block
 

@@ -1,9 +1,8 @@
 #define RESTRICT __restrict__
 
-#if GOOGLE_CUDA
-#define EIGEN_USE_GPU
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
-#endif
+#define GOOGLE_CUDA 1
+
+#define EIGEN_USE_GPU 1
 
 {% for header in headers -%}
 #include {{ header }}
@@ -11,6 +10,7 @@
 {% for global in globals -%}
 {{ global }}
 {% endfor %}
+
 
 {% for kernel in kernels %}
 {{ kernel }}
