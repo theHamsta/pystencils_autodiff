@@ -10,10 +10,14 @@
 
 import itertools
 
-from pystencils.astnodes import KernelFunction, SympyAssignment
+from pystencils.astnodes import KernelFunction, ResolvedFieldAccess, SympyAssignment
 
 
 def compatibility_hacks():
+
+    def fields_written(self):
+        assignments = self.atoms(SympyAssignment)
+        return {a.lhs.field for a in assignments if isinstance(a.lhs, ResolvedFieldAccess)}
 
     def fields_read(self):
         assignments = self.atoms(SympyAssignment)
@@ -21,6 +25,7 @@ def compatibility_hacks():
                                                          for a in assignments))
 
     KernelFunction.fields_read = property(fields_read)
+    KernelFunction.fields_written = property(fields_written)
 
 
 compatibility_hacks()
