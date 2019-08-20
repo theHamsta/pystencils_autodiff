@@ -117,12 +117,13 @@ def test_native_tensorflow_compilation_gpu():
     _write_file(temp_file.name, str(module))
     _write_file('/tmp/foo.cpp', str(module))
 
+    # on my machine g++-6 and clang-7 are working
     command = ['nvcc',
                temp_file.name,
                '-lcudart',
                '--expt-relaxed-constexpr',
                '-ccbin',
-               'clang-7',
+               'g++-6',
                '-lcudart',
                '-std=c++14',
                '-x',
@@ -137,7 +138,7 @@ def test_native_tensorflow_compilation_gpu():
 
     # command = ['clang-7', '-shared', temp_file.name, '--cuda-path=/usr/include',  '-std=c++14',
     # '-fPIC', '-lcudart', '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
-    command = ['clang-7', '-v', '-std=c++14', '-fPIC', '-lcudart', 'foo_gpu.o',
+    command = ['c++', '-std=c++14', '-fPIC', '-lcudart', 'foo_gpu.o',
                '-shared', '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
     print(command)
     subprocess.check_call(command)
