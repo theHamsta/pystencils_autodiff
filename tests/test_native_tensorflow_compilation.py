@@ -109,7 +109,7 @@ def test_native_tensorflow_compilation_gpu():
     forward_ast.function_name = 'forward'
     backward_ast = pystencils.create_kernel(backward_assignments, target)
     backward_ast.function_name = 'backward'
-    module = TensorflowModule(module_name, [forward_ast, backward_ast], use_cuda=True)
+    module = TensorflowModule(module_name, [forward_ast, backward_ast])
     print(module)
 
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')

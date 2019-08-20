@@ -89,18 +89,9 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         """  # noqa
     )
 
-    _required_global_declarations = ["using namespace tensorflow;"]
-    _headers = ['"tensorflow/core/framework/op.h"',
-                '"tensorflow/core/framework/op_kernel.h"']
-
-    @property
-    def headers(self):
-        return self._headers  # + ['"tensorflow/core/util/gpu_kernel_helper.h"'] if self.is_cuda else self._headers
-
-    @property
-    def required_global_declarations(self):
-        return self._required_global_declarations  # + ['#define EIGEN_USE_GPU'] \
-        # if self.is_cuda else self._required_global_declarations
+    required_global_declarations = ["using namespace tensorflow;"]
+    headers = ['"tensorflow/core/framework/op.h"',
+               '"tensorflow/core/framework/op_kernel.h"']
 
     def __init__(self, function_node: KernelFunction):
         input_fields = list(function_node.fields_read)
