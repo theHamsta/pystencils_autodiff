@@ -12,8 +12,9 @@ import itertools
 import jinja2
 import stringcase
 
+import pystencils
 from pystencils.astnodes import KernelFunction
-from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
+from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile, KernelFunctionCall
 
 
 class PybindPythonBindings(JinjaCppFile):
@@ -74,14 +75,12 @@ R"doc(
 
 class {{ python_name }} : public OpKernel {
 public:
-{%- if constructor  %}
     explicit {{ python_name }}(OpKernelConstruction* context) : OpKernel(context)
     {
 {{ constructor | indent(8,true) }}
     }
-{%- endif %}
 
-    auto Compute(OpKernelContext* context) override -> void
+    void Compute(OpKernelContext* context) override
     {
 {{ compute_method | indent(8,true) }}
     }
@@ -122,18 +121,19 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
                        'output_fields': output_fields,
                        'other_symbols': other_symbols,
                        'docstring': docstring,
-                       'device': 'DEVICE_GPU' if function_node.backend == 'gpucuda' else 'DEVICE_CPU',
+                       'device': 'DEVICE_GPU' if any(f.backend == 'gpucuda'
+                                                     for f in function_node.atoms(KernelFunction)) else 'DEVICE_CPU',
                        'constructor': '',
                        'output_shape': output_shape}
         # TODO dtype -> tf dtype mapping
         compute_method = jinja2.Template(
             """
 {%- for f in input_fields -%}
-const Tensor* {{ f.name }} = &context->input({{ loop.index - 1 }});
+Tensor* {{ f.name }} = (Tensor*) &context->input({{ loop.index - 1 }});
 {% endfor -%}
 {%- for f in other_symbols -%}
-const {{ f.dtype }} _{{ f.name }} = context->input({{ loop.index - 1 + input_fields|length }}).template scalar<{{ f.dtype }}>();
-const {{ f.dtype }}* {{ f.name }} = &_{{ f.name }};
+auto _{{ f.name }} = context->input({{ loop.index - 1 + input_fields|length }}).template scalar<{{ f.dtype }}>();
+{{ f.dtype }}* {{ f.name }} = ({{ f.dtype }}*) &_{{ f.name }};
 {% endfor -%}
 {% for f in output_fields -%}
 Tensor* {{ f.name }} = nullptr;

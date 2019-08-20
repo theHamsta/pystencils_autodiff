@@ -55,7 +55,7 @@ class DestructuringBindingsForFieldClass(Node):
     @property
     def args(self) -> List[NodeOrExpr]:
         """Returns all arguments/children of this node."""
-        return set()
+        return [self.body]
 
     @property
     def symbols_defined(self) -> Set[sp.Symbol]:

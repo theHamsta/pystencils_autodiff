@@ -16,5 +16,7 @@
 {{ wrapper }}
 {% endfor %}
 
+#include <cuda.h>
+#define EIGEN_USE_GPU
+#include "tensorflow/core/util/gpu_kernel_helper.h"
 {{ python_bindings }}
-
