@@ -16,7 +16,7 @@ from pystencils_autodiff._file_io import _write_file
 from pystencils_autodiff.backends.astnodes import TorchModule
 
 
-def test_jit():
+def test_torch_jit():
     """
     Test JIT compilation from example on git@github.com:pytorch/extension-cpp.git
     `ninja-build` is required
