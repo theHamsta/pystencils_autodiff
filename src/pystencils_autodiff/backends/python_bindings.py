@@ -7,6 +7,8 @@
 """
 
 """
+import itertools
+
 import jinja2
 import stringcase
 
@@ -58,14 +60,11 @@ class TensorflowFunctionWrapping(JinjaCppFile):
     TEMPLATE = jinja2.Template(
         """
 REGISTER_OP("{{ python_name }}")
-    {% for f in input_fields -%}
+    {% for f in inputs -%}
     .Input("{{ f.name }}: {{ f.dtype }}")
     {% endfor -%}
     {% for f in output_fields -%}
     .Output("{{ f.name }}: {{ f.dtype }}")
-    {% endfor -%}
-    {% for s in other_symbols -%}
-    .Input("{{ s.name }}: {{ s.dtype }}")
     {% endfor -%}
     .Doc(
 R"doc(
@@ -75,14 +74,16 @@ R"doc(
 
 class {{ python_name }} : public OpKernel {
 public:
+{%- if constructor  %}
     explicit {{ python_name }}(OpKernelConstruction* context) : OpKernel(context)
     {
-         {{ constructor }}
+{{ constructor | indent(8,true) }}
     }
+{%- endif %}
 
     auto Compute(OpKernelContext* context) override -> void
     {
-        {{ compute_method }}
+{{ compute_method | indent(8,true) }}
     }
 };
 
@@ -100,6 +101,7 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         input_field_names = [f.name for f in input_fields]
         output_field_names = [f.name for f in output_fields]
         parameters = function_node.get_parameters()
+        output_shape = str(output_fields[0].shape).replace('(', '{').replace(')', '}')  # noqa,  TODO make work for flexible sizes
 
         docstring = "TODO"  # TODO
 
@@ -108,18 +110,48 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
                          for p in parameters
                          if (p.symbol.name not in input_field_names and
                              p.symbol.name not in output_field_names)]
+        self.input_fields = input_fields
+        self.output_fields = output_fields
+        self.other_symbols = other_symbols
 
+        render_dict = {'python_name': stringcase.pascalcase(function_node.function_name),  # tf wants PascalCase!
+                       'cpp_name': function_node.function_name,
+                       'parameters': [p.symbol.name for p in parameters],
+                       'input_fields': input_fields,
+                       'inputs': self.inputs,
+                       'output_fields': output_fields,
+                       'other_symbols': other_symbols,
+                       'docstring': docstring,
+                       'device': 'DEVICE_GPU' if function_node.backend == 'gpucuda' else 'DEVICE_CPU',
+                       'constructor': '',
+                       'output_shape': output_shape}
         # TODO dtype -> tf dtype mapping
+        compute_method = jinja2.Template(
+            """
+{%- for f in input_fields -%}
+const Tensor* {{ f.name }} = &context->input({{ loop.index - 1 }});
+{% endfor -%}
+{%- for f in other_symbols -%}
+const {{ f.dtype }} _{{ f.name }} = context->input({{ loop.index - 1 + input_fields|length }}).template scalar<{{ f.dtype }}>();
+const {{ f.dtype }}* {{ f.name }} = &_{{ f.name }};
+{% endfor -%}
+{% for f in output_fields -%}
+Tensor* {{ f.name }} = nullptr;
+OP_REQUIRES_OK(context,
+               context->allocate_output({{ loop.index - 1 }}, {{ output_shape }}, &{{ f.name }}));
+{% endfor %}
+{{ cpp_name }}(
+{%- for p in parameters %}
+    *{{ p }}{{- ", " if not loop.last -}}
+{% endfor %}
+);
+""").render(render_dict)  # noqa
 
-        super().__init__({'python_name': stringcase.pascalcase(function_node.function_name),  # tf wants PascalCase!
-                          'cpp_name': function_node.function_name,
-                          'parameters': [p.symbol.name for p in parameters],
-                          'input_fields': input_fields,
-                          'output_fields': output_fields,
-                          'other_symbols': other_symbols,
-                          'docstring': docstring,
-                          'device': 'DEVICE_GPU' if function_node.backend == 'gpucuda' else 'DEVICE_CPU',
-                          })
+        super().__init__({**render_dict, 'compute_method': compute_method})
+
+    @property
+    def inputs(self):
+        return list(itertools.chain(self.input_fields, self.other_symbols))
 
 
 class PybindFunctionWrapping(JinjaCppFile):
