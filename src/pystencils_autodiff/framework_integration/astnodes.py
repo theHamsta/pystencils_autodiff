@@ -255,9 +255,9 @@ class JinjaCppFile(Node):
 
     def __str__(self):
         assert self.TEMPLATE, f"Template of {self.__class__} must be set"
-        render_dict = {k: self._print(v)
+        render_dict = {k: (self._print(v) if not isinstance(v, (pystencils.Field, pystencils.TypedSymbol)) else v)
                        if not isinstance(v, Iterable) or isinstance(v, str)
-                       else [self._print(a) for a in v]
+                       else [(self._print(a) if not isinstance(a, (pystencils.Field, pystencils.TypedSymbol)) else a) for a in v]
                        for k, v in self.ast_dict.items()}
         render_dict.update({"headers": pystencils.backends.cbackend.get_headers(self)})
         render_dict.update({"globals": pystencils.backends.cbackend.get_global_declarations(self)})
