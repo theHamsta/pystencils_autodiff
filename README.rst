@@ -15,7 +15,7 @@
 pystencils_autodiff
 ===================
 
-This repo adds automatic differentiation to `pystencils <https://i10git.cs.fau.de/seitz/pystencils>`_.
+This repo adds automatic differentiation to `pystencils <https://i10git.cs.fau.de/pycodegen/pystencils>`_.
 
 Installation
 ------------
@@ -26,7 +26,7 @@ Install via pip:
 
    pip install pystencils-autodiff
 
-or if you downloaded this `repository <https://github.com/theHamsta/pystencils_autodiff>`_ using:
+or if you downloaded this `repository <https://github.com/pycodegen/pystencils_autodiff>`_ using:
 
 .. code-block:: bash
 
