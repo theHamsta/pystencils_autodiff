@@ -50,3 +50,4 @@ MANIFEST
 .ninja_deps
 .ninja_log
 build.ninja
+test-report
