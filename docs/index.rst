@@ -4,7 +4,7 @@ pystencils-autodiff
 
 This is the documentation of **pystencils-autodiff**.
 
-This document assumes that you are already familiar with `pystencils <https://i10git.cs.fau.de/seitz/pystencils>`_.
+This document assumes that you are already familiar with `pystencils <https://i10git.cs.fau.de/pycodegen/pystencils>`_.
 If not, here is a good `tutorial to start <http://pycodegen.pages.walberla.net/pystencils/notebooks/01_tutorial_getting_started.html>`_.
 
 Installation of this Auto-Diff Extension
