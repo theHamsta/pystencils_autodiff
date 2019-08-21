@@ -16,6 +16,7 @@ from pystencils_autodiff._file_io import _write_file
 from pystencils_autodiff.backends.astnodes import TorchModule
 
 
+@pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
 def test_torch_jit():
     """
     Test JIT compilation from example on git@github.com:pytorch/extension-cpp.git
@@ -66,6 +67,7 @@ def test_torch_native_compilation_cpu():
     assert 'call_backward' in dir(torch_extension)
 
 
+@pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
 def test_torch_native_compilation_gpu():
     from torch.utils.cpp_extension import load
 
