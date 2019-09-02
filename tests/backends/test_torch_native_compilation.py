@@ -4,6 +4,7 @@
 #
 
 import os
+import subprocess
 from os.path import dirname, isfile, join
 
 # TODO: from pystencils.backends.cudabackend import generate_cuda
@@ -11,7 +12,6 @@ import appdirs
 import jinja2
 import numpy as np
 import pytest
-import torch
 
 import pystencils
 import pystencils_autodiff
@@ -19,6 +19,10 @@ import pystencils_autodiff
 from pystencils.backends.cbackend import generate_c
 from pystencils.gpucuda.kernelcreation import create_cuda_kernel
 from pystencils_autodiff.backends._torch_native import create_autograd_function, generate_torch
+
+torch = pytest.importorskip('torch')
+pytestmark = pytest.mark.skipif(subprocess.call(['ninja', '--v']) != 0,
+                                reason='torch compilation requires ninja')
 
 PROJECT_ROOT = dirname
 
@@ -50,23 +54,26 @@ def test_jit():
 def test_torch_native_compilation():
     x, y = pystencils.fields('x, y: float32[2d]')
 
-    assignments = pystencils.AssignmentCollection({
-        y.center(): x.center()**2
-    }, {})
+    assignments = pystencils.AssignmentCollection({y.center(): x.center()**2},
+                                                  {})
     autodiff = pystencils_autodiff.AutoDiffOp(assignments)
     backward_assignments = autodiff.backward_assignments
 
     print(assignments)
     print(backward_assignments)
 
-    template_string = read_file(join(dirname(__file__),
-                                     '../../src/pystencils_autodiff/backends/torch_native_cuda.tmpl.cpp'))
+    template_string = read_file(
+        join(
+            dirname(__file__),
+            '../../src/pystencils_autodiff/backends/torch_native_cuda.tmpl.cpp'
+        ))
     template = jinja2.Template(template_string)
 
     print(template_string)
 
     forward_kernel = create_cuda_kernel(assignments.all_assignments).body
-    backward_kernel = create_cuda_kernel(backward_assignments.all_assignments).body
+    backward_kernel = create_cuda_kernel(
+        backward_assignments.all_assignments).body
 
     forward_code = generate_c(forward_kernel)
     backward_code = generate_c(backward_kernel)
@@ -74,20 +81,31 @@ def test_torch_native_compilation():
     output = template.render(
         forward_tensors=[f.name for f in autodiff.forward_fields],
         forward_input_tensors=[f.name for f in autodiff.forward_input_fields],
-        forward_output_tensors=[f.name for f in autodiff.forward_output_fields],
-        backward_tensors=[f.name for f in autodiff.backward_fields + autodiff.forward_input_fields],
-        backward_input_tensors=[f.name for f in autodiff.backward_input_fields],
-        backward_output_tensors=[f.name for f in autodiff.backward_output_fields],
+        forward_output_tensors=[
+            f.name for f in autodiff.forward_output_fields
+        ],
+        backward_tensors=[
+            f.name
+            for f in autodiff.backward_fields + autodiff.forward_input_fields
+        ],
+        backward_input_tensors=[
+            f.name for f in autodiff.backward_input_fields
+        ],
+        backward_output_tensors=[
+            f.name for f in autodiff.backward_output_fields
+        ],
         forward_kernel=forward_code,
         backward_kernel=backward_code,
         dimensions=range(2),
         kernel_name="square",
-        dtype="float"
-    )
+        dtype="float")
     print(output)
 
-    template_string = read_file(join(dirname(__file__),
-                                     '../../src/pystencils_autodiff/backends/torch_native_cuda.tmpl.cu'))
+    template_string = read_file(
+        join(
+            dirname(__file__),
+            '../../src/pystencils_autodiff/backends/torch_native_cuda.tmpl.cu')
+    )
     template = jinja2.Template(template_string)
 
     print(template_string)
@@ -96,7 +114,9 @@ def test_torch_native_compilation():
         forward_tensors=[f for f in autodiff.forward_fields],
         forward_input_tensors=[f for f in autodiff.forward_input_fields],
         forward_output_tensors=[f for f in autodiff.forward_output_fields],
-        backward_tensors=[f for f in autodiff.backward_fields + autodiff.forward_input_fields],
+        backward_tensors=[
+            f for f in autodiff.backward_fields + autodiff.forward_input_fields
+        ],
         backward_input_tensors=[f for f in autodiff.backward_input_fields],
         backward_output_tensors=[f for f in autodiff.backward_output_fields],
         forward_kernel=forward_code,
@@ -106,12 +126,14 @@ def test_torch_native_compilation():
         forward_blocks=str({1, 1, 1}),
         forward_threads=str({1, 1, 1}),
         kernel_name="square",
-        dimensions=range(2)
-    )
+        dimensions=range(2))
     print(output)
 
-    template_string = read_file(join(dirname(__file__),
-                                     '../../src/pystencils_autodiff/backends/torch_native_cpu.tmpl.cpp'))
+    template_string = read_file(
+        join(
+            dirname(__file__),
+            '../../src/pystencils_autodiff/backends/torch_native_cpu.tmpl.cpp')
+    )
     template = jinja2.Template(template_string)
 
     print(template_string)
@@ -119,16 +141,24 @@ def test_torch_native_compilation():
     output = template.render(
         forward_tensors=[f.name for f in autodiff.forward_fields],
         forward_input_tensors=[f.name for f in autodiff.forward_input_fields],
-        forward_output_tensors=[f.name for f in autodiff.forward_output_fields],
-        backward_tensors=[f.name for f in autodiff.backward_fields + autodiff.forward_input_fields],
-        backward_input_tensors=[f.name for f in autodiff.backward_input_fields],
-        backward_output_tensors=[f.name for f in autodiff.backward_output_fields],
+        forward_output_tensors=[
+            f.name for f in autodiff.forward_output_fields
+        ],
+        backward_tensors=[
+            f.name
+            for f in autodiff.backward_fields + autodiff.forward_input_fields
+        ],
+        backward_input_tensors=[
+            f.name for f in autodiff.backward_input_fields
+        ],
+        backward_output_tensors=[
+            f.name for f in autodiff.backward_output_fields
+        ],
         forward_kernel=forward_code,
         backward_kernel=backward_code,
         kernel_name="square",
         dtype="float",
-        dimensions=range(2)
-    )
+        dimensions=range(2))
     print(output)
 
 
@@ -136,33 +166,36 @@ def test_torch_native_compilation():
 def test_generate_torch_gpu():
     x, y = pystencils.fields('x, y: float32[2d]')
 
-    assignments = pystencils.AssignmentCollection({
-        y.center(): x.center()**2
-    }, {})
+    assignments = pystencils.AssignmentCollection({y.center(): x.center()**2},
+                                                  {})
     autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
-    op_cuda = generate_torch(appdirs.user_cache_dir('pystencils'), autodiff, is_cuda=True, dtype=np.float32)
+    op_cuda = generate_torch(appdirs.user_cache_dir('pystencils'),
+                             autodiff,
+                             is_cuda=True,
+                             dtype=np.float32)
     assert op_cuda is not None
 
 
 def test_generate_torch_cpu():
     x, y = pystencils.fields('x, y: float32[2d]')
 
-    assignments = pystencils.AssignmentCollection({
-        y.center(): x.center()**2
-    }, {})
+    assignments = pystencils.AssignmentCollection({y.center(): x.center()**2},
+                                                  {})
     autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
-    op_cpp = generate_torch(appdirs.user_cache_dir('pystencils'), autodiff, is_cuda=False, dtype=np.float32)
+    op_cpp = generate_torch(appdirs.user_cache_dir('pystencils'),
+                            autodiff,
+                            is_cuda=False,
+                            dtype=np.float32)
     assert op_cpp is not None
 
 
 def test_execute_torch():
     x, y = pystencils.fields('x, y: float64[32,32]')
 
-    assignments = pystencils.AssignmentCollection({
-        y.center(): 5 + x.center()
-    }, {})
+    assignments = pystencils.AssignmentCollection({y.center(): 5 + x.center()},
+                                                  {})
     autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
     x_tensor = pystencils_autodiff.torch_tensor_from_field(x, 1, cuda=False)
@@ -174,13 +207,13 @@ def test_execute_torch():
     assert op_cpp is not None
 
 
-@pytest.mark.skipif('NO_GPU_EXECUTION' in os.environ, reason='Skip GPU execution tests')
+@pytest.mark.skipif('NO_GPU_EXECUTION' in os.environ,
+                    reason='Skip GPU execution tests')
 def test_execute_torch_gpu():
     x, y = pystencils.fields('x, y: float64[32,32]')
 
-    assignments = pystencils.AssignmentCollection({
-        y.center(): 5 + x.center()
-    }, {})
+    assignments = pystencils.AssignmentCollection({y.center(): 5 + x.center()},
+                                                  {})
     autodiff = pystencils_autodiff.AutoDiffOp(assignments)
 
     x_tensor = pystencils_autodiff.torch_tensor_from_field(x, 3, cuda=True)
@@ -193,4 +226,3 @@ def test_execute_torch_gpu():
     rtn = op_cuda.forward()
     print(y_tensor)
     print(rtn)
-

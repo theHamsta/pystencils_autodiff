@@ -4,7 +4,6 @@ from itertools import chain
 from os.path import dirname, isdir, isfile, join
 
 import jinja2
-import torch
 from appdirs import user_cache_dir
 
 import pystencils
@@ -16,6 +15,11 @@ from pystencils.backends.cuda_backend import CudaSympyPrinter, generate_cuda
 from pystencils.cpu.kernelcreation import create_kernel
 from pystencils.gpucuda.kernelcreation import create_cuda_kernel
 from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
+
+try:
+    import torch
+except ImportError:
+    pass
 
 
 def _read_file(file):
