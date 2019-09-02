@@ -14,8 +14,6 @@ addons:
     update: true
 matrix:
   fast_finish: true
-  allow_failures:
-    - name: "Pystencils from pip"
   include:
     - python: 3.6
       env: DISTRIB="ubuntu" TOX_PYTHON_VERSION="py36" COVERAGE="true" LINT="false"
