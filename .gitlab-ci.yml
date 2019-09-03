@@ -20,43 +20,43 @@ windows:
       - test-report
       - htmlcov
 
-ubuntu:
-  stage: test
-  except:
-    variables:
-      - $ENABLE_NIGHTLY_BUILDS
-  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_ubuntu
-  script:
-    - apt install -y ninja-build
-    - python3 -m pip install -e .
-    - python3 setup.py test
-  tags:
-    - docker
-    - cuda
-  artifacts:
-    when: always
-    paths:
-      - test-report
-      - htmlcov
+#ubuntu:
+  #stage: test
+  #except:
+    #variables:
+      #- $ENABLE_NIGHTLY_BUILDS
+  #image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_ubuntu
+  #script:
+    #- apt install -y ninja-build
+    #- python3 -m pip install -e .
+    #- python3 setup.py test
+  #tags:
+    #- docker
+    #- cuda
+  #artifacts:
+    #when: always
+    #paths:
+      #- test-report
+      #- htmlcov
 
-conda:
-  stage: test
-  except:
-    variables:
-      - $ENABLE_NIGHTLY_BUILDS
-  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
-  script:
-    - apt install -y ninja-build
-    - conda install pip
-    - pip install -e .
-    - python setup.py test
-  tags:
-    - docker
-  artifacts:
-    when: always
-    paths:
-      - test-report
-      - htmlcov
+#conda:
+  #stage: test
+  #except:
+    #variables:
+      #- $ENABLE_NIGHTLY_BUILDS
+  #image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
+  #script:
+    #- apt install -y ninja-build
+    #- conda install pip
+    #- pip install -e .
+    #- python setup.py test
+  #tags:
+    #- docker
+  #artifacts:
+    #when: always
+    #paths:
+      #- test-report
+      #- htmlcov
 
 full:
   stage: test
