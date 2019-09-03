@@ -1,5 +1,5 @@
 # Minimal tests in windows environment
-minimal-windows:
+windows:
   stage: test
   except:
     variables:
@@ -14,8 +14,11 @@ minimal-windows:
     - python -c "import numpy"
     - python -m pip install -e .
     - python setup.py test
+  artifacts:
+    paths:
+      - test-report
 
-minimal-ubuntu:
+ubuntu:
   stage: test
   except:
     variables:
@@ -26,8 +29,12 @@ minimal-ubuntu:
     - python3 setup.py test
   tags:
     - docker
+    - cuda
+  artifacts:
+    paths:
+      - test-report
 
-minimal-conda:
+conda:
   stage: test
   except:
     variables:
@@ -39,6 +46,9 @@ minimal-conda:
     - python setup.py test
   tags:
     - docker
+  artifacts:
+    paths:
+      - test-report
 
 
 # -------------------- Linter & Documentation --------------------------------------------------------------------------
