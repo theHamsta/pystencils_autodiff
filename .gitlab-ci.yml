@@ -63,7 +63,7 @@ full:
       - $ENABLE_NIGHTLY_BUILDS
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/full
   script:
-    - apt install ninja-build
+    - apt install -y ninja-build
     - python -m pip install -e .
     - python setup.py test
     - python setup.py doctest
