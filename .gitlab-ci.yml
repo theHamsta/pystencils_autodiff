@@ -67,4 +67,4 @@ build-documentation:
     - cuda
   artifacts:
     paths:
-      - html_doc
+      - build/sphinx/html
