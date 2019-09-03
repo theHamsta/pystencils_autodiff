@@ -6,6 +6,10 @@
     :target: https://pystencils-autodiff.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status===================
 
+.. image:: https://i10git.cs.fau.de/pycodegen/pystencils_autodiff/badges/master/pipeline.svg 
+    :target: https://i10git.cs.fau.de/pycodegen/pystencils_autodiff
+    :alt: Gitlab 
+
 .. image:: https://travis-ci.org/theHamsta/pystencils_autodiff.svg?branch=master
     :target: https://travis-ci.org/theHamsta/pystencils_autodiff
 
