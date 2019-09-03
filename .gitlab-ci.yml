@@ -15,8 +15,10 @@ windows:
     - python -m pip install -e .
     - python setup.py test
   artifacts:
+    when: always
     paths:
       - test-report
+      - htmlcov
 
 ubuntu:
   stage: test
@@ -27,11 +29,11 @@ ubuntu:
   script:
     - python3 -m pip install -e .
     - python3 setup.py test
-    - python3 setup.py doctest
   tags:
     - docker
     - cuda
   artifacts:
+    when: always
     paths:
       - test-report
       - htmlcov
@@ -49,9 +51,29 @@ conda:
   tags:
     - docker
   artifacts:
+    when: always
     paths:
       - test-report
       - htmlcov
+
+full:
+  stage: test
+  except:
+    variables:
+      - $ENABLE_NIGHTLY_BUILDS
+  image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
+  script:
+    - python -m pip install -e .
+    - python setup.py test
+    - python setup.py doctest
+  tags:
+    - docker
+  artifacts:
+    when: always
+    paths:
+      - test-report
+      - htmlcov
+
 # -------------------- Linter & Documentation --------------------------------------------------------------------------
 
 
