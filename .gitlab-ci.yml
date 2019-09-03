@@ -12,9 +12,8 @@ minimal-windows:
     - env
     - conda env list
     - python -c "import numpy"
-    - conda install pip
-    - pip install -e .
-    - python3 setup.py test
+    - python -m pip install -e .
+    - python setup.py test
 
 minimal-ubuntu:
   stage: test
@@ -23,7 +22,7 @@ minimal-ubuntu:
       - $ENABLE_NIGHTLY_BUILDS
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_ubuntu
   script:
-    - pip install -e .
+    - python3 -m pip install -e .
     - python3 setup.py test
   tags:
     - docker
@@ -36,8 +35,8 @@ minimal-conda:
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
   script:
     - conda install pip
-    - pip install -e .
-    - python3 setup.py test
+    - pip -m install -e .
+    - python setup.py test
   tags:
     - docker
 
@@ -55,15 +54,13 @@ flake8-lint:
     - flake8 src
   tags:
     - docker
-    - cuda
 
 
 build-documentation:
   stage: test
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/full
   script:
-    - conda install pip
-    - pip install -e .
+    - python -m pip install -e .
     - export PYTHONPATH=`pwd`
     - mkdir html_doc
     - sphinx-build -W -b html doc  html_doc
