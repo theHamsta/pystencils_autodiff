@@ -35,7 +35,7 @@ minimal-conda:
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/minimal_conda
   script:
     - conda install pip
-    - pip -m install -e .
+    - pip install -e .
     - python setup.py test
   tags:
     - docker
