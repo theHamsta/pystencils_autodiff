@@ -61,9 +61,7 @@ build-documentation:
   image: i10git.cs.fau.de:5005/pycodegen/pycodegen/full
   script:
     - python -m pip install -e .
-    - export PYTHONPATH=`pwd`
-    - mkdir html_doc
-    - sphinx-build -W -b html doc  html_doc
+    - python setup.py docs
   tags:
     - docker
     - cuda
