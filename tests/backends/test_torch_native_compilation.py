@@ -9,6 +9,7 @@ from os.path import dirname, isfile, join
 
 import pytest
 import sympy
+import tempfile
 
 import pystencils
 from pystencils_autodiff import create_backward_assignments
