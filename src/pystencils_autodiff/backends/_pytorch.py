@@ -1,7 +1,10 @@
 import uuid
 
 import numpy as np
-import torch
+try:
+    import torch
+except ImportError:
+    pass
 
 try:
     import pycuda.autoinit
