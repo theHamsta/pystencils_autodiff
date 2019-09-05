@@ -19,7 +19,7 @@
 pystencils_autodiff
 ===================
 
-This repo adds automatic differentiation to `pystencils <https://i10git.cs.fau.de/seitz/pystencils>`_.
+This repo adds automatic differentiation to `pystencils <https://i10git.cs.fau.de/pycodegen/pystencils>`_.
 
 Installation
 ------------
@@ -30,7 +30,7 @@ Install via pip:
 
    pip install pystencils-autodiff
 
-or if you downloaded this `repository <https://github.com/theHamsta/pystencils_autodiff>`_ using:
+or if you downloaded this `repository <https://github.com/pycodegen/pystencils_autodiff>`_ using:
 
 .. code-block:: bash
 
@@ -52,7 +52,7 @@ Create a `pystencils.AssignmentCollection` with pystencils:
     import sympy
     import pystencils
 
-    z, x, y = pystencils.fields("z, y, x: [20,30]")
+    z, y, x = pystencils.fields("z, y, x: [20,30]")
 
     forward_assignments = pystencils.AssignmentCollection({
         z[0, 0]: x[0, 0] * sympy.log(x[0, 0] * y[0, 0])
@@ -65,7 +65,7 @@ Create a `pystencils.AssignmentCollection` with pystencils:
 
     Subexpressions:
     Main Assignments:
-         z[0,0] ← y_C*log(x_C*y_C)
+         z[0,0] ← x_C*log(x_C*y_C)
    
 You can then obtain the corresponding backward assignments:
 
@@ -82,8 +82,8 @@ You can see the derivatives with respective to the two inputs multiplied by the 
 
     Subexpressions:
     Main Assignments:
-        \hat{y}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
-        \hat{x}[0,0] ← diffz_C*y_C/x_C
+        \hat{x}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
+        \hat{y}[0,0] ← diffz_C*x_C/y_C
 
 You can also use the class `AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 

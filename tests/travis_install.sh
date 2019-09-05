@@ -38,19 +38,25 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # (prefer local venv, since the miniconda folder is cached)
     conda create -p ./.venv --yes python=${PYTHON_VERSION} pip virtualenv
     source activate ./.venv
+    alias pip3='python -m pip'
+    shopt -s expand_aliases
 fi
 
 # for all
-pip install -U pip setuptools
-pip install tox
-pip install codecov
-pip install sphinx
-# use newest pystencils
-pip install git+https://github.com/mabau/pystencils.git
+pip3 install -U pip wheel setuptools
+pip3 install tox
+pip3 install codecov
+pip3 install sphinx
+
+if [[ -z "$PYSTENCIL_FROM_PIP" ]]; then
+    pip install git+https://github.com/mabau/pystencils.git
+else
+    pip install pystencils
+fi
 pip install flake8
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install -U pytest-cov pytest-virtualenv coverage coveralls flake8
+    pip3 install -U pytest-cov pytest-virtualenv coverage coveralls flake8
 fi
 
 

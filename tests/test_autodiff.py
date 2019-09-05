@@ -48,12 +48,3 @@ def test_simple_2d_check_raw_assignments():
     for diff_mode in DiffModes:
         pystencils_autodiff.create_backward_assignments(
             forward_assignments, diff_mode=diff_mode)
-
-
-def main():
-    test_simple_2d_check_assignment_collection()
-    test_simple_2d_check_raw_assignments()
-
-
-if __name__ == '__main__':
-    main()

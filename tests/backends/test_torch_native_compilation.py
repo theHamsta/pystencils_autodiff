@@ -4,7 +4,7 @@
 #
 
 import os
-import tempfile
+import subprocess
 from os.path import dirname, isfile, join
 
 import pytest
@@ -15,6 +15,11 @@ from pystencils_autodiff import create_backward_assignments
 from pystencils_autodiff._file_io import _write_file
 from pystencils_autodiff.backends.astnodes import TorchModule
 
+torch = pytest.importorskip('torch')
+pytestmark = pytest.mark.skipif(subprocess.call(['ninja', '--v']) != 0,
+                                reason='torch compilation requires ninja')
+
+PROJECT_ROOT = dirname
 
 @pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
 def test_torch_jit():
