@@ -116,7 +116,6 @@ def test_native_tensorflow_compilation_gpu():
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
     print(temp_file.name)
     _write_file(temp_file.name, str(module))
-    _write_file('/tmp/foo.cpp', str(module))
 
     # on my machine g++-6 and clang-7 are working
     command = ['nvcc',
