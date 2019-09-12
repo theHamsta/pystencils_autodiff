@@ -108,9 +108,9 @@ def test_native_tensorflow_compilation_gpu():
     backward_assignments = create_backward_assignments(forward_assignments)
 
     forward_ast = pystencils.create_kernel(forward_assignments, target)
-    forward_ast.function_name = 'forward'
+    forward_ast.function_name = 'forward2'
     backward_ast = pystencils.create_kernel(backward_assignments, target)
-    backward_ast.function_name = 'backward'
+    backward_ast.function_name = 'backward2'
     module = TensorflowModule(module_name, [forward_ast, backward_ast])
     print(str(module))
 
@@ -144,10 +144,10 @@ def test_native_tensorflow_compilation_gpu():
     # command = ['clang-7', '-shared', temp_file.name, '--cuda-path=/usr/include',  '-std=c++14',
     # '-fPIC', '-lcudart', '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
     command = ['c++', '-fPIC', '-lcudart', 'foo_gpu.o',
-               '-shared', '-o', 'foo.so'] + link_flags
+               '-shared', '-o', 'foo_gpu.so'] + link_flags
 
     subprocess.check_call(command)
-    lib = tf.load_op_library(join(os.getcwd(), 'foo.so'))
+    lib = tf.load_op_library(join(os.getcwd(), 'foo_gpu.so'))
 
-    assert 'call_forward' in dir(lib)
-    assert 'call_backward' in dir(lib)
+    assert 'call_forward2' in dir(lib)
+    assert 'call_backward2' in dir(lib)
