@@ -13,7 +13,7 @@ import tempfile
 
 import pystencils
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import _write_file
+from pystencils_autodiff._file_io import write_file
 from pystencils_autodiff.backends.astnodes import TorchModule
 
 torch = pytest.importorskip('torch')
@@ -66,7 +66,7 @@ def test_torch_native_compilation_cpu():
 
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
     print(temp_file.name)
-    _write_file(temp_file.name, str(module))
+    write_file(temp_file.name, str(module))
     torch_extension = load(module_name, [temp_file.name])
     assert torch_extension is not None
     assert 'call_forward' in dir(torch_extension)
@@ -99,7 +99,7 @@ def test_torch_native_compilation_gpu():
 
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
     print(temp_file.name)
-    _write_file(temp_file.name, str(module))
+    write_file(temp_file.name, str(module))
     torch_extension = load(module_name, [temp_file.name])
     assert torch_extension is not None
     assert 'call_forward' in dir(torch_extension)

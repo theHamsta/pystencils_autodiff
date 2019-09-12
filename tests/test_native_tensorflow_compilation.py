@@ -20,7 +20,7 @@ import sympy
 import pystencils
 from pystencils.include import get_pystencils_include_path
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import _write_file
+from pystencils_autodiff._file_io import write_file
 from pystencils_autodiff.backends.astnodes import TensorflowModule
 
 
@@ -71,8 +71,8 @@ def test_native_tensorflow_compilation_cpu():
 
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
     print(temp_file.name)
-    _write_file(temp_file.name, str(module))
-    _write_file('/tmp/foo.cpp', str(module))
+    write_file(temp_file.name, str(module))
+    write_file('/tmp/foo.cpp', str(module))
 
     command = ['c++', '-fPIC', temp_file.name, '-O2', '-shared',
                '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
@@ -115,7 +115,7 @@ def test_native_tensorflow_compilation_gpu():
 
     temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
     print(temp_file.name)
-    _write_file(temp_file.name, str(module))
+    write_file(temp_file.name, str(module))
 
     # on my machine g++-6 and clang-7 are working
     command = ['nvcc',

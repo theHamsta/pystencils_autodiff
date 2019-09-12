@@ -12,7 +12,7 @@ from collections.abc import Iterable
 from os.path import dirname, join
 
 from pystencils.astnodes import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
-from pystencils_autodiff._file_io import _read_template_from_file
+from pystencils_autodiff._file_io import read_template_from_file
 from pystencils_autodiff.backends.python_bindings import (
     PybindFunctionWrapping, PybindPythonBindings, TensorflowFunctionWrapping,
     TensorflowPythonBindings, TorchPythonBindings)
@@ -61,7 +61,7 @@ class PybindArrayDestructuring(DestructuringBindingsForFieldClass):
 
 
 class TorchModule(JinjaCppFile):
-    TEMPLATE = _read_template_from_file(join(dirname(__file__), 'module.tmpl.cpp'))
+    TEMPLATE = read_template_from_file(join(dirname(__file__), 'module.tmpl.cpp'))
     DESTRUCTURING_CLASS = TorchTensorDestructuring
     PYTHON_BINDINGS_CLASS = TorchPythonBindings
     PYTHON_FUNCTION_WRAPPING_CLASS = PybindFunctionWrapping
@@ -103,7 +103,7 @@ class TensorflowModule(TorchModule):
         :param backward_kernel_ast:
         """
         if use_cuda:
-            self.TEMPLATE = _read_template_from_file(join(dirname(__file__), 'tensorflow.cuda.tmpl.cu'))
+            self.TEMPLATE = read_template_from_file(join(dirname(__file__), 'tensorflow.cuda.tmpl.cu'))
 
         super().__init__(module_name, kernel_asts)
 

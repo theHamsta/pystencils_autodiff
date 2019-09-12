@@ -22,12 +22,12 @@ except ImportError:
     pass
 
 
-def _read_file(file):
+def read_file(file):
     with open(file, 'r') as f:
         return f.read()
 
 
-def _write_file(filename, content):
+def write_file(filename, content):
     with open(filename, 'w') as f:
         return f.write(content)
 
@@ -106,22 +106,22 @@ def generate_torch(destination_folder,
         }
 
         if is_cuda:
-            template_string_cpp = _read_file(join(dirname(__file__),
+            template_string_cpp = read_file(join(dirname(__file__),
                                                   'torch_native_cuda.tmpl.cpp'))
             template = jinja2.Template(template_string_cpp)
             output = template.render(render_dict)
-            _write_file(join(destination_folder, operation_string + '.cpp'), output)
+            write_file(join(destination_folder, operation_string + '.cpp'), output)
 
-            template_string = _read_file(join(dirname(__file__), 'torch_native_cuda.tmpl.cu'))
+            template_string = read_file(join(dirname(__file__), 'torch_native_cuda.tmpl.cu'))
             template = jinja2.Template(template_string)
             output = template.render(render_dict)
-            _write_file(join(destination_folder, operation_string + '.cu'), output)
+            write_file(join(destination_folder, operation_string + '.cu'), output)
         else:
-            template_string_cpp = _read_file(join(dirname(__file__),
+            template_string_cpp = read_file(join(dirname(__file__),
                                                   'torch_native_cpu.tmpl.cpp'))
             template = jinja2.Template(template_string_cpp)
             output = template.render(render_dict)
-            _write_file(join(destination_folder, operation_string + '.cpp'), output)
+            write_file(join(destination_folder, operation_string + '.cpp'), output)
 
     from torch.utils.cpp_extension import load
     compiled_operation = load(operation_string, required_files, verbose=True,
