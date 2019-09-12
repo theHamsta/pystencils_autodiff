@@ -1,8 +1,8 @@
 import sys
 
 import pystencils_autodiff._backport
-
 import pystencils_autodiff.backends  # NOQA
+import pystencils_autodiff.tensorflow_jit
 from pystencils_autodiff._adjoint_field import AdjointField
 from pystencils_autodiff._autodiff import (
     AutoDiffAstPair, AutoDiffOp, DiffModes, create_backward_assignments,
