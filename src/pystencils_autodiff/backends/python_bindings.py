@@ -12,7 +12,7 @@ import itertools
 import jinja2
 import stringcase
 
-from pystencils.astnodes import KernelFunction, Node
+from pystencils.astnodes import KernelFunction
 from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
 
 

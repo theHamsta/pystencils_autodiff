@@ -10,7 +10,6 @@
 import json
 import subprocess
 import sysconfig
-from itertools import chain
 from os.path import exists, join
 
 from tqdm import tqdm

@@ -106,8 +106,7 @@ def generate_torch(destination_folder,
         }
 
         if is_cuda:
-            template_string_cpp = read_file(join(dirname(__file__),
-                                                  'torch_native_cuda.tmpl.cpp'))
+            template_string_cpp = read_file(join(dirname(__file__), 'torch_native_cuda.tmpl.cpp'))
             template = jinja2.Template(template_string_cpp)
             output = template.render(render_dict)
             write_file(join(destination_folder, operation_string + '.cpp'), output)
@@ -117,8 +116,7 @@ def generate_torch(destination_folder,
             output = template.render(render_dict)
             write_file(join(destination_folder, operation_string + '.cu'), output)
         else:
-            template_string_cpp = read_file(join(dirname(__file__),
-                                                  'torch_native_cpu.tmpl.cpp'))
+            template_string_cpp = read_file(join(dirname(__file__), 'torch_native_cpu.tmpl.cpp'))
             template = jinja2.Template(template_string_cpp)
             output = template.render(render_dict)
             write_file(join(destination_folder, operation_string + '.cpp'), output)
