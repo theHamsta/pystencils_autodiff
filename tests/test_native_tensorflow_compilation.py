@@ -16,13 +16,13 @@ from sysconfig import get_paths
 
 import pytest
 import sympy
+from pystencils_autodiff import create_backward_assignments
+from pystencils_autodiff._file_io import write_file
+from pystencils_autodiff.backends.astnodes import TensorflowModule
 
 import pystencils
 from pystencils.cpu.cpujit import get_compiler_config
 from pystencils.include import get_pystencils_include_path
-from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import write_file
-from pystencils_autodiff.backends.astnodes import TensorflowModule
 
 
 def test_detect_cpu_vs_cpu():
@@ -125,11 +125,9 @@ def test_native_tensorflow_compilation_gpu():
     # 'g++-6',
     command = ['nvcc',
                temp_file.name,
-               '-lcudart',
                '--expt-relaxed-constexpr',
                '-ccbin',
                get_compiler_config()['tensorflow_host_compiler'],
-               '-lcudart',
                '-std=c++14',
                '-x',
                'cu',
@@ -141,13 +139,12 @@ def test_native_tensorflow_compilation_gpu():
 
     subprocess.check_call(command)
 
-    # command = ['clang-7', '-shared', temp_file.name, '--cuda-path=/usr/include',  '-std=c++14',
-    # '-fPIC', '-lcudart', '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
-    command = ['c++', '-fPIC', '-lcudart', 'foo_gpu.o',
+    command = ['c++', '-fPIC', 'foo_gpu.o',
                '-shared', '-o', 'foo_gpu.so'] + link_flags
 
     subprocess.check_call(command)
     lib = tf.load_op_library(join(os.getcwd(), 'foo_gpu.so'))
 
     assert 'call_forward2' in dir(lib)
+    #
     assert 'call_backward2' in dir(lib)
