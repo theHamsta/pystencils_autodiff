@@ -29,13 +29,13 @@ if get_compiler_config()['os'] != 'windows':
     _include_flags = ['-I' + sysconfig.get_paths()['include'], '-I' + get_pystencils_include_path()]
     _do_not_link_flag = "-c"
     _position_independent_flag = "-fPIC"
-    get_compiler_config()['command'] = 'cl.exe'
 else:
     _do_not_link_flag = "/c"
     _output_flag = '/OUT:'
     _shared_object_flag = '/DLL'
     _include_flags = ['/I' + sysconfig.get_paths()['include'], '/I' + get_pystencils_include_path()]
     _position_independent_flag = "/DTHIS_FLAG_DOES_NOTHING"
+    get_compiler_config()['command'] = 'cl.exe'
 
 
 try:
