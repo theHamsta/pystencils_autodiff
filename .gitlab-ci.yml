@@ -1,24 +1,24 @@
-# Minimal tests in windows environment
-windows:
-  stage: test
-  except:
-    variables:
-      - $ENABLE_NIGHTLY_BUILDS
-  tags:
-    - win
-  script:
-    - source /cygdrive/c/Users/build/Miniconda3/Scripts/activate
-    - source activate pystencils_dev
-    - env
-    - conda env list
-    - python -c "import numpy"
-    - python -m pip install -e .
-    - python setup.py test
-  artifacts:
-    when: always
-    paths:
-      - test-report
-      - htmlcov
+## Minimal tests in windows environment
+#windows:
+  #stage: test
+  #except:
+    #variables:
+      #- $ENABLE_NIGHTLY_BUILDS
+  #tags:
+    #- win
+  #script:
+    #- source /cygdrive/c/Users/build/Miniconda3/Scripts/activate
+    #- source activate pystencils_dev
+    #- env
+    #- conda env list
+    #- python -c "import numpy"
+    #- python -m pip install -e .
+    #- python setup.py test
+  #artifacts:
+    #when: always
+    #paths:
+      #- test-report
+      #- htmlcov
 
 #ubuntu:
   #stage: test

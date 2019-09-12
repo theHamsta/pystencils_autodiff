@@ -54,7 +54,7 @@ def test_tfmad_two_stencils():
     print(auto_diff)
 
 
-@pytest.mark.skipif("TRAVIS" in os.environ, reason="Temporary skip")
+@pytest.mark.skipif("CI" in os.environ, reason="Temporary skip")
 def test_tfmad_gradient_check():
     tf = pytest.importorskip('tensorflow')
 
