@@ -161,12 +161,16 @@ def compile_sources_and_load(host_sources, cuda_sources=[], additional_compile_f
         file_name = join(pystencils.cache.cache_dir, f'{_hash(source_code.encode()).hexdigest()}{file_extension}')
         write_file(file_name, source_code)
 
-        compile_file(file_name, use_nvcc=is_cuda, overwrite_destination_file=False,
+        compile_file(file_name,
+                     use_nvcc=is_cuda,
+                     overwrite_destination_file=False,
                      additional_compile_flags=additional_compile_flags)
         object_files.append(file_name + '.o')
 
     print('Linking Tensorflow module...')
-    module = link_and_load(object_files, overwrite_destination_file=False, additional_link_flags=additional_link_flags)
+    module = link_and_load(object_files,
+                           overwrite_destination_file=False,
+                           additional_link_flags=additional_link_flags)
     if module:
         print('Loaded Tensorflow module.')
     return module
