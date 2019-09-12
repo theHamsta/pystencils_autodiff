@@ -23,6 +23,8 @@ from pystencils_autodiff.backends.astnodes import TensorflowModule
 import pystencils
 from pystencils.cpu.cpujit import get_compiler_config
 from pystencils.include import get_pystencils_include_path
+from pystencils_autodiff.tensorflow_jit import _compile_env
+
 
 
 def test_detect_cpu_vs_cpu():
@@ -78,7 +80,7 @@ def test_native_tensorflow_compilation_cpu():
     command = ['c++', '-fPIC', temp_file.name, '-O2', '-shared',
                '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
     print(command)
-    subprocess.check_call(command)
+    subprocess.check_call(command, env=_compile_env)
 
     lib = tf.load_op_library(join(os.getcwd(), 'foo.so'))
     assert 'call_forward' in dir(lib)
