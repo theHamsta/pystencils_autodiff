@@ -122,8 +122,6 @@ def test_native_tensorflow_compilation_gpu():
                temp_file.name,
                '-lcudart',
                '--expt-relaxed-constexpr',
-               '-ccbin',
-               'g++-6',
                '-lcudart',
                '-std=c++14',
                '-x',
