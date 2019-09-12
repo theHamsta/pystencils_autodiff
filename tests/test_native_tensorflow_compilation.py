@@ -85,7 +85,6 @@ def test_native_tensorflow_compilation_cpu():
     assert 'call_backward' in dir(lib)
 
 
-@pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
 def test_native_tensorflow_compilation_gpu():
     tf = pytest.importorskip('tensorflow')
 
