@@ -17,9 +17,10 @@ __all__ = ['backends',
            'create_backward_assignments',
            'AutoDiffOp',
            'AutoDiffAstPair',
-           "tf_constant_from_field", " tf_placeholder_from_field",
-           "tf_scalar_variable_from_field", " tf_variable_from_field",
-           "torch_tensor_from_field", "DiffModes"]
+           'tensorflow_jit',
+           'tf_constant_from_field', ' tf_placeholder_from_field',
+           'tf_scalar_variable_from_field', ' tf_variable_from_field',
+           'torch_tensor_from_field', 'DiffModes']
 
 sys.modules['pystencils.autodiff'] = pystencils_autodiff
 sys.modules['pystencils.autodiff.backends'] = pystencils_autodiff.backends
