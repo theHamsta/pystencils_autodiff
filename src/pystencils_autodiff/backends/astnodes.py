@@ -19,8 +19,6 @@ from pystencils_autodiff.backends.python_bindings import (
 from pystencils_autodiff.framework_integration.astnodes import (
     DestructuringBindingsForFieldClass, JinjaCppFile, WrapperFunction, generate_kernel_call)
 
-# Torch
-
 
 class TorchTensorDestructuring(DestructuringBindingsForFieldClass):
     CLASS_TO_MEMBER_DICT = {

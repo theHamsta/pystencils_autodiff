@@ -101,8 +101,6 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         parameters = function_node.get_parameters()
         output_shape = str(output_fields[0].shape).replace('(', '{').replace(')', '}')  # noqa,  TODO make work for flexible sizes
 
-        print([f for f in function_node.atoms(Node)])
-
         docstring = "TODO"  # TODO
 
         # this looks almost like lisp 😕
