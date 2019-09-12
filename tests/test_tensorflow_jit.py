@@ -8,6 +8,8 @@
 
 """
 
+from os.path import exists
+
 import pytest
 import sympy
 
@@ -43,6 +45,10 @@ def test_tensorflow_jit_gpu():
     lib = pystencils_autodiff.tensorflow_jit.compile_sources_and_load([], [str(module)])
     assert 'call_forward_jit_gpu' in dir(lib)
     assert 'call_backward_jit_gpu' in dir(lib)
+
+    file_name = pystencils_autodiff.tensorflow_jit.compile_sources_and_load([], [str(module)], compile_only=True)
+    print(file_name)
+    assert exists(file_name)
 
 
 def test_tensorflow_jit_cpu():
