@@ -13,11 +13,11 @@ import subprocess
 import sysconfig
 from os.path import exists, join
 
+from pystencils_autodiff._file_io import read_file, write_file
 from tqdm import tqdm
 
 import pystencils
 from pystencils.cpu.cpujit import get_cache_config, get_compiler_config, get_pystencils_include_path
-from pystencils_autodiff._file_io import read_file, write_file
 
 _hash = hashlib.md5
 
@@ -29,6 +29,7 @@ if get_compiler_config()['os'] != 'windows':
     _include_flags = ['-I' + sysconfig.get_paths()['include'], '-I' + get_pystencils_include_path()]
     _do_not_link_flag = "-c"
     _position_independent_flag = "-fPIC"
+    get_compiler_config()['command'] = 'cl.exe'
 else:
     _do_not_link_flag = "/c"
     _output_flag = '/OUT:'
