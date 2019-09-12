@@ -8,7 +8,6 @@
 
 """
 import hashlib
-import json
 import subprocess
 import sysconfig
 from os.path import exists, join
@@ -106,7 +105,6 @@ if pystencils.gpucuda.cudajit.USE_FAST_MATH:
 def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=True, additional_compile_flags=[]):
     if 'tensorflow_host_compiler' not in get_compiler_config():
         get_compiler_config()['tensorflow_host_compiler'] = get_compiler_config()['command']
-        write_file(pystencils.cpu.cpujit.get_configuration_file_path(), json.dumps(pystencils.cpu.cpujit._config))
 
     destination_file = file + '.o'
     if use_nvcc:
