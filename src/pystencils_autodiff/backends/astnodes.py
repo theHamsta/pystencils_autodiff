@@ -9,6 +9,7 @@
 """
 
 import os
+import sys
 from collections.abc import Iterable
 from os.path import dirname, exists, join
 
@@ -97,14 +98,11 @@ class TorchModule(JinjaCppFile):
         file_extension = '.cu' if self.is_cuda else '.cpp'
         source_code = str(self)
         hash = _hash(source_code.encode()).hexdigest()
-        try:
-            os.mkdir(join(pystencils.cache.cache_dir, hash))
-        except Exception:
-            pass
-        file_name = join(pystencils.cache.cache_dir, hash, f'{hash}{file_extension}')
+        file_name = join(pystencils.cache.cache_dir, f'{hash}{file_extension}')
 
         if not exists(file_name):
             write_file(file_name, source_code)
+        # TODO: propagate extra headers
         torch_extension = load(hash, [file_name], with_cuda=self.is_cuda)
         return torch_extension
 
@@ -134,3 +132,27 @@ class TensorflowModule(TorchModule):
 class PybindModule(TorchModule):
     DESTRUCTURING_CLASS = PybindArrayDestructuring
     PYTHON_BINDINGS_CLASS = PybindPythonBindings
+
+    CPP_IMPORT_PREFIX = """/*
+<%
+setup_pybind11(cfg)
+%>
+*/
+"""
+
+    def compile(self):
+        import cppimport
+
+        assert not self.is_cuda
+
+        source_code = str(self)
+        file_name = join(pystencils.cache.cache_dir, f'{self.module_name}.cpp')
+
+        if not exists(file_name):
+            write_file(file_name, source_code)
+        # TODO: propagate extra headers
+        cache_dir = pystencils.cache.cache_dir
+        if cache_dir not in sys.path:
+            sys.path.append(cache_dir)
+        torch_extension = cppimport.imp(f'{self.module_name}')
+        return torch_extension

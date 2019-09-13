@@ -14,7 +14,7 @@ import sympy
 import pystencils
 from pystencils_autodiff import create_backward_assignments
 from pystencils_autodiff._file_io import write_file
-from pystencils_autodiff.backends.astnodes import TorchModule
+from pystencils_autodiff.backends.astnodes import PybindModule, TorchModule
 
 torch = pytest.importorskip('torch')
 pytestmark = pytest.mark.skipif(subprocess.call(['ninja', '--v']) != 0,
@@ -77,6 +77,34 @@ def test_torch_native_compilation_cpu():
     assert torch_extension is not None
     assert 'call_forward' in dir(torch_extension)
     assert 'call_backward' in dir(torch_extension)
+
+
+def test_pybind11_compilation_cpu():
+
+    module_name = "Olololsada"
+
+    target = 'cpu'
+
+    z, y, x = pystencils.fields("z, y, x: [20,40]")
+    a = sympy.Symbol('a')
+
+    forward_assignments = pystencils.AssignmentCollection({
+        z[0, 0]: x[0, 0] * sympy.log(a * x[0, 0] * y[0, 0])
+    })
+
+    backward_assignments = create_backward_assignments(forward_assignments)
+
+    forward_ast = pystencils.create_kernel(forward_assignments, target)
+    forward_ast.function_name = 'forward'
+    backward_ast = pystencils.create_kernel(backward_assignments, target)
+    backward_ast.function_name = 'backward'
+    module = PybindModule(module_name, [forward_ast, backward_ast])
+    print(module)
+
+    pybind_extension = module.compile()
+    assert pybind_extension is not None
+    assert 'call_forward' in dir(pybind_extension)
+    assert 'call_backward' in dir(pybind_extension)
 
 
 @pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
