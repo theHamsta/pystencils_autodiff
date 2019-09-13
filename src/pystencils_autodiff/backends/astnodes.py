@@ -144,7 +144,7 @@ setup_pybind11(cfg)
 
         assert not self.is_cuda
 
-        source_code = str(self)
+        source_code = self.CPP_IMPORT_PREFIX + str(self)
         file_name = join(pystencils.cache.cache_dir, f'{self.module_name}.cpp')
 
         if not exists(file_name):
