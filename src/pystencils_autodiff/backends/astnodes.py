@@ -140,7 +140,10 @@ setup_pybind11(cfg)
 """
 
     def compile(self):
-        import cppimport
+        try:
+            import cppimport
+        except ImportError:
+            assert False, 'cppimport ist required for compiling pybind11 modules'
 
         assert not self.is_cuda
 
