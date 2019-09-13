@@ -18,7 +18,7 @@ import numpy as np
 import sympy as sp
 
 import pystencils
-from pystencils.astnodes import Node, NodeOrExpr, ResolvedFieldAccess
+from pystencils.astnodes import KernelFunction, Node, NodeOrExpr, ResolvedFieldAccess
 from pystencils.data_types import TypedSymbol
 from pystencils.kernelparameters import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
 from pystencils_autodiff.framework_integration.printer import FrameworkIntegrationPrinter
@@ -248,6 +248,20 @@ class JinjaCppFile(Node):
             return self.printer(node)
         else:
             return str(node)
+
+    def atoms(self, arg_type) -> Set[Any]:
+        """Returns a set of all descendants recursively, which are an instance of the given type."""
+        result = set()
+        for arg in self.args:
+            if isinstance(arg, arg_type):
+                result.add(arg)
+            if hasattr(arg, 'atoms'):
+                result.update(arg.atoms(arg_type))
+        return result
+
+    @property
+    def is_cuda(self):
+        return any(f.backend == 'gpucuda' for f in self.atoms(KernelFunction))
 
     def __str__(self):
         assert self.TEMPLATE, f"Template of {self.__class__} must be set"

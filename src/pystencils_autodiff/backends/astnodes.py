@@ -94,20 +94,21 @@ class TensorflowModule(TorchModule):
     PYTHON_BINDINGS_CLASS = TensorflowPythonBindings
     PYTHON_FUNCTION_WRAPPING_CLASS = TensorflowFunctionWrapping
 
-    def __init__(self, module_name, kernel_asts, use_cuda=False):
+    def __init__(self, module_name, kernel_asts):
         """Create a C++ module with forward and optional backward_kernels
 
         :param forward_kernel_ast: one or more kernel ASTs (can have any C dialect)
         :param backward_kernel_ast:
         """
-        if use_cuda:
-            self.TEMPLATE = read_template_from_file(join(dirname(__file__), 'tensorflow.cuda.tmpl.cu'))
 
         super().__init__(module_name, kernel_asts)
 
     def compile(self):
         from pystencils_autodiff.tensorflow_jit import compile_sources_and_load
-        return compile_sources_and_load([str(self)])
+        if self.is_cuda:
+            return compile_sources_and_load([], cuda_sources=[str(self)])
+        else:
+            return compile_sources_and_load([str(self)])
 
 
 class PybindModule(TorchModule):

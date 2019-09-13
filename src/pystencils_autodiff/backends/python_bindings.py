@@ -111,7 +111,7 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
         self.input_fields = input_fields
         self.output_fields = output_fields
         self.other_symbols = other_symbols
-        self.is_cuda = any(f.backend == 'gpucuda' for f in function_node.atoms(KernelFunction))
+        is_cuda = any(f.backend == 'gpucuda' for f in function_node.atoms(KernelFunction))
 
         render_dict = {'python_name': stringcase.pascalcase(function_node.function_name),  # tf wants PascalCase!
                        'cpp_name': function_node.function_name,
@@ -121,7 +121,7 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
                        'output_fields': output_fields,
                        'other_symbols': other_symbols,
                        'docstring': docstring,
-                       'device': 'DEVICE_GPU' if self.is_cuda else 'DEVICE_CPU',
+                       'device': 'DEVICE_GPU' if is_cuda else 'DEVICE_CPU',
                        'constructor': '',
                        'output_shape': output_shape}
         # TODO dtype -> tf dtype mapping
