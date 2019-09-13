@@ -16,15 +16,14 @@ from sysconfig import get_paths
 
 import pytest
 import sympy
-from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import write_file
-from pystencils_autodiff.backends.astnodes import TensorflowModule
 
 import pystencils
 from pystencils.cpu.cpujit import get_compiler_config
 from pystencils.include import get_pystencils_include_path
+from pystencils_autodiff import create_backward_assignments
+from pystencils_autodiff._file_io import write_file
+from pystencils_autodiff.backends.astnodes import TensorflowModule
 from pystencils_autodiff.tensorflow_jit import _compile_env
-
 
 
 def test_detect_cpu_vs_cpu():
