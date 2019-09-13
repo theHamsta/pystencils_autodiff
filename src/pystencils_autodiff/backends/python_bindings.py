@@ -17,7 +17,7 @@ from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
 
 
 class PybindPythonBindings(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""PYBIND11_MODULE("{{ module_name }}", m)
+    TEMPLATE = jinja2.Template("""PYBIND11_MODULE({{ module_name }}, m)
 {
 {% for ast_node in module_contents -%}
 {{ ast_node | indent(3,true) }}
