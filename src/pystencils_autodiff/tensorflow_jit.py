@@ -121,7 +121,7 @@ def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=T
     if 'tensorflow_host_compiler' not in get_compiler_config():
         get_compiler_config()['tensorflow_host_compiler'] = get_compiler_config()['command']
 
-    destination_file = file + '.o'
+    destination_file = file + _object_file_extension
     if use_nvcc:
         command = [nvcc,
                    '--expt-relaxed-constexpr',
