@@ -143,7 +143,10 @@ setup_pybind11(cfg)
         try:
             import cppimport
         except ImportError:
-            assert False, 'cppimport ist required for compiling pybind11 modules'
+            try:
+                from torch.utils.cpp_extension import load
+            except Exception:
+                assert False, 'cppimport or torch ist required for compiling pybind11 modules'
 
         assert not self.is_cuda
 
@@ -156,5 +159,9 @@ setup_pybind11(cfg)
         cache_dir = pystencils.cache.cache_dir
         if cache_dir not in sys.path:
             sys.path.append(cache_dir)
-        torch_extension = cppimport.imp(f'{self.module_name}')
+
+        try:
+            torch_extension = cppimport.imp(f'{self.module_name}')
+        except Exception:
+            torch_extension = load(self.module_name, [file_name])
         return torch_extension
