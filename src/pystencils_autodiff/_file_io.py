@@ -16,9 +16,10 @@ def read_template_from_file(file):
 
 def read_file(file):
     with open(file, 'r') as f:
-        return f.read()
+        content = f.read()
+    return content
 
 
 def write_file(filename, content):
     with open(filename, 'w') as f:
-        return f.write(content)
+        f.write(content)
