@@ -81,6 +81,9 @@ def test_torch_native_compilation_cpu():
 
 def test_pybind11_compilation_cpu():
 
+    pytest.importorskip('pybind11')
+    pytest.importorskip('cppimport')
+
     module_name = "Olololsada"
 
     target = 'cpu'
