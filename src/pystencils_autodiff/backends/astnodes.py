@@ -105,6 +105,10 @@ class TensorflowModule(TorchModule):
 
         super().__init__(module_name, kernel_asts)
 
+    def compile(self):
+        from pystencils_autodiff.tensorflow_jit import compile_sources_and_load
+        return compile_sources_and_load([str(self)])
+
 
 class PybindModule(TorchModule):
     DESTRUCTURING_CLASS = PybindArrayDestructuring

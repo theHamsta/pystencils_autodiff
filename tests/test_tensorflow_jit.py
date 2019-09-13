@@ -77,3 +77,7 @@ def test_tensorflow_jit_cpu():
     lib = pystencils_autodiff.tensorflow_jit.compile_sources_and_load([str(module)])
     assert 'call_forward_jit' in dir(lib)
     assert 'call_backward_jit' in dir(lib)
+
+    lib = module.compile()
+    assert 'call_forward_jit' in dir(lib)
+    assert 'call_backward_jit' in dir(lib)
