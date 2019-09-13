@@ -13,11 +13,11 @@ import subprocess
 import sysconfig
 from os.path import exists, join
 
-from pystencils_autodiff._file_io import read_file, write_file
 from tqdm import tqdm
 
 import pystencils
 from pystencils.cpu.cpujit import get_cache_config, get_compiler_config, get_pystencils_include_path
+from pystencils_autodiff._file_io import read_file, write_file
 
 _hash = hashlib.md5
 
@@ -30,9 +30,10 @@ if get_compiler_config()['os'] != 'windows':
     _do_not_link_flag = "-c"
     _position_independent_flag = "-fPIC"
     _compile_env = os.environ.copy()
+    _object_file_extension = '.o'
 else:
-    _do_not_link_flag = "/c"
-    _output_flag = '/OUT:'
+    _do_not_link_flag = '-c'
+    _output_flag = '-o'
     _shared_object_flag = '/DLL'
     _include_flags = ['/I' + sysconfig.get_paths()['include'], '/I' + get_pystencils_include_path()]
     _position_independent_flag = "/DTHIS_FLAG_DOES_NOTHING"
@@ -40,6 +41,7 @@ else:
     config_env = get_compiler_config()['env'] if 'env' in get_compiler_config() else {}
     _compile_env = os.environ.copy()
     _compile_env.update(config_env)
+    _object_file_extension = '.obj'
 
 
 try:
@@ -176,7 +178,7 @@ def compile_sources(host_sources, cuda_sources=[], additional_compile_flags=[], 
                      use_nvcc=is_cuda,
                      overwrite_destination_file=False,
                      additional_compile_flags=additional_compile_flags)
-        object_files.append(file_name + '.o')
+        object_files.append(file_name + _object_file_extension)
 
     print('Linking Tensorflow module...')
     module = link_and_load(object_files,
@@ -211,7 +213,7 @@ def compile_sources_and_load(host_sources,
                      use_nvcc=is_cuda,
                      overwrite_destination_file=False,
                      additional_compile_flags=additional_compile_flags)
-        object_files.append(file_name + '.o')
+        object_files.append(file_name + _object_file_extension)
 
     print('Linking Tensorflow module...')
     module_file = link(object_files,
