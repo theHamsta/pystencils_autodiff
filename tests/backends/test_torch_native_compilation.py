@@ -73,6 +73,11 @@ def test_torch_native_compilation_cpu():
     assert 'call_forward' in dir(torch_extension)
     assert 'call_backward' in dir(torch_extension)
 
+    torch_extension = module.compile()
+    assert torch_extension is not None
+    assert 'call_forward' in dir(torch_extension)
+    assert 'call_backward' in dir(torch_extension)
+
 
 @pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
 def test_torch_native_compilation_gpu():
@@ -102,6 +107,11 @@ def test_torch_native_compilation_gpu():
     print(temp_file.name)
     write_file(temp_file.name, str(module))
     torch_extension = load(module_name, [temp_file.name])
+    assert torch_extension is not None
+    assert 'call_forward' in dir(torch_extension)
+    assert 'call_backward' in dir(torch_extension)
+
+    torch_extension = module.compile()
     assert torch_extension is not None
     assert 'call_forward' in dir(torch_extension)
     assert 'call_backward' in dir(torch_extension)
