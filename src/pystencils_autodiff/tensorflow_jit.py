@@ -35,7 +35,7 @@ else:
     _do_not_link_flag = '-c'
     _output_flag = '-o'
     _shared_object_flag = '/DLL'
-    _include_flags = ['/I' + sysconfig.get_paths()['include'], '/I' + get_pystencils_include_path()]
+    _include_flags = ['-I' + sysconfig.get_paths()['include'], '-I' + get_pystencils_include_path()]
     _position_independent_flag = "/DTHIS_FLAG_DOES_NOTHING"
     get_compiler_config()['command'] = 'cl.exe'
     config_env = get_compiler_config()['env'] if 'env' in get_compiler_config() else {}
@@ -91,6 +91,7 @@ def link_and_load(object_files, destination_file=None, overwrite_destination_fil
 
 
 def try_get_cuda_arch_flag():
+    return '-arch=sm_35'
     if 'PYSTENCILS_TENSORFLOW_NVCC_ARCH' in os.environ:
         return "-arch=sm_" + os.environ['PYSTENCILS_TENSORFLOW_NVCC_ARCH']
     try:
@@ -121,6 +122,8 @@ def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=T
 
     if use_nvcc:
         command_prefix = [nvcc,
+                            r'-IC:\Users\Acer\source\repos\eigen-eigen-c8f466327c3a',
+                            '-DEIGEN_USE_GPU',
                           '--expt-relaxed-constexpr',
                           '-ccbin',
                           get_compiler_config()['tensorflow_host_compiler'],
@@ -135,8 +138,13 @@ def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=T
                           _do_not_link_flag,
                           *_tf_compile_flags,
                           *_include_flags,
+                          r'-IC:\Users\Acer\AppData\Roaming\Python\Python37\site-packages',
+                          r'-IC:\Users\Acer\AppData\Roaming\Python\Python37\site-packages\tensorflow\include\google\protobuf_archive\src',
+                          r'-IC:\Users\Acer\AppData\Roaming\Python\Python37\site-packages\tensorflow\include\third_party\eigen3',
+                          r'-IC:\Users\Acer\source\repos\abseil-cpp',
                           *additional_compile_flags,
                           _output_flag]
+        command_prefix = [c.replace('\\', '/') for c in command_prefix]
     else:
         command_prefix = [get_compiler_config()['command'],
                           *(get_compiler_config()['flags']).split(' '),
@@ -146,6 +154,7 @@ def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=T
                           *_include_flags,
                           *additional_compile_flags,
                           _output_flag]
+    
 
     destination_file = f'{file}_{_hash(".".join(command_prefix).encode()).hexdigest()}{_object_file_extension}'
 
@@ -186,7 +195,7 @@ def compile_sources_and_load(host_sources,
         return object_file
 
     # p_tqdm is just a parallel tqdm
-    object_files = p_tqdm.p_umap(compile, sources)
+    object_files = p_tqdm.p_umap(compile, sources[0])
 
     print('Linking Tensorflow module...')
     module_file = link(object_files,
