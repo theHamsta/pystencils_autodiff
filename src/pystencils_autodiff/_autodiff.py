@@ -62,6 +62,10 @@ Backward:
         self._time_constant_fields = time_constant_fields
         self._kwargs = kwargs
         self.op_name = op_name
+        self._forward_ast_cpu = None
+        self._backward_ast_cpu = None
+        self._forward_ast_gpu = None
+        self._backward_ast_gpu = None
         self._forward_kernel_cpu = None
         self._backward_kernel_cpu = None
         self._forward_kernel_gpu = None
