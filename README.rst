@@ -13,6 +13,9 @@
 .. image:: https://travis-ci.org/theHamsta/pystencils_autodiff.svg?branch=master
     :target: https://travis-ci.org/theHamsta/pystencils_autodiff
 
+.. image:: https://i10git.cs.fau.de/pycodegen/pystencils_autodiff/badges/master/pipeline.svg
+    :target: https://i10git.cs.fau.de/pycodegen/pystencils_autodiff/commits/master
+
 .. image:: https://codecov.io/gh/theHamsta/pystencils_autodiff/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/theHamsta/pystencils_autodiff
 
@@ -104,3 +107,8 @@ You can also use the class `AutoDiffOp` to obtain both the assignments (if you a
     y_tensor = pystencils.autodiff.torch_tensor_from_field(y, cuda=False, requires_grad=True)
 
     z_tensor = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='torch')
+
+Test Report and Coverage
+------------------------
+
+  - https://i10git.cs.fau.de/pycodegen/pystencils_autodiff/-/jobs/299120/artifacts/browse
