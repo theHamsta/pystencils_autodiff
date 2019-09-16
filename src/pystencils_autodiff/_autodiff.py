@@ -542,8 +542,7 @@ Backward:
                 self, inputfield_tensor_dict, forward_loop, backward_loop)
         elif backend == 'torch_native':
             import pystencils_autodiff.backends._torch_native
-            op = pystencils_autodiff.backends._torch_native.create_autograd_function(
-                self, inputfield_tensor_dict, None, None)
+            op = pystencils_autodiff.backends._torch_native.create_autograd_function(self, inputfield_tensor_dict)
         else:
             raise NotImplementedError()
 
