@@ -366,31 +366,51 @@ Backward:
         return [a for a in self.backward_assignments.free_symbols if isinstance(a, ps.Field.Access)]
 
     @property
+    def forward_ast_cpu(self):
+        if not self._forward_ast_cpu:
+            self._forward_ast_cpu = ps.create_kernel(self._forward_assignments, **self._kwargs)
+        return self._forward_ast_cpu
+
+    @property
+    def forward_ast_gpu(self):
+        if not self._forward_ast_gpu:
+            self._forward_ast_gpu = ps.create_kernel(self._forward_assignments, target='gpu', **self._kwargs)
+        return self._forward_ast_gpu
+
+    @property
+    def backward_ast_cpu(self):
+        if not self._backward_ast_cpu:
+            self._backward_ast_cpu = ps.create_kernel(self._backward_assignments, target='cpu', **self._kwargs)
+        return self._backward_ast_cpu
+
+    @property
+    def backward_ast_gpu(self):
+        if not self._backward_ast_gpu:
+            self._backward_ast_gpu = ps.create_kernel(self._backward_assignments, target='gpu', **self._kwargs)
+        return self._backward_ast_gpu
+
+    @property
     def forward_kernel_cpu(self):
         if not self._forward_kernel_cpu:
-            self._forward_kernel_cpu = ps.create_kernel(
-                self._forward_assignments, **self._kwargs).compile()
+            self._forward_kernel_cpu = self.forward_ast_cpu.compile()
         return self._forward_kernel_cpu
 
     @property
     def forward_kernel_gpu(self):
         if not self._forward_kernel_gpu:
-            self._forward_kernel_gpu = ps.create_kernel(
-                self._forward_assignments, target='gpu', **self._kwargs).compile()
+            self._forward_kernel_gpu = self.forward_ast_gpu.compile()
         return self._forward_kernel_gpu
 
     @property
     def backward_kernel_cpu(self):
         if not self._backward_kernel_cpu:
-            self._backward_kernel_cpu = ps.create_kernel(
-                self._backward_assignments, target='cpu', **self._kwargs).compile()
+            self._backward_kernel_cpu = self.backward_ast_cpu.compile()
         return self._backward_kernel_cpu
 
     @property
     def backward_kernel_gpu(self):
         if not self._backward_kernel_gpu:
-            self._backward_kernel_gpu = ps.create_kernel(
-                self._backward_assignments, target='gpu', **self._kwargs).compile()
+            self._backward_kernel_gpu = self.backward_ast_gpu.compile()
         return self._backward_kernel_gpu
 
     @property
