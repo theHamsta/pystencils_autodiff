@@ -7,7 +7,14 @@
 """
 
 """
+import hashlib
+from os.path import exists, join
+
 import jinja2
+
+from pystencils.cpu.cpujit import get_cache_config
+
+_hash = hashlib.md5
 
 
 def read_template_from_file(file):
@@ -23,3 +30,11 @@ def read_file(file):
 def write_file(filename, content):
     with open(filename, 'w') as f:
         f.write(content)
+
+
+def write_cached_content(content, suffix):
+    filename = join(get_cache_config()['object_cache'], _hash(content.encode()).hexdigest() + suffix)
+    if not exists(filename):
+        with open(filename, 'w') as f:
+            f.write(content)
+    return filename
