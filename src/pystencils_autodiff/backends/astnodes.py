@@ -12,7 +12,6 @@ import sys
 from collections.abc import Iterable
 from os.path import dirname, exists, join
 
-import pystencils
 from pystencils.astnodes import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
 from pystencils.cpu.cpujit import get_cache_config
 from pystencils_autodiff._file_io import read_template_from_file, write_file
