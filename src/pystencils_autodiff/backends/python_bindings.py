@@ -94,8 +94,8 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
                '"tensorflow/core/framework/op_kernel.h"']
 
     def __init__(self, function_node: KernelFunction):
-        input_fields = list(function_node.fields_read)
-        output_fields = list(function_node.fields_written)
+        input_fields = list(sorted(function_node.fields_read, key=lambda x: str(x)))
+        output_fields = list(sorted(function_node.fields_written, key=lambda x: str(x)))
         input_field_names = [f.name for f in input_fields]
         output_field_names = [f.name for f in output_fields]
         parameters = function_node.get_parameters()
