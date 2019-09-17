@@ -14,6 +14,7 @@ from os.path import dirname, exists, join
 
 import pystencils
 from pystencils.astnodes import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
+from pystencils.cpu.cpujit import get_cache_config
 from pystencils_autodiff._file_io import read_template_from_file, write_file
 from pystencils_autodiff.backends.python_bindings import (
     PybindFunctionWrapping, PybindPythonBindings, TensorflowFunctionWrapping,
@@ -97,7 +98,7 @@ class TorchModule(JinjaCppFile):
         file_extension = '.cu' if self.is_cuda else '.cpp'
         source_code = str(self)
         hash = _hash(source_code.encode()).hexdigest()
-        file_name = join(pystencils.cache.cache_dir, f'{hash}{file_extension}')
+        file_name = join(get_cache_config()['object_cache'], f'{hash}{file_extension}')
 
         if not exists(file_name):
             write_file(file_name, source_code)
@@ -150,13 +151,13 @@ setup_pybind11(cfg)
 
         assert not self.is_cuda
 
+        cache_dir = get_cache_config()['object_cache']
         source_code = self.CPP_IMPORT_PREFIX + str(self)
-        file_name = join(pystencils.cache.cache_dir, f'{self.module_name}.cpp')
+        file_name = join(cache_dir, f'{self.module_name}.cpp')
 
         if not exists(file_name):
             write_file(file_name, source_code)
         # TODO: propagate extra headers
-        cache_dir = pystencils.cache.cache_dir
         if cache_dir not in sys.path:
             sys.path.append(cache_dir)
 

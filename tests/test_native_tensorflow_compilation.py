@@ -10,7 +10,6 @@
 
 import os
 import subprocess
-import tempfile
 from os.path import join
 from sysconfig import get_paths
 
@@ -21,7 +20,7 @@ import pystencils
 from pystencils.cpu.cpujit import get_compiler_config
 from pystencils.include import get_pystencils_include_path
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import write_file
+from pystencils_autodiff._file_io import write_cached_content, write_file
 from pystencils_autodiff.backends.astnodes import TensorflowModule
 from pystencils_autodiff.tensorflow_jit import _compile_env
 
@@ -71,17 +70,14 @@ def test_native_tensorflow_compilation_cpu():
     module = TensorflowModule(module_name, [forward_ast, backward_ast])
     print(module)
 
-    temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
-    print(temp_file.name)
-    write_file(temp_file.name, str(module))
-    write_file('/tmp/foo.cpp', str(module))
+    # temp_file = write_cached_content(str(module), '.cpp')
 
-    command = ['c++', '-fPIC', temp_file.name, '-O2', '-shared',
-               '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
-    print(command)
-    subprocess.check_call(command, env=_compile_env)
+    # command = ['c++', '-fPIC', temp_file, '-O2', '-shared',
+    # '-o', 'foo.so'] + compile_flags + link_flags + extra_flags
+    # print(command)
+    # subprocess.check_call(command, env=_compile_env)
 
-    lib = tf.load_op_library(join(os.getcwd(), 'foo.so'))
+    lib = module.compile()
     assert 'call_forward' in dir(lib)
     assert 'call_backward' in dir(lib)
 
@@ -115,36 +111,34 @@ def test_native_tensorflow_compilation_gpu():
     module = TensorflowModule(module_name, [forward_ast, backward_ast])
     print(str(module))
 
-    temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
-    print(temp_file.name)
-    write_file(temp_file.name, str(module))
-    if 'tensorflow_host_compiler' not in get_compiler_config():
-        get_compiler_config()['tensorflow_host_compiler'] = get_compiler_config()['command']
+    # temp_file = write_cached_content(str(module), '.cu')
+    # if 'tensorflow_host_compiler' not in get_compiler_config():
+    # get_compiler_config()['tensorflow_host_compiler'] = get_compiler_config()['command']
 
-    # on my machine g++-6 and clang-7 are working
+    # # on my machine g++-6 and clang-7 are working
+    # # '-ccbin',
+    # # 'g++-6',
+    # command = ['nvcc',
+    # temp_file.name,
+    # '--expt-relaxed-constexpr',
     # '-ccbin',
-    # 'g++-6',
-    command = ['nvcc',
-               temp_file.name,
-               '--expt-relaxed-constexpr',
-               '-ccbin',
-               get_compiler_config()['tensorflow_host_compiler'],
-               '-std=c++14',
-               '-x',
-               'cu',
-               '-Xcompiler',
-               '-fPIC',
-               '-c',
-               '-o',
-               'foo_gpu.o'] + compile_flags + extra_flags
+    # get_compiler_config()['tensorflow_host_compiler'],
+    # '-std=c++14',
+    # '-x',
+    # 'cu',
+    # '-Xcompiler',
+    # '-fPIC',
+    # '-c',
+    # '-o',
+    # 'foo_gpu.o'] + compile_flags + extra_flags
 
-    subprocess.check_call(command)
+    # subprocess.check_call(command)
 
-    command = ['c++', '-fPIC', 'foo_gpu.o',
-               '-shared', '-o', 'foo_gpu.so'] + link_flags
+    # command = ['c++', '-fPIC', 'foo_gpu.o',
+    # '-shared', '-o', 'foo_gpu.so'] + link_flags
 
-    subprocess.check_call(command)
-    lib = tf.load_op_library(join(os.getcwd(), 'foo_gpu.so'))
+    # subprocess.check_call(command)
+    lib = module.compile()
 
     assert 'call_forward2' in dir(lib)
     #

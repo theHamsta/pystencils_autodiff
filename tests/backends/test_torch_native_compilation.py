@@ -5,7 +5,6 @@
 
 import os
 import subprocess
-import tempfile
 from os.path import dirname, isfile, join
 
 import numpy as np
@@ -14,12 +13,13 @@ import sympy
 
 import pystencils
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import write_file
+from pystencils_autodiff._file_io import write_cached_content, write_file
 from pystencils_autodiff.backends.astnodes import PybindModule, TorchModule
 
 torch = pytest.importorskip('torch')
 pytestmark = pytest.mark.skipif(subprocess.call(['ninja', '--v']) != 0,
                                 reason='torch compilation requires ninja')
+
 
 PROJECT_ROOT = dirname
 
@@ -66,10 +66,8 @@ def test_torch_native_compilation_cpu():
     module = TorchModule(module_name, [forward_ast, backward_ast])
     print(module)
 
-    temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
-    print(temp_file.name)
-    write_file(temp_file.name, str(module))
-    torch_extension = load(module_name, [temp_file.name])
+    temp_file = write_cached_content(str(module), '.cpp')
+    torch_extension = load(module_name, [temp_file])
     assert torch_extension is not None
     assert 'call_forward' in dir(torch_extension)
     assert 'call_backward' in dir(torch_extension)
@@ -135,10 +133,8 @@ def test_torch_native_compilation_gpu():
     module = TorchModule(module_name, [forward_ast, backward_ast])
     print(module)
 
-    temp_file = tempfile.NamedTemporaryFile(suffix='.cu' if target == 'gpu' else '.cpp')
-    print(temp_file.name)
-    write_file(temp_file.name, str(module))
-    torch_extension = load(module_name, [temp_file.name])
+    temp_file = write_cached_content(str(module), suffix='.cu')
+    torch_extension = load(module_name, [temp_file])
     assert torch_extension is not None
     assert 'call_forward' in dir(torch_extension)
     assert 'call_backward' in dir(torch_extension)

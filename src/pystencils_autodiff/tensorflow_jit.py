@@ -176,7 +176,8 @@ def compile_sources_and_load(host_sources,
             source_code = source
 
         file_extension = '.cu' if is_cuda else '.cpp'
-        file_name = join(pystencils.cache.cache_dir, f'{_hash(source_code.encode()).hexdigest()}{file_extension}')
+        file_name = join(get_cache_config()['object_cache'],
+                         f'{_hash(source_code.encode()).hexdigest()}{file_extension}')
         if not exists(file_name):
             write_file(file_name, source_code)
 
