@@ -13,9 +13,6 @@
 .. image:: https://travis-ci.org/theHamsta/pystencils_autodiff.svg?branch=master
     :target: https://travis-ci.org/theHamsta/pystencils_autodiff
 
-.. image:: https://i10git.cs.fau.de/pycodegen/pystencils_autodiff/badges/master/pipeline.svg
-    :target: https://i10git.cs.fau.de/pycodegen/pystencils_autodiff/commits/master
-
 .. image:: https://codecov.io/gh/theHamsta/pystencils_autodiff/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/theHamsta/pystencils_autodiff
 
