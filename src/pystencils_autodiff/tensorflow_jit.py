@@ -14,9 +14,9 @@ import sysconfig
 from os.path import exists, join
 
 import p_tqdm
+
 import pystencils
 from pystencils.cpu.cpujit import get_cache_config, get_compiler_config, get_pystencils_include_path
-
 from pystencils_autodiff._file_io import read_file, write_file
 
 _hash = hashlib.md5
@@ -177,7 +177,8 @@ def compile_sources_and_load(host_sources,
 
         file_extension = '.cu' if is_cuda else '.cpp'
         file_name = join(pystencils.cache.cache_dir, f'{_hash(source_code.encode()).hexdigest()}{file_extension}')
-        write_file(file_name, source_code)
+        if not exists(file_name):
+            write_file(file_name, source_code)
 
         object_file = compile_file(file_name,
                                    use_nvcc=is_cuda,
