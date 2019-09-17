@@ -9,20 +9,13 @@
 """
 
 import os
-import subprocess
-from os.path import join
-from sysconfig import get_paths
 
 import pytest
 import sympy
 
 import pystencils
-from pystencils.cpu.cpujit import get_compiler_config
-from pystencils.include import get_pystencils_include_path
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import write_cached_content, write_file
 from pystencils_autodiff.backends.astnodes import TensorflowModule
-from pystencils_autodiff.tensorflow_jit import _compile_env
 
 
 def test_detect_cpu_vs_cpu():
@@ -44,11 +37,6 @@ def test_detect_cpu_vs_cpu():
 
 def test_native_tensorflow_compilation_cpu():
     tf = pytest.importorskip('tensorflow')
-
-    extra_flags = ['-I' + get_paths()['include'], '-I' + get_pystencils_include_path()]
-
-    compile_flags = tf.sysconfig.get_compile_flags()
-    link_flags = tf.sysconfig.get_link_flags()
 
     module_name = "Ololol"
 
@@ -85,11 +73,6 @@ def test_native_tensorflow_compilation_cpu():
 @pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
 def test_native_tensorflow_compilation_gpu():
     tf = pytest.importorskip('tensorflow')
-
-    extra_flags = ['-I' + get_paths()['include'], '-I' + get_pystencils_include_path()]
-
-    compile_flags = tf.sysconfig.get_compile_flags()
-    link_flags = tf.sysconfig.get_link_flags()
 
     module_name = "Ololol"
 
