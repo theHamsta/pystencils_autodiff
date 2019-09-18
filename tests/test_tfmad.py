@@ -165,10 +165,10 @@ def test_tfmad_gradient_check_torch():
 
     a, b, out = ps.fields("a, b, out: float[21,13]")
 
-    cont = ps.fd.Diff(a, 0) - ps.fd.Diff(a, 1) - \
-        ps.fd.Diff(b, 0) + ps.fd.Diff(b, 1)
+    cont = 2*ps.fd.Diff(a, 0) - 1.5*ps.fd.Diff(a, 1) - \
+        ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
     discretize = ps.fd.Discretization2ndOrder(dx=1)
-    discretization = discretize(cont)
+    discretization = discretize(cont) + 1.2*a.center
 
     assignment = ps.Assignment(out.center(), discretization)
     assignment_collection = ps.AssignmentCollection([assignment], [])
@@ -189,10 +189,49 @@ def test_tfmad_gradient_check_torch():
     function = auto_diff.create_tensorflow_op({
         a: a_tensor,
         b: b_tensor
-    },
-                                              backend='torch')
+    }, backend='torch')
 
     torch.autograd.gradcheck(function.apply, [a_tensor, b_tensor])
+
+
+@pytest.mark.parametrize('with_offsets', (True, False))
+def test_tfmad_gradient_check_torch_native(with_offsets):
+    torch = pytest.importorskip('torch')
+
+    a, b, out = ps.fields("a, b, out: float64[21,13]")
+
+    if with_offsets:
+        cont = 2*ps.fd.Diff(a, 0) - 1.5*ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
+        discretize = ps.fd.Discretization2ndOrder(dx=1)
+        discretization = discretize(cont)
+
+        assignment = ps.Assignment(out.center(), discretization + 1.2*a.center())
+    else:
+        assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b.center)
+    assignment_collection = ps.AssignmentCollection([assignment], [])
+    print('Forward')
+    print(assignment_collection)
+
+    print('Backward')
+    auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
+                                               diff_mode='transposed-forward')
+    backward = auto_diff.backward_assignments
+    print(backward)
+    print('Forward output fields (to check order)')
+    print(auto_diff.forward_input_fields)
+
+    a_tensor = torch.zeros(*a.shape, dtype=torch.float64, requires_grad=True).contiguous()
+    b_tensor = torch.zeros(*b.shape, dtype=torch.float64, requires_grad=True).contiguous()
+
+    dict = {
+        a: a_tensor,
+        b: b_tensor
+    }
+    function = auto_diff.create_tensorflow_op(dict, backend='torch_native')
+
+    import torch
+    torch.autograd.gradcheck(function.apply, tuple(
+        [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
 def get_curl(input_field: ps.Field, curl_field: ps.Field):
@@ -256,3 +295,7 @@ def test_tfmad_two_outputs():
 
     print('Backward')
     print(curl_op.backward_assignments)
+
+
+if __name__ == '__main__':
+    test_tfmad_gradient_check_torch_native()
