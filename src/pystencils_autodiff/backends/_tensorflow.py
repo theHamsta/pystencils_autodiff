@@ -69,9 +69,12 @@ def native_tensorflowop_from_autodiffop(autodiff_obj: pystencils_autodiff.AutoDi
                              **{autodiff_obj.forward_input_fields[i].name: inp for i, inp in enumerate(op.inputs)
                                 if autodiff_obj.forward_input_fields[i] in backward_ast.fields_accessed})
 
-    tf.RegisterGradient(stringcase.pascalcase("call_" + forward_ast.function_name))(
-        gradient_calculation
-    )
+    try:
+        tf.RegisterGradient(stringcase.pascalcase("call_" + forward_ast.function_name))(
+            gradient_calculation
+        )
+    except Exception:
+        pass
 
     return getattr(compiled_op, stringcase.snakecase(stringcase.pascalcase("call_" + forward_ast.function_name)))
 
