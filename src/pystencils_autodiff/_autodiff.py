@@ -469,16 +469,17 @@ Backward:
         return self.create_tensorflow_op(*args, backend='torch_native', **kwags)
 
     def create_tensorflow_op(self,
-                             inputfield_tensor_dict,
+                             inputfield_tensor_dict={},
                              forward_loop=None,
                              backward_loop=None,
+                             use_cuda=True,
                              backend='tensorflow'):
         """
         Creates custom differentiable Tensorflow Op from assignments.
         Will return either a single output tensor or a OrderedDict[field_name -> tf.Tensor] in case of multiple outputs
         """
         backend = backend.lower()
-        assert backend in AVAILABLE_BACKENDS, "\"{}\" is not a. Available backends: {}".format(
+        assert backend in AVAILABLE_BACKENDS, "\"{}\" is not a valid backend. Available backends: {}".format(
             backend, AVAILABLE_BACKENDS)
 
         additional_fields = [f for f in inputfield_tensor_dict.keys(
@@ -536,17 +537,20 @@ Backward:
 
             backward_loop = backward_function
 
-        if backend == 'tensorflow':
+        if backend == 'tensorflow_native':
             import pystencils_autodiff.backends._tensorflow
-            op = pystencils_autodiff.backends._tensorflow.tensorflowop_from_autodiffop(
-                self, inputfield_tensor_dict, forward_loop, backward_loop)
+            op = pystencils_autodiff.backends._tensorflow.native_tensorflowop_from_autodiffop(self, use_cuda)
         elif backend == 'torch':
             import pystencils_autodiff.backends._pytorch
             op = pystencils_autodiff.backends._pytorch.create_autograd_function(
                 self, inputfield_tensor_dict, forward_loop, backward_loop)
         elif backend == 'torch_native':
             import pystencils_autodiff.backends._torch_native
-            op = pystencils_autodiff.backends._torch_native.create_autograd_function(self, inputfield_tensor_dict)
+            op = pystencils_autodiff.backends._torch_native.create_autograd_function(self, use_cuda)
+        elif backend == 'tensorflow':
+            import pystencils_autodiff.backends._tensorflow
+            op = pystencils_autodiff.backends._tensorflow.tensorflowop_from_autodiffop(
+                self, inputfield_tensor_dict, forward_loop, backward_loop)
         else:
             raise NotImplementedError()
 

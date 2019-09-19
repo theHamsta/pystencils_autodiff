@@ -1,7 +1,12 @@
+from collections.abc import Iterable
+
+import stringcase
 import tensorflow as tf
 from tensorflow.compat.v1 import get_default_graph, py_func
 
 import pystencils_autodiff
+from pystencils_autodiff.backends.astnodes import TensorflowModule
+from pystencils_autodiff.tensorflow_jit import _hash
 
 _num_generated_ops = 0
 
@@ -34,6 +39,39 @@ def _py_func(func, inp, Tout, stateful=False, name=None, grad=None):
     # Add gradient override map
     with g.gradient_override_map({"PyFunc": rnd_name, "PyFuncStateless": rnd_name}):
         return py_func(func, inp, Tout, stateful=stateful, name=name)
+
+
+def native_tensorflowop_from_autodiffop(autodiff_obj: pystencils_autodiff.AutoDiffOp,
+                                        use_cuda):
+
+    if use_cuda:
+        forward_ast = autodiff_obj.forward_ast_gpu
+        backward_ast = autodiff_obj.backward_ast_gpu
+    else:
+        forward_ast = autodiff_obj.forward_ast_cpu
+        backward_ast = autodiff_obj.backward_ast_cpu
+
+    op_name = f'{autodiff_obj.op_name}_{_hash(str(autodiff_obj).encode()).hexdigest()}'
+    forward_ast.function_name = autodiff_obj.op_name + "_forward"
+    backward_ast.function_name = autodiff_obj.op_name + "_backward"
+    module = TensorflowModule(op_name, [forward_ast, backward_ast])
+    compiled_op = module.compile()
+
+    backward_func = getattr(compiled_op, stringcase.snakecase(
+        stringcase.pascalcase("call_" + backward_ast.function_name)))
+
+    def gradient_calculation(op, grad):
+        if isinstance(grad, Iterable):
+            grad = [grad]
+        return backward_func(**{autodiff_obj.backward_input_fields[i].name: g for i, g in enumerate(grad)},
+                             **{autodiff_obj.forward_input_fields[i].name: inp for i, inp in enumerate(op.inputs)
+                                if autodiff_obj.forward_input_fields[i] in backward_ast.fields_accessed})
+
+    tf.RegisterGradient(stringcase.pascalcase("call_" + forward_ast.function_name))(
+        gradient_calculation
+    )
+
+    return getattr(compiled_op, stringcase.snakecase(stringcase.pascalcase("call_" + forward_ast.function_name)))
 
 
 def tensorflowop_from_autodiffop(autodiffop: pystencils_autodiff.AutoDiffOp,

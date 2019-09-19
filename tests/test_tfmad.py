@@ -1,4 +1,5 @@
 import argparse
+import itertools
 import os
 
 import numpy as np
@@ -165,8 +166,8 @@ def test_tfmad_gradient_check_torch():
 
     a, b, out = ps.fields("a, b, out: float[21,13]")
 
-    cont = 2*ps.fd.Diff(a, 0) - 1.5*ps.fd.Diff(a, 1) - \
-        ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
+    cont = 2 * ps.fd.Diff(a, 0) - 1.5 * ps.fd.Diff(a, 1) \
+        - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
     discretize = ps.fd.Discretization2ndOrder(dx=1)
     discretization = discretize(cont) + 1.2*a.center
 
@@ -194,9 +195,10 @@ def test_tfmad_gradient_check_torch():
     torch.autograd.gradcheck(function.apply, [a_tensor, b_tensor])
 
 
-@pytest.mark.parametrize('with_offsets', (True, False))
-def test_tfmad_gradient_check_torch_native(with_offsets):
+@pytest.mark.parametrize('with_offsets, with_cuda', itertools.product((False, True), repeat=2))
+def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
     torch = pytest.importorskip('torch')
+    import torch
 
     a, b, out = ps.fields("a, b, out: float64[21,13]")
 
@@ -223,15 +225,73 @@ def test_tfmad_gradient_check_torch_native(with_offsets):
     a_tensor = torch.zeros(*a.shape, dtype=torch.float64, requires_grad=True).contiguous()
     b_tensor = torch.zeros(*b.shape, dtype=torch.float64, requires_grad=True).contiguous()
 
+    if with_cuda:
+        a_tensor = a_tensor.cuda()
+        b_tensor = b_tensor.cuda()
+
+    function = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='torch_native')
+
     dict = {
         a: a_tensor,
         b: b_tensor
     }
-    function = auto_diff.create_tensorflow_op(dict, backend='torch_native')
-
-    import torch
     torch.autograd.gradcheck(function.apply, tuple(
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
+
+
+# @pytest.mark.parametrize('with_offsets, with_cuda', itertools.product((False, True), repeat=2))
+@pytest.mark.parametrize('with_offsets, with_cuda, gradient_check', ((False, False, True),))
+def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):
+    pytest.importorskip('tensorflow')
+    import tensorflow as tf
+
+    a, b, out = ps.fields("a, b, out: double[21,13]")
+    print(a.shape)
+
+    if with_offsets:
+        cont = 2*ps.fd.Diff(a, 0) - 1.5*ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
+        discretize = ps.fd.Discretization2ndOrder(dx=1)
+        discretization = discretize(cont)
+
+        assignment = ps.Assignment(out.center(), discretization + 1.2*a.center())
+    else:
+        assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b.center)
+
+    assignment_collection = ps.AssignmentCollection([assignment], [])
+    print('Forward')
+    print(assignment_collection)
+
+    print('Backward')
+    auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
+                                               diff_mode='transposed-forward')
+    backward = auto_diff.backward_assignments
+    print(backward)
+    print('Forward output fields (to check order)')
+    print(auto_diff.forward_input_fields)
+
+    a_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
+    b_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
+    # out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
+    # print(out_tensor)
+
+    out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')(a=a_tensor, b=b_tensor)
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        sess.run(out_tensor)
+
+        if gradient_check:
+            gradient_error = compute_gradient_error_without_border(
+                [a_tensor, b_tensor], [a.shape, b.shape],
+                out_tensor,
+                out.shape,
+                num_border_pixels=2,
+                ndim=2,
+                debug=False)
+            print('error: %s' % gradient_error.max_error)
+            print('avg error: %s' % gradient_error.avg_error)
+
+            assert any(e < 1e-4 for e in gradient_error.values())
 
 
 def get_curl(input_field: ps.Field, curl_field: ps.Field):
