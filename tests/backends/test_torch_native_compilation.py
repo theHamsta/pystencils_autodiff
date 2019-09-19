@@ -13,7 +13,7 @@ import sympy
 
 import pystencils
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff._file_io import write_cached_content, write_file
+from pystencils_autodiff._file_io import write_cached_content
 from pystencils_autodiff.backends.astnodes import PybindModule, TorchModule
 
 torch = pytest.importorskip('torch')

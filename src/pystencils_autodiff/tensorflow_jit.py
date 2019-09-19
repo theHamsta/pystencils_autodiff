@@ -35,7 +35,7 @@ else:
     _do_not_link_flag = '-c'
     _output_flag = '-o'
     _shared_object_flag = '/DLL'
-    _include_flags = ['/I' + sysconfig.get_paths()['include'], '/I' + get_pystencils_include_path()]
+    _include_flags = ['-I' + sysconfig.get_paths()['include'], '-I' + get_pystencils_include_path()]
     _position_independent_flag = "/DTHIS_FLAG_DOES_NOTHING"
     get_compiler_config()['command'] = 'cl.exe'
     config_env = get_compiler_config()['env'] if 'env' in get_compiler_config() else {}
