@@ -239,8 +239,7 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
-# @pytest.mark.parametrize('with_offsets, with_cuda, gradient_check', ((True, False, False),))
-@pytest.mark.parametrize('with_offsets, with_cuda', itertools.product((False, True), repeat=3))
+@pytest.mark.parametrize('with_offsets, with_cuda, gradient_check', itertools.product((False, True), repeat=3))
 def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):
     pytest.importorskip('tensorflow')
     import tensorflow as tf
@@ -253,7 +252,7 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
         discretize = ps.fd.Discretization2ndOrder(dx=1)
         discretization = discretize(cont)
 
-        assignment = ps.Assignment(out.center(), discretization + 1.2*a.center())
+        assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b[1, 0])
     else:
         assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b.center)
 
@@ -263,7 +262,7 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
 
     print('Backward')
     auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
-                                               diff_mode='transposed-forward')
+                                               diff_mode='transposed')
     backward = auto_diff.backward_assignments
     print(backward)
     print('Forward output fields (to check order)')
@@ -355,7 +354,3 @@ def test_tfmad_two_outputs():
 
     print('Backward')
     print(curl_op.backward_assignments)
-
-
-if __name__ == '__main__':
-    test_tfmad_gradient_check_torch_native()
