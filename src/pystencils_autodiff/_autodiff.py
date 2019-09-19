@@ -35,7 +35,7 @@ Backward:
 
     def __init__(self,
                  forward_assignments: List[ps.Assignment],
-                 op_name: str = "AutoDiffOp",
+                 op_name: str = "autodiffop",
                  time_constant_fields: List[ps.Field] = [],
                  constant_fields: List[ps.Field] = [],
                  diff_fields_prefix='diff',  # TODO: remove!
