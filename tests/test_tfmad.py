@@ -275,7 +275,7 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
 
     out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')(a=a_tensor, b=b_tensor)
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(out_tensor)
 
