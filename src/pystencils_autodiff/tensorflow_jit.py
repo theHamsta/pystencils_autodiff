@@ -24,7 +24,7 @@ _hash = hashlib.md5
 if 'NVCC_BINARY' in os.environ:
     NVCC_BINARY = os.environ['NVCC_BINARY']
 else:
-    NVCC_BINARY = 'nvcc'
+    NVCC_BINARY = '/usr/local/cuda/bin/nvcc'
 
 # TODO: msvc
 if get_compiler_config()['os'] != 'windows':
