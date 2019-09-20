@@ -51,12 +51,12 @@ def native_tensorflowop_from_autodiffop(autodiff_obj: pystencils_autodiff.AutoDi
         forward_ast = autodiff_obj.forward_ast_cpu
         backward_ast = autodiff_obj.backward_ast_cpu
 
-    autodiff_obj.op_name = f'{autodiff_obj.op_name}_hash{_hash(str(autodiff_obj).encode()).hexdigest()}'
+    op_name = f'{autodiff_obj.op_name.lower()}_hash{_hash(str(autodiff_obj).encode()).hexdigest()}'
     if use_cuda:
-        autodiff_obj.op_name += '_cuda'
-    forward_ast.function_name = autodiff_obj.op_name + "_forward"
-    backward_ast.function_name = autodiff_obj.op_name + "_backward"
-    module = TensorflowModule(autodiff_obj.op_name, [forward_ast, backward_ast])
+        op_name += '_cuda'
+    forward_ast.function_name = op_name + "_forward"
+    backward_ast.function_name = op_name + "_backward"
+    module = TensorflowModule(op_name, [forward_ast, backward_ast])
     compiled_op = module.compile()
 
     backward_func = getattr(compiled_op, stringcase.snakecase(
