@@ -75,6 +75,7 @@ def link(object_files, destination_file=None, overwrite_destination_file=True, a
                       *_tf_link_flags,
                       *_include_flags,
                       *additional_link_flags,
+                      '-lcudart',
                       _shared_object_flag,
                       _output_flag]
     if not destination_file:
