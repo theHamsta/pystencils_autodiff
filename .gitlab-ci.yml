@@ -101,7 +101,6 @@ build-documentation:
     - python setup.py docs
   tags:
     - docker
-    - cuda
   artifacts:
     paths:
       - build/sphinx/html
