@@ -248,7 +248,7 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
     print(a.shape)
 
     if with_offsets:
-        cont = 2*ps.fd.Diff(a, 0) - 1.5*ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
+        cont = 2*ps.fd.Diff(a, 0) - 1.5 * ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
         discretize = ps.fd.Discretization2ndOrder(dx=1)
         discretization = discretize(cont)
 

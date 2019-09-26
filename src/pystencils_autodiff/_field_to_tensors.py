@@ -1,25 +1,19 @@
 import numpy as np
 
-try:
-    import tensorflow as tf
-except ImportError:
-    pass
-try:
-    import torch
-except ImportError:
-    pass
-
 
 def tf_constant_from_field(field, init_val=0):
+    import tensorflow as tf
     return tf.constant(init_val, dtype=field.dtype.numpy_dtype, shape=field.shape, name=field.name + '_constant')
 
 
 def tf_scalar_variable_from_field(field, init_val, constraint=None):
+    import tensorflow as tf
     var = tf.Variable(init_val, dtype=field.dtype.numpy_dtype, name=field.name + '_variable', constraint=constraint)
     return var * tf_constant_from_field(field, 1)
 
 
 def tf_variable_from_field(field, init_val=0, constraint=None):
+    import tensorflow as tf
     if isinstance(init_val, (int, float)):
         init_val *= np.ones(field.shape, field.dtype.numpy_dtype)
 
@@ -27,10 +21,12 @@ def tf_variable_from_field(field, init_val=0, constraint=None):
 
 
 def tf_placeholder_from_field(field):
+    import tensorflow as tf
     return tf.placeholder(dtype=field.dtype.numpy_dtype, name=field.name + '_placeholder', shape=field.shape)
 
 
 def torch_tensor_from_field(field, init_val=0, cuda=True, requires_grad=False):
+    import torch
     if isinstance(init_val, (int, float)):
         init_val *= np.ones(field.shape, field.dtype.numpy_dtype)
     device = torch.device('cuda' if cuda else 'cpu')
