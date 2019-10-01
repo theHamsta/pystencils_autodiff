@@ -2,15 +2,12 @@ from collections import OrderedDict
 
 from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils_autodiff.backends.astnodes import TorchModule
+from pystencils_autodiff.kernel_wrapper import OpWrapper
 from pystencils_autodiff.tensorflow_jit import _hash
-
-try:
-    import torch
-except ImportError:
-    pass
 
 
 def create_autograd_function(autodiff_obj, use_cuda):
+    import torch
     field_to_tensor_dict = dict()
     # Allocate output tensor for forward and backward pass
     # for field in autodiff_obj.forward_output_fields + autodiff_obj.backward_output_fields:
@@ -88,7 +85,14 @@ def create_autograd_function(autodiff_obj, use_cuda):
 
         return tuple(backward_output_tensors.values())
 
-    cls = type(op_name, (torch.autograd.Function,), {})
+    cls = type(op_name, (torch.autograd.Function, OpWrapper), {})
     cls.forward = forward
     cls.backward = backward
+    cls.kernel = forward
+    cls.ast = module
+    cls.parameters = forward_ast.get_parameters()
+    cls.forward_ast = forward_ast
+    cls.backward_ast = backward_ast
+    cls.num_regs = None
+
     return cls
