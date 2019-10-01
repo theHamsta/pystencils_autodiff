@@ -102,11 +102,4 @@ def test_module_printing_globals():
         print(module)
 
 
-def main():
-    test_module_printing()
-    test_module_printing_parameter()
-    test_module_printing_globals()
 
-
-if __name__ == '__main__':
-    main()

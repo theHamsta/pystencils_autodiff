@@ -4,10 +4,10 @@ import os
 
 import numpy as np
 import pytest
-import sympy as sp
 
 import pystencils as ps
 import pystencils_autodiff
+import sympy as sp
 from test_utils.gradient_check_tensorflow import compute_gradient_error_without_border
 
 
@@ -414,7 +414,3 @@ def test_tfmad_two_outputs():
 
     print('Backward')
     print(curl_op.backward_assignments)
-
-
-# if __name__ == "__main__":
-    # test_tfmad_gradient_check_torch_native(True, False)

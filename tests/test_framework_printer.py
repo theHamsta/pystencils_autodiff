@@ -149,10 +149,3 @@ def test_generate_kernel_call_only_texture_for_one_field():
         code = FrameworkIntegrationPrinter()(wrapper)
         print(code)
 
-
-def main():
-    test_generate_kernel_call_only_texture_for_one_field()
-
-
-if __name__ == '__main__':
-    main()
