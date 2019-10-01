@@ -14,9 +14,9 @@ import sysconfig
 from os.path import exists, join
 
 import p_tqdm
+
 import pystencils
 from pystencils.cpu.cpujit import get_cache_config, get_compiler_config, get_pystencils_include_path
-
 from pystencils_autodiff._file_io import read_file, write_file
 
 _hash = hashlib.md5
@@ -50,15 +50,6 @@ else:
     _link_cudart = '/link cudart'  # ???
 
 
-try:
-    import tensorflow as tf
-
-    _tf_compile_flags = tf.sysconfig.get_compile_flags()
-    _tf_link_flags = tf.sysconfig.get_link_flags()
-except ImportError:
-    pass
-
-
 def link(object_files, destination_file=None, overwrite_destination_file=True, additional_link_flags=[]):
     """Compiles given :param:`source_file` to a Tensorflow shared Library.
 
@@ -71,10 +62,11 @@ def link(object_files, destination_file=None, overwrite_destination_file=True, a
     :returns: Object containing all Tensorflow Ops in that shared library.
 
     """
+    import tensorflow as tf
     command_prefix = [get_compiler_config()['command'],
                       _position_independent_flag,
                       *object_files,
-                      *_tf_link_flags,
+                      *tf.sysconfig.get_link_flags(),
                       *_include_flags,
                       *additional_link_flags,
                       _link_cudart,
@@ -92,6 +84,8 @@ def link(object_files, destination_file=None, overwrite_destination_file=True, a
 
 
 def link_and_load(object_files, destination_file=None, overwrite_destination_file=True, additional_link_flags=[]):
+    import tensorflow as tf
+
     destination_file = link(object_files, destination_file, overwrite_destination_file, additional_link_flags)
     lib = tf.load_op_library(destination_file)
     return lib
@@ -125,6 +119,7 @@ if pystencils.gpucuda.cudajit.USE_FAST_MATH:
 def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=True, additional_compile_flags=[]):
     if 'tensorflow_host_compiler' not in get_compiler_config():
         get_compiler_config()['tensorflow_host_compiler'] = get_compiler_config()['command']
+    import tensorflow as tf
 
     if use_nvcc:
         command_prefix = [NVCC_BINARY,
@@ -140,7 +135,7 @@ def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=T
                           '-Xcompiler',
                           _position_independent_flag,
                           _do_not_link_flag,
-                          *_tf_compile_flags,
+                          *tf.sysconfig.get_compile_flags(),
                           *_include_flags,
                           *additional_compile_flags,
                           _output_flag]
@@ -149,7 +144,7 @@ def compile_file(file, use_nvcc=False, nvcc='nvcc', overwrite_destination_file=T
                           *(get_compiler_config()['flags']).split(' '),
                           file,
                           _do_not_link_flag,
-                          *_tf_compile_flags,
+                          *tf.sysconfig.get_compile_flags(),
                           *_include_flags,
                           *additional_compile_flags,
                           _output_flag]
@@ -168,6 +163,8 @@ def compile_sources_and_load(host_sources,
                              additional_compile_flags=[],
                              additional_link_flags=[],
                              compile_only=False):
+
+    import tensorflow as tf
 
     object_files = []
     sources = host_sources + cuda_sources
