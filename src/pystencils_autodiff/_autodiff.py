@@ -83,6 +83,9 @@ Backward:
             subexpressions = [a for a in forward_assignments if not isinstance(a.lhs, ps.Field.Access)]
             forward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
 
+        if boundary_handling == AutoDiffBoundaryHandling.VALID:
+            raise NotImplementedError('there seems to be still a bug with valid. -> Use "zeros"')
+
         self._forward_assignments = forward_assignments
         self._constant_fields = constant_fields
         self._time_constant_fields = time_constant_fields

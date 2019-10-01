@@ -195,6 +195,58 @@ def test_tfmad_gradient_check_torch():
     torch.autograd.gradcheck(function.apply, [a_tensor, b_tensor])
 
 
+@pytest.mark.xfail(reason="'valid' seems to be still broken", strict=True)
+def test_valid_boundary_handling_torch_native():
+    pytest.importorskip('tensorflow')
+    import tensorflow as tf
+
+    a, b, out = ps.fields("a, b, out: double[21,13]")
+    print(a.shape)
+
+    cont = 2*ps.fd.Diff(a, 0) - 1.5 * ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
+    discretize = ps.fd.Discretization2ndOrder(dx=1)
+    discretization = discretize(cont)
+
+    assignment = ps.Assignment(out.center(), discretization + 0.1*b[1, 0])
+
+    assignment_collection = ps.AssignmentCollection([assignment], [])
+
+    print('Forward')
+    print(assignment_collection)
+
+    print('Backward')
+    auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
+                                               boundary_handling='valid')
+    backward = auto_diff.backward_assignments
+    print(backward)
+    print('Forward output fields (to check order)')
+    print(auto_diff.forward_input_fields)
+
+    a_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
+    b_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
+    # out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
+    # print(out_tensor)
+
+    out_tensor = auto_diff.create_tensorflow_op(use_cuda=False, backend='tensorflow_native')(a=a_tensor, b=b_tensor)
+
+    with tf.compat.v1.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        sess.run(out_tensor)
+
+        if True:
+            gradient_error = compute_gradient_error_without_border(
+                [a_tensor, b_tensor], [a.shape, b.shape],
+                out_tensor,
+                out.shape,
+                num_border_pixels=0,
+                ndim=2,
+                debug=False)
+            print('error: %s' % gradient_error.max_error)
+            print('avg error: %s' % gradient_error.avg_error)
+
+            assert any(e < 1e-4 for e in gradient_error.values())
+
+
 @pytest.mark.parametrize('with_offsets, with_cuda', itertools.product((False, True), repeat=2))
 def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
     torch = pytest.importorskip('torch')
@@ -241,6 +293,7 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
+@pytest.mark.xfail(reason="", strict=False)
 @pytest.mark.parametrize('with_offsets, with_cuda, gradient_check', itertools.product((False, True), repeat=3))
 def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):
     pytest.importorskip('tensorflow')
