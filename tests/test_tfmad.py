@@ -247,7 +247,8 @@ def test_valid_boundary_handling_torch_native():
             assert any(e < 1e-4 for e in gradient_error.values())
 
 
-@pytest.mark.parametrize('with_offsets, with_cuda', itertools.product((False, True), repeat=2))
+@pytest.mark.parametrize('with_offsets', (False, True))
+@pytest.mark.parametrize('with_cuda', (False, pytest.param(True, marks=pytest.mark.xfail)))
 def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
     torch = pytest.importorskip('torch')
     import torch
@@ -293,8 +294,9 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
-@pytest.mark.xfail(reason="", strict=False)
-@pytest.mark.parametrize('with_offsets, with_cuda, gradient_check', itertools.product((False, True), repeat=3))
+@pytest.mark.parametrize('gradient_check', (False, 'with_gradient_check'))
+@pytest.mark.parametrize('with_cuda', (False, pytest.param('with_cuda', marks=pytest.mark.xfail)))
+@pytest.mark.parametrize('with_offsets', (False, 'with_offsets'))
 def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):
     pytest.importorskip('tensorflow')
     import tensorflow as tf
@@ -325,11 +327,13 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
     print('Forward output fields (to check order)')
     print(auto_diff.forward_input_fields)
 
+    tf.compat.v1.reset_default_graph()
     a_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
     b_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
     # out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
     # print(out_tensor)
 
+    # __import__('pdb').set_trace()
     out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')(a=a_tensor, b=b_tensor)
 
     with tf.compat.v1.Session() as sess:
