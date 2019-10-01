@@ -77,7 +77,7 @@ You can see the derivatives with respective to the two inputs multiplied by the 
         \hat{x}[0,0] ← diffz_C*(log(x_C*y_C) + 1)
         \hat{y}[0,0] ← diffz_C*x_C/y_C
 
-You can also use the class :class:`.autodiff.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
+You can also use the class :class:`pystencils_autodiff.AutoDiffOp` to obtain both the assignments (if you are curious) and auto-differentiable operations for Tensorflow...
 
 .. testcode::
 
