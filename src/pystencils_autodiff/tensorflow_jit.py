@@ -35,7 +35,7 @@ if get_compiler_config()['os'] != 'windows':
     _position_independent_flag = "-fPIC"
     _compile_env = os.environ.copy()
     _object_file_extension = '.o'
-    _link_cudart = ''
+    _link_cudart = '-lcudart'
 else:
     _do_not_link_flag = '-c'
     _output_flag = '-o'
@@ -77,6 +77,7 @@ def link(object_files, destination_file=None, overwrite_destination_file=True, a
                       *_tf_link_flags,
                       *_include_flags,
                       *additional_link_flags,
+                      _link_cudart,
                       _shared_object_flag,
                       _output_flag]
     if not destination_file:
