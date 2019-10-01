@@ -14,13 +14,16 @@ class OpWrapper(pystencils.kernel_wrapper.KernelWrapper):
     machine learning frameworks
     """
 
-    def __init__(self, kernel, parameters, forward_ast, backward_ast=None):
+    def __init__(self, kernel, parameters, ast, forward_ast=None, backward_ast=None):
         self.kernel = kernel
         self.backward_ast = backward_ast
+        self.forward_ast = forward_ast
         self.parameters = parameters
-        self.ast = forward_ast
+        self.ast = ast
+        self.forward_ast = forward_ast
         self.num_regs = None
 
     @property
     def code(self):
+        print('das')
         return FrameworkIntegrationPrinter().doprint(self.ast)

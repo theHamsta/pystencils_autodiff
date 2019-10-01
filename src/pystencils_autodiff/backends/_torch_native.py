@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+import sympy as sp
+
 from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils_autodiff.backends.astnodes import TorchModule
 from pystencils_autodiff.kernel_wrapper import OpWrapper
@@ -44,7 +46,8 @@ def create_autograd_function(autodiff_obj, use_cuda):
         input_tensors = dict()
         input_tensors.update({f.name: args[i] for i, f in enumerate(
             autodiff_obj.forward_input_fields) if f in forward_ast.fields_accessed})
-        assert all(f.shape == args[i].shape for i, f in enumerate(autodiff_obj.forward_input_fields))
+        assert all(f.shape == args[i].shape for i, f in enumerate(autodiff_obj.forward_input_fields)
+                   if not any(isinstance(s, sp.Symbol) for s in args[i].shape))
         assert all(f.strides == tuple(args[i].stride(j) for j in range(args[i].ndim))
                    for i, f in enumerate(autodiff_obj.forward_input_fields))
         for field in autodiff_obj.forward_output_fields:
@@ -94,5 +97,6 @@ def create_autograd_function(autodiff_obj, use_cuda):
     cls.forward_ast = forward_ast
     cls.backward_ast = backward_ast
     cls.num_regs = None
+    cls.code = str(module)
 
     return cls
