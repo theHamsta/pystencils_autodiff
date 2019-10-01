@@ -210,12 +210,14 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         assignment = ps.Assignment(out.center(), discretization + 1.2*a.center())
     else:
         assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b.center)
+
     assignment_collection = ps.AssignmentCollection([assignment], [])
     print('Forward')
     print(assignment_collection)
 
     print('Backward')
     auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
+                                               boundary_handling='zeros',
                                                diff_mode='transposed-forward')
     backward = auto_diff.backward_assignments
     print(backward)
@@ -252,17 +254,19 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
         discretize = ps.fd.Discretization2ndOrder(dx=1)
         discretization = discretize(cont)
 
-        assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b[1, 0])
+        assignment = ps.Assignment(out.center(), discretization + 0.1*b[1, 0])
+
     else:
         assignment = ps.Assignment(out.center(), 1.2*a.center + 0.1*b.center)
 
     assignment_collection = ps.AssignmentCollection([assignment], [])
+
     print('Forward')
     print(assignment_collection)
 
     print('Backward')
     auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
-                                               diff_mode='transposed')
+                                               boundary_handling='zeros')
     backward = auto_diff.backward_assignments
     print(backward)
     print('Forward output fields (to check order)')
@@ -354,3 +358,7 @@ def test_tfmad_two_outputs():
 
     print('Backward')
     print(curl_op.backward_assignments)
+
+
+# if __name__ == "__main__":
+    # test_tfmad_gradient_check_torch_native(True, False)
