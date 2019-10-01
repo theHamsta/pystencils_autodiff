@@ -73,6 +73,7 @@ full:
     - python setup.py doctest
   tags:
     - docker
+    - cuda
   artifacts:
     when: always
     paths:
