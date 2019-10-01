@@ -195,7 +195,7 @@ def test_tfmad_gradient_check_torch():
     torch.autograd.gradcheck(function.apply, [a_tensor, b_tensor])
 
 
-@pytest.mark.xfail(reason="'valid' seems to be still broken", strict=True)
+@pytest.mark.skip(reason="'valid' seems to be still broken", strict=True)
 def test_valid_boundary_handling_torch_native():
     pytest.importorskip('tensorflow')
     import tensorflow as tf
@@ -333,7 +333,6 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
     # out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
     # print(out_tensor)
 
-    # __import__('pdb').set_trace()
     out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')(a=a_tensor, b=b_tensor)
 
     with tf.compat.v1.Session() as sess:
