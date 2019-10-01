@@ -9,6 +9,31 @@ import sympy as sp
 import pystencils as ps
 import pystencils_autodiff._layout_fixer
 from pystencils_autodiff.backends import AVAILABLE_BACKENDS
+from pystencils_autodiff.transformations import add_fixed_constant_boundary_handling
+
+
+class AutoDiffBoundaryHandling(str, Enum):
+    """
+    Strategies for in-kernel boundary handling for AutoDiffOp
+
+    ======= =====================================================
+    Variant Effect
+    ======= =====================================================
+    None    No boundary handling is integrated into the kernels.
+            You have to do it yourself to obtain valid gradients.
+
+    ZEROS   Out-of-bound values are assumed to be zero.
+            This affects both forward and backward pass.
+
+    VALID   No boundary handling in the forward pass.
+            Gradients are calculated correctly in the backward
+            pass by assuming zeros when treating out-of-bounds
+            regions
+    ======= =====================================================
+    """
+    NONE = None
+    ZEROS = 'zeros'
+    VALID = 'valid'
 
 
 class DiffModes(str, Enum):
@@ -36,6 +61,7 @@ Backward:
     def __init__(self,
                  forward_assignments: List[ps.Assignment],
                  op_name: str = "autodiffop",
+                 boundary_handling: AutoDiffBoundaryHandling = None,
                  time_constant_fields: List[ps.Field] = [],
                  constant_fields: List[ps.Field] = [],
                  diff_fields_prefix='diff',  # TODO: remove!
@@ -71,6 +97,7 @@ Backward:
         self._forward_kernel_gpu = None
         self._backward_kernel_gpu = None
         self._do_common_subexpression_elimination = do_common_subexpression_elimination
+        self._boundary_handling = boundary_handling
         if backward_assignments:
             self._forward_assignments = forward_assignments
             self._forward_read_accesses = None
@@ -372,28 +399,63 @@ Backward:
     @property
     def forward_ast_cpu(self):
         if not self._forward_ast_cpu:
-            self._forward_ast_cpu = ps.create_kernel(self._forward_assignments, **self._kwargs)
+            if self._boundary_handling == AutoDiffBoundaryHandling.ZEROS:
+                self._forward_assignments = add_fixed_constant_boundary_handling(self._forward_assignments)
+                ghost_layers = 0
+            else:
+                ghost_layers = None
+            self._forward_ast_cpu = ps.create_kernel(self._forward_assignments,
+                                                     ghost_layers=ghost_layers,
+                                                     **self._kwargs)
+
         self._forward_ast_cpu.function_name = self.op_name + '_forward_cpu'
         return self._forward_ast_cpu
 
     @property
     def forward_ast_gpu(self):
         if not self._forward_ast_gpu:
-            self._forward_ast_gpu = ps.create_kernel(self._forward_assignments, target='gpu', **self._kwargs)
+            if self._boundary_handling == AutoDiffBoundaryHandling.ZEROS:
+                self._forward_assignments = add_fixed_constant_boundary_handling(self._forward_assignments)
+                ghost_layers = 0
+            else:
+                ghost_layers = None
+            self._forward_ast_gpu = ps.create_kernel(self._forward_assignments,
+                                                     ghost_layers=ghost_layers,
+                                                     target='gpu',
+                                                     **self._kwargs)
+
         self._forward_ast_gpu.function_name = self.op_name + '_forward_gpu'
         return self._forward_ast_gpu
 
     @property
     def backward_ast_cpu(self):
         if not self._backward_ast_cpu:
-            self._backward_ast_cpu = ps.create_kernel(self._backward_assignments, target='cpu', **self._kwargs)
+            if (self._boundary_handling == AutoDiffBoundaryHandling.ZEROS or
+                    self._boundary_handling == AutoDiffBoundaryHandling.VALID):
+                self._backward_assignments = add_fixed_constant_boundary_handling(self._backward_assignments)
+                ghost_layers = 0
+            else:
+                ghost_layers = None
+            self._backward_ast_cpu = ps.create_kernel(self._backward_assignments,
+                                                      ghost_layers=ghost_layers,
+                                                      target='cpu',
+                                                      **self._kwargs)
         self._backward_ast_cpu.function_name = self.op_name + '_backward_cpu'
         return self._backward_ast_cpu
 
     @property
     def backward_ast_gpu(self):
         if not self._backward_ast_gpu:
-            self._backward_ast_gpu = ps.create_kernel(self._backward_assignments, target='gpu', **self._kwargs)
+            if (self._boundary_handling == AutoDiffBoundaryHandling.ZEROS or
+                    self._boundary_handling == AutoDiffBoundaryHandling.VALID):
+                self._backward_assignments = add_fixed_constant_boundary_handling(self._backward_assignments)
+                ghost_layers = 0
+            else:
+                ghost_layers = None
+            self._backward_ast_gpu = ps.create_kernel(self._backward_assignments,
+                                                      ghost_layers=ghost_layers,
+                                                      target='gpu',
+                                                      **self._kwargs)
         self._backward_ast_gpu.function_name = self.op_name + '_backward_gpu'
         return self._backward_ast_gpu
 
