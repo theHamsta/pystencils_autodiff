@@ -20,8 +20,8 @@ from pystencils_autodiff.transformations import add_fixed_constant_boundary_hand
 
 try:
     import pyconrad.autoinit
-except Exception:
-    import unittest
+except ImportError:
+    import unittest.mock
     pyconrad = unittest.mock.MagicMock()
 
 
