@@ -67,6 +67,7 @@ full:
   script:
     - apt install -y ninja-build
     - python -m pip install -U cppimport pybind11
+    - python -m pip install --upgrade git+https://github.com/sympy/sympy.git
     - python -m pip install -e .
     - python -m pip install git+https://i10git.cs.fau.de/pycodegen/pystencils.git
     - python setup.py test
