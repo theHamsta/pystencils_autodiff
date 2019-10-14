@@ -102,7 +102,11 @@ class TorchModule(JinjaCppFile):
         if not exists(file_name):
             write_file(file_name, source_code)
         # TODO: propagate extra headers
-        torch_extension = load(hash, [file_name], with_cuda=self.is_cuda)
+        torch_extension = load(hash,
+                               [file_name],
+                               with_cuda=self.is_cuda,
+                               extra_include_paths=[
+                                   get_pycuda_include_path(), get_pystencils_include_path()])
         return torch_extension
 
 
