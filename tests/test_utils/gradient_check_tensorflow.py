@@ -24,7 +24,7 @@ def compute_gradient_error_without_border(x,
     This may be necessary since `pystencils` leaves some ghost layer/boundary regions uninitialized.
     """
 
-    jacobi_list = tf.test.compute_gradient(
+    jacobi_list = tf.compat.v1.test.compute_gradient(
         x, x_shape, y, y_shape, x_init_value, delta)
 
     if not isinstance(x_shape, list):

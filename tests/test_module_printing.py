@@ -8,12 +8,11 @@
 
 """
 import pytest
-import sympy
 
 import pystencils
+import sympy
 from pystencils_autodiff import create_backward_assignments
-from pystencils_autodiff.backends.astnodes import (
-    PybindFunctionWrapping, PybindModule, PybindPythonBindings, TensorflowModule, TorchModule)
+from pystencils_autodiff.backends.astnodes import PybindModule, TensorflowModule, TorchModule
 
 try:
     from pystencils.interpolation_astnodes import TextureCachedField
@@ -102,4 +101,5 @@ def test_module_printing_globals():
         print(module)
 
 
-
+if __name__ == "__main__":
+    test_module_printing_globals()

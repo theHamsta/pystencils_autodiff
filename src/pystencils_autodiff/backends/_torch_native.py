@@ -88,7 +88,7 @@ def create_autograd_function(autodiff_obj, use_cuda):
 
         return tuple(backward_output_tensors.values())
 
-    cls = type(op_name, (torch.autograd.Function, OpWrapper), {})
+    cls = type(op_name, (torch.autograd.Function,), {})
     cls.forward = forward
     cls.backward = backward
     cls.kernel = forward
