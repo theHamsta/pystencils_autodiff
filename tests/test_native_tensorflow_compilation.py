@@ -71,6 +71,7 @@ def test_native_tensorflow_compilation_cpu():
 
 
 @pytest.mark.skipif("TRAVIS" in os.environ, reason="nvcc compilation currently not working on TRAVIS")
+@pytest.mark.skipif("GITLAB_CI" in os.environ, reason="linking against cudart does not work on GITLAB_CI")
 def test_native_tensorflow_compilation_gpu():
     tf = pytest.importorskip('tensorflow')
 
