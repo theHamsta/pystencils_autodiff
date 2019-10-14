@@ -69,7 +69,7 @@ full:
     - python -m pip install -U cppimport pybind11
     - python -m pip install --upgrade git+https://github.com/sympy/sympy.git
     - python -m pip install -e .
-    - python -m pip install git+https://i10git.cs.fau.de/theHamsta/pystencils.git
+    - python -m pip install git+https://i10git.cs.fau.de/seitz/pystencils.git
     - python setup.py test
     - python setup.py doctest
   tags:
