@@ -69,8 +69,8 @@ full:
     - python -m pip install -U cppimport pybind11
     - python -m pip install --upgrade git+https://github.com/sympy/sympy.git
     - python -m pip install -e .
-    - python -m pip install git+https://i10git.cs.fau.de/seitz/pystencils.git@89ed566a9f08dfeb2faa98a5bd9110acc2edff5a
-    - python setup.py test
+    - python -m pip install git+https://i10git.cs.fau.de/seitz/pystencils.git
+    - pytest
     - python setup.py doctest
   tags:
     - docker
