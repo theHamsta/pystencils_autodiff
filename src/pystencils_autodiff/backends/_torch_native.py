@@ -1,10 +1,8 @@
 from collections import OrderedDict
 
 import sympy as sp
-
 from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils_autodiff.backends.astnodes import TorchModule
-from pystencils_autodiff.kernel_wrapper import OpWrapper
 from pystencils_autodiff.tensorflow_jit import _hash
 
 
