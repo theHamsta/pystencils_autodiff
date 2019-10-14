@@ -248,7 +248,8 @@ def test_valid_boundary_handling_torch_native():
 
 
 @pytest.mark.parametrize('with_offsets', (False, True))
-@pytest.mark.parametrize('with_cuda', (False, pytest.param(True, marks=pytest.mark.xfail)))
+@pytest.mark.parametrize('with_cuda',
+                         (False, pytest.param(True, marks=pytest.mark.skipif('CI' in os.environ, reason='SEGFAULT on CI'))))  # noqa
 def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
     torch = pytest.importorskip('torch')
     import torch
