@@ -11,13 +11,14 @@ waLBerla currently uses `pystencils-walberla <https://pypi.org/project/pystencil
 """
 import itertools
 from collections.abc import Iterable
+from functools import reduce
 from typing import Any, List, Set
 
 import jinja2
 import numpy as np
-import sympy as sp
 
 import pystencils
+import sympy as sp
 from pystencils.astnodes import KernelFunction, Node, NodeOrExpr, ResolvedFieldAccess
 from pystencils.data_types import TypedSymbol
 from pystencils.kernelparameters import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
@@ -95,7 +96,7 @@ class NativeTextureBinding(pystencils.backends.cbackend.CustomCodeNode):
 
 cudaTextureDesc {texture_desc}{{}};
 cudaTextureObject_t {texture_object}=0;
-cudaCreateTextureObject(&{texture_object}, &{resource_desc}, &texture_desc, null_ptr);
+cudaCreateTextureObject(&{texture_object}, &{resource_desc}, &{texture_desc}, nullptr);
 {texture_desc}.readMode = cudaReadModeElementType;
 auto {texture_object}Destroyer = [&](){{
    cudaDestroyTextureObject({texture_object});
@@ -153,7 +154,7 @@ auto {texture_object}Destroyer = [&](){{
             device_ptr=self._device_ptr,
             cuda_channel_format=self._get_channel_format_string(),
             bits_per_channel=self._dtype.itemsize * 8,
-            total_size="TODO!!!")
+            total_size=self._dtype.itemsize * reduce(lambda x, y: x*y, self._shape, 1))
         return code
 
 
