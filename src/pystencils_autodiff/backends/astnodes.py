@@ -108,7 +108,7 @@ class TorchModule(JinjaCppFile):
                                [file_name],
                                with_cuda=self.is_cuda,
                                extra_cflags=['--std=c++14'],
-                               build_directory=join(cache_dir, 'object_cache'),
+                               build_directory=get_cache_config()['object_cache'],
                                extra_include_paths=[get_pycuda_include_path(),
                                                     get_pystencils_include_path()])
         return torch_extension
