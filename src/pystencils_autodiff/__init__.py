@@ -20,4 +20,3 @@ __all__ = ['backends',
 
 sys.modules['pystencils.autodiff'] = pystencils_autodiff
 sys.modules['pystencils.autodiff.backends'] = pystencils_autodiff.backends
-

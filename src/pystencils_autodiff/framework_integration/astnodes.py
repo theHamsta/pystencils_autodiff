@@ -154,7 +154,7 @@ auto {texture_object}Destroyer = [&](){{
             device_ptr=self._device_ptr,
             cuda_channel_format=self._get_channel_format_string(),
             bits_per_channel=self._dtype.itemsize * 8,
-            total_size=self._dtype.itemsize * reduce(lambda x, y: x*y, self._shape, 1))
+            total_size=self._dtype.itemsize * reduce(lambda x, y: x * y, self._shape, 1))
         return code
 
 
