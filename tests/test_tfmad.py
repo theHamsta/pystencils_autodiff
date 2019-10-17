@@ -98,69 +98,6 @@ def test_tfmad_gradient_check():
         assert any(e < 1e-4 for e in gradient_error.values())
 
 
-def check_tfmad_vector_input_data(args):
-    dtype = args.dtype
-    domain_shape = args.domain_shape
-    ndim = len(domain_shape)
-
-    # create arrays
-    c_arr = np.zeros(domain_shape)
-    v_arr = np.zeros(domain_shape + (ndim, ))
-
-    # create fields
-    c, v, c_next = ps.fields("c, v(2), c_next: % s[ % i, % i]" %
-                             ("float" if dtype == np.float32 else "double",
-                              domain_shape[0], domain_shape[1]),
-                             c=c_arr,
-                             v=v_arr,
-                             c_next=c_arr)
-
-    # write down advection diffusion pde
-    # the equation is represented by a single term and an implicit "=0" is assumed.
-    adv_diff_pde = ps.fd.transient(c) - ps.fd.diffusion(
-        c, sp.Symbol("D")) + ps.fd.advection(c, v)
-
-    discretize = ps.fd.Discretization2ndOrder(args.dx, args.dt)
-    discretization = discretize(adv_diff_pde)
-    discretization = discretization.subs(sp.Symbol("D"),
-                                         args.diffusion_coefficient)
-    forward_assignments = ps.AssignmentCollection(
-        [ps.Assignment(c_next.center(), discretization)], [])
-
-    autodiff = pystencils_autodiff.AutoDiffOp(
-        forward_assignments,
-        diff_mode='transposed-forward')  # , constant_fields=[v]
-
-    print('Forward assignments:')
-    print(autodiff.forward_assignments)
-    print('Backward assignments:')
-    print(autodiff.backward_assignments)
-
-
-def test_tfmad_vector_input_data():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--domain_shape',
-                        default=(100, 30),
-                        nargs=2,
-                        type=int,
-                        help="")
-    parser.add_argument('--dx', default=1, type=float, help="")
-    parser.add_argument('--dt', default=0.01, type=float, help="")
-    parser.add_argument('--diffusion_coefficient',
-                        default=1,
-                        type=float,
-                        help="")
-    parser.add_argument('--num_total_time_steps', default=100, type=int)
-    parser.add_argument('--num_time_steps_for_op', default=1, type=int)
-    parser.add_argument('--learning_rate', default=1e-2, type=float)
-    parser.add_argument('--dtype', default=np.float64, type=np.dtype)
-    parser.add_argument('--num_optimization_steps', default=2000, type=int)
-    parser.add_argument('vargs', nargs='*')
-
-    args = parser.parse_args()
-    check_tfmad_vector_input_data(args)
-
-
 def test_tfmad_gradient_check_torch():
     torch = pytest.importorskip('torch')
 

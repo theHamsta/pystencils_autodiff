@@ -9,9 +9,9 @@ from os.path import dirname, isfile, join
 
 import numpy as np
 import pytest
-import sympy
 
 import pystencils
+import sympy
 from pystencils_autodiff import create_backward_assignments
 from pystencils_autodiff._file_io import write_cached_content
 from pystencils_autodiff.backends.astnodes import PybindModule, TorchModule
@@ -147,6 +147,7 @@ def test_torch_native_compilation_gpu():
 
 @pytest.mark.parametrize('target', ('gpu', 'cpu'))
 def test_execute_torch(target):
+    import pycuda.autoinit
     module_name = "Ololol" + target
 
     z, y, x = pystencils.fields("z, y, x: [20,40]")
@@ -234,3 +235,15 @@ def test_reproducability():
             output_0 = new_output
 
         assert output_0 == new_output
+
+
+def test_fields_from_torch_tensor():
+    torch = pytest.importorskip('torch')
+    import torch
+    a, b = torch.zeros((20, 10)), torch.zeros((6, 7))
+    x, y = pystencils.fields(x=a, y=b)
+    print(x)
+    print(y)
+    c = torch.zeros((20, 10)).cuda()
+    z = pystencils.fields(z=c)
+    print(z)

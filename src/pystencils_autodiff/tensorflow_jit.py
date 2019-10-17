@@ -16,6 +16,7 @@ from os.path import exists, join
 import p_tqdm
 
 import pystencils
+import pystencils.gpucuda
 from pystencils.cpu.cpujit import get_cache_config, get_compiler_config, get_pystencils_include_path
 from pystencils_autodiff._file_io import read_file, write_file
 

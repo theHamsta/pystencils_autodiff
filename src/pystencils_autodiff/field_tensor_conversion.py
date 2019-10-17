@@ -1,5 +1,48 @@
 import numpy as np
 
+import sympy
+from pystencils import Field
+
+
+class _WhatEverClass:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+
+def _torch_tensor_to_numpy_shim(tensor):
+
+    from pystencils.autodiff.backends._pytorch import torch_dtype_to_numpy
+    fake_array = _WhatEverClass(
+        strides=[tensor.stride(i) for i in range(len(tensor.shape))],
+        shape=tensor.shape,
+        dtype=torch_dtype_to_numpy(tensor.dtype))
+    return fake_array
+
+
+def _create_field_from_array_like(field_name, maybe_array):
+    try:
+        import torch
+    except ImportError:
+        torch = None
+
+    if torch:
+        # Torch tensors don't have t.strides but t.stride(dim). Let's fix that!
+        if isinstance(maybe_array, torch.Tensor):
+            maybe_array = _torch_tensor_to_numpy_shim(maybe_array)
+
+    return Field.create_from_numpy_array(field_name, maybe_array)
+
+
+def coerce_to_field(field_name, array_like):
+    if isinstance(array_like, Field):
+        return array_like.new_field_with_different_name(field_name, array_like)
+    return _create_field_from_array_like(field_name, array_like)
+
+
+def is_array_like(a):
+    import pycuda.gpuarray
+    return (hasattr(a, '__array__') or isinstance(a, pycuda.gpuarray.GPUArray)) and not isinstance(a, sympy.Matrix)
+
 
 def tf_constant_from_field(field, init_val=0):
     import tensorflow as tf
