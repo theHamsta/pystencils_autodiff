@@ -13,7 +13,6 @@ from collections.abc import Iterable
 from os.path import dirname, exists, join
 
 from pystencils.astnodes import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
-from pystencils.cache import cache_dir
 from pystencils.cpu.cpujit import get_cache_config
 from pystencils.include import get_pycuda_include_path, get_pystencils_include_path
 from pystencils_autodiff._file_io import read_template_from_file, write_file
