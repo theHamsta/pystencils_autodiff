@@ -33,12 +33,6 @@ def add_fixed_constant_boundary_handling(assignments, with_cse=True):
             for a in assignment.rhs.atoms(Field.Access) if not a.is_absolute_access
         })) for assignment in assignments.all_assignments]
 
-    subs = [{a: ConditionalFieldAccess(a, is_out_of_bound(
-        sp.Matrix(a.offsets) + x_vector(ndim), common_shape))
-        for a in assignment.rhs.atoms(Field.Access) if not a.is_absolute_access
-    } for assignment in assignments.all_assignments]
-    print(subs)
-
     if with_cse:
         safe_assignments = sympy_cse(pystencils.AssignmentCollection(safe_assignments))
         return safe_assignments
