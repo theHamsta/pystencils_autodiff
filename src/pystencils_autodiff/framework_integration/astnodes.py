@@ -78,6 +78,9 @@ class DestructuringBindingsForFieldClass(Node):
         """Inplace! substitute, similar to sympy's but modifies the AST inplace."""
         self.body.subs(subs_dict)
 
+    def __repr__(self):
+        return f'Destructuring of Tensors {self.symbols_defined}\n' + self.body.__repr__()
+
     @property
     def func(self):
         return self.__class__
