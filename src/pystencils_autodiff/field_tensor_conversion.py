@@ -30,7 +30,7 @@ def _torch_tensor_to_numpy_shim(tensor):
 
     from pystencils.autodiff.backends._pytorch import torch_dtype_to_numpy
     fake_array = _WhatEverClass(
-        strides=[tensor.stride(i) for i in range(len(tensor.shape))],
+        strides=[tensor.stride(i) * tensor.storage().element_size() for i in range(len(tensor.shape))],
         shape=tensor.shape,
         dtype=torch_dtype_to_numpy(tensor.dtype))
     return fake_array
