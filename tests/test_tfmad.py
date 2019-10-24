@@ -1,4 +1,3 @@
-import argparse
 import os
 
 import numpy as np
@@ -6,7 +5,6 @@ import pytest
 
 import pystencils as ps
 import pystencils_autodiff
-import sympy as sp
 from test_utils.gradient_check_tensorflow import compute_gradient_error_without_border
 
 
