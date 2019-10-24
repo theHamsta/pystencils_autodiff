@@ -234,7 +234,7 @@ class JinjaCppFile(Node):
     def args(self):
         """Returns all arguments/children of this node."""
         ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, str))]
-        iterables_of_ast_nodes = [a for a in self.ast_dict.values() if not isinstance(a, (Node, str))]
+        iterables_of_ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, Iterable)]
         return ast_nodes + list(itertools.chain.from_iterable(iterables_of_ast_nodes))
 
     @property
