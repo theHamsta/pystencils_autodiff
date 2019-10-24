@@ -282,4 +282,4 @@ class JinjaCppFile(Node):
         return self.TEMPLATE.render(render_dict)
 
     def __repr__(self):
-        return self.TEMPLATE.render(self.ast_dict)
+        return f'{str(self.__class__)}:\n {self.TEMPLATE.render(self.ast_dict)}'

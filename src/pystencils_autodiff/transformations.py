@@ -8,7 +8,6 @@
 
 """
 import itertools
-
 import sympy as sp
 
 import pystencils
