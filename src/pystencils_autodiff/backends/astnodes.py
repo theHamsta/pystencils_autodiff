@@ -8,6 +8,7 @@
 
 """
 
+import os
 import sys
 from collections.abc import Iterable
 from os.path import dirname, exists, join
@@ -102,12 +103,15 @@ class TorchModule(JinjaCppFile):
 
         if not exists(file_name):
             write_file(file_name, source_code)
-        # TODO: propagate extra headers
+
+        build_dir = join(get_cache_config()['object_cache'], self.module_name)
+        os.makedirs(build_dir, exist_ok=True)
+
         torch_extension = load(hash,
                                [file_name],
                                with_cuda=self.is_cuda,
                                extra_cflags=['--std=c++14'],
-                               build_directory=get_cache_config()['object_cache'],
+                               build_directory=build_dir,
                                extra_include_paths=[get_pycuda_include_path(),
                                                     get_pystencils_include_path()])
         return torch_extension
