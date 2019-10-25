@@ -99,18 +99,18 @@ class TorchModule(JinjaCppFile):
         file_extension = '.cu' if self.is_cuda else '.cpp'
         source_code = str(self)
         hash = _hash(source_code.encode()).hexdigest()
-        file_name = join(get_cache_config()['object_cache'], f'{hash}{file_extension}')
+        build_dir = join(get_cache_config()['object_cache'], self.module_name)
+        os.makedirs(build_dir, exist_ok=True)
+        file_name = join(build_dir, f'{hash}{file_extension}')
 
         if not exists(file_name):
             write_file(file_name, source_code)
-
-        build_dir = join(get_cache_config()['object_cache'], self.module_name)
-        os.makedirs(build_dir, exist_ok=True)
 
         torch_extension = load(hash,
                                [file_name],
                                with_cuda=self.is_cuda,
                                extra_cflags=['--std=c++14'],
+                               extra_cuda_cflags=['-std=c++14'],
                                build_directory=build_dir,
                                extra_include_paths=[get_pycuda_include_path(),
                                                     get_pystencils_include_path()])
