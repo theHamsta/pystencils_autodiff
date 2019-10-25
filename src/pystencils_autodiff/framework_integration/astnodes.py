@@ -15,7 +15,6 @@ from functools import reduce
 from typing import Any, List, Set
 
 import jinja2
-import numpy as np
 
 import pystencils
 import sympy as sp
@@ -268,7 +267,7 @@ copyParams.extent = {{{", ".join(reversed(self._shape))}}};
 copyParams.kind = cudaMemcpyDeviceToDevice;
 cudaMemcpy3D(&{{copy_params}});"""  # noqa
         elif self._texture.field.ndim == 2:
-            # cudaMemcpy2DToArray(cudaArray_t dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
+            # noqa: cudaMemcpy2DToArray(cudaArray_t dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
 
             return f"""cudaMemcpy2DToArray({array},
                     0u,
@@ -278,7 +277,7 @@ cudaMemcpy3D(&{{copy_params}});"""  # noqa
                     {self._texture.field.shape[-1]},
                     {self._texture.field.shape[-2]},
                     cudaMemcpyDeviceToDevice);
- """
+ """  # noqa
         else:
             raise NotImplementedError()
 
