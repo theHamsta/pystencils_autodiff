@@ -258,14 +258,15 @@ cudaMalloc{ndim}Array(&{array}, &channel_desc_{texture_name}, """ + (
         array = 'array_' + texture_name
         if self._texture.field.ndim == 3:
             copy_params = f'cpy_{texture_name}_params'
-            return f"""cudaMemcpy3DParams {copy_params}{{}};
+            return f"""cudaMemcpy3DParms {copy_params}{{}};
 {copy_params}.srcPtr = {{{self._device_ptr},
-                       {self._texture.field.strides[-1] * self._texture.field.shape[-1] * self._dtype.numpy_dtype.itemsize},
-                       {self._texture.field.shape[-1], self._texture.field.shape[-2]}}};
-{copy_params}.dsrArray = {array};
-copyParams.extent = {{{", ".join(reversed(self._shape))}}};
-copyParams.kind = cudaMemcpyDeviceToDevice;
-cudaMemcpy3D(&{{copy_params}});"""  # noqa
+                        {self._texture.field.strides[-1] * self._texture.field.shape[-1] * self._dtype.numpy_dtype.itemsize},
+                        {self._texture.field.shape[-1]},
+                        {self._texture.field.shape[-2]}}};
+{copy_params}.dstArray = {array};
+{copy_params}.extent = {{{", ".join(str(s) for s in reversed(self._shape))}}};
+{copy_params}.kind = cudaMemcpyDeviceToDevice;
+cudaMemcpy3D(&{copy_params});"""  # noqa
         elif self._texture.field.ndim == 2:
             # noqa: cudaMemcpy2DToArray(cudaArray_t dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
 
