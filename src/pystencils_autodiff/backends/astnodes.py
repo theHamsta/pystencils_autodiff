@@ -59,6 +59,7 @@ class PybindArrayDestructuring(DestructuringBindingsForFieldClass):
     }
 
     CLASS_NAME_TEMPLATE = "pybind11::array_t<{dtype}>"
+    ARGS_AS_REFERENCE = False
 
     headers = ["<pybind11/numpy.h>"]
 

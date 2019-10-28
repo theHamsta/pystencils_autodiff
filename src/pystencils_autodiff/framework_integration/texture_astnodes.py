@@ -187,7 +187,7 @@ cudaMalloc{ndim}Array(&{array}, &channel_desc_{texture_name}, """ + (
             copy_params = f'cpy_{texture_name}_params'
             return f"""cudaMemcpy3DParms {copy_params}{{}};
 {copy_params}.srcPtr = {{{self._device_ptr},
-                        {self._texture.field.strides[-1] * self._texture.field.shape[-1] * self._dtype.numpy_dtype.itemsize},
+                        {self._texture.field.strides[-1] * self._texture.field.shape[-2]},
                         {self._texture.field.shape[-1]},
                         {self._texture.field.shape[-2]}}};
 {copy_params}.dstArray = {array};
@@ -201,7 +201,7 @@ cudaMemcpy3D(&{copy_params});"""  # noqa
                     0u,
                     0u,
                     {self._device_ptr},
-                    {self._texture.field.strides[-1] * self._texture.field.shape[-1] * self._dtype.numpy_dtype.itemsize},
+                    {self._texture.field.strides[-1]},
                     {self._texture.field.shape[-1]},
                     {self._texture.field.shape[-2]},
                     cudaMemcpyDeviceToDevice);
