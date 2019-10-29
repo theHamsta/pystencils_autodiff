@@ -40,11 +40,11 @@ def create_autograd_function(autodiff_obj, use_cuda):
         kwargs.update(class_kwargs)
         # TODO: drop contiguous requirement
         if use_cuda:
-            args = [a.contiguous().cuda() for a in args]
-            kwargs = {k: v.contiguous().cuda() for k, v in kwargs.items()}
+            args = [a.contiguous().cuda() if isinstance(a, torch.Tensor) else a for a in args]
+            kwargs = {k: v.contiguous().cuda() if isinstance(v, torch.Tensor) else v for k, v in kwargs.items()}
         else:
-            args = [a.contiguous().cpu() for a in args]
-            kwargs = {k: v.contiguous().cpu() for k, v in kwargs.items()}
+            args = [a.contiguous().cpu() if isinstance(a, torch.Tensor) else a for a in args]
+            kwargs = {k: v.contiguous().cpu() if isinstance(v, torch.Tensor) else v for k, v in kwargs.items()}
 
         # assert all(f.shape == args[i].shape for i, f in enumerate(autodiff_obj.forward_input_fields)
         # if not any(isinstance(s, sp.Symbol) for s in args[i].shape))

@@ -55,10 +55,11 @@ class PybindArrayDestructuring(DestructuringBindingsForFieldClass):
     CLASS_TO_MEMBER_DICT = {
         FieldPointerSymbol: "mutable_data()",
         FieldShapeSymbol: "shape({dim})",
-        FieldStrideSymbol: "strides({dim})"
+        FieldStrideSymbol: "strides({dim}) / sizeof({dtype})"
     }
 
     CLASS_NAME_TEMPLATE = "pybind11::array_t<{dtype}>"
+    ARGS_AS_REFERENCE = False
 
     headers = ["<pybind11/numpy.h>"]
 
@@ -77,7 +78,10 @@ class TorchModule(JinjaCppFile):
         """
         if not isinstance(kernel_asts, Iterable):
             kernel_asts = [kernel_asts]
-        wrapper_functions = [self.generate_wrapper_function(k) for k in kernel_asts]
+        wrapper_functions = [self.generate_wrapper_function(k)
+                             if not isinstance(k, WrapperFunction)
+                             else k for k in kernel_asts]
+        kernel_asts = [k for k in kernel_asts if not isinstance(k, WrapperFunction)]
         self.module_name = module_name
 
         ast_dict = {
@@ -99,18 +103,18 @@ class TorchModule(JinjaCppFile):
         file_extension = '.cu' if self.is_cuda else '.cpp'
         source_code = str(self)
         hash = _hash(source_code.encode()).hexdigest()
-        file_name = join(get_cache_config()['object_cache'], f'{hash}{file_extension}')
+        build_dir = join(get_cache_config()['object_cache'], self.module_name)
+        os.makedirs(build_dir, exist_ok=True)
+        file_name = join(build_dir, f'{hash}{file_extension}')
 
         if not exists(file_name):
             write_file(file_name, source_code)
-
-        build_dir = join(get_cache_config()['object_cache'], self.module_name)
-        os.makedirs(build_dir, exist_ok=True)
 
         torch_extension = load(hash,
                                [file_name],
                                with_cuda=self.is_cuda,
                                extra_cflags=['--std=c++14'],
+                               extra_cuda_cflags=['-std=c++14'],
                                build_directory=build_dir,
                                extra_include_paths=[get_pycuda_include_path(),
                                                     get_pystencils_include_path()])
