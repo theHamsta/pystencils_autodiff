@@ -1,6 +1,6 @@
 import numpy as np
-
 import sympy
+
 from pystencils import Field
 from pystencils.field import FieldType
 
@@ -36,8 +36,11 @@ def _torch_tensor_to_numpy_shim(tensor):
     return fake_array
 
 
-def create_field_from_array_like(field_name, maybe_array):
-    if isinstance(maybe_array, ArrayWithIndexDimensions):
+def create_field_from_array_like(field_name, maybe_array, annotations=None):
+    if annotations and isinstance(annotations, dict):
+        index_dimensions = annotations.get('index_dimensions', 0)
+        field_type = annotations.get('field_type', FieldType.GENERIC)
+    elif isinstance(maybe_array, ArrayWithIndexDimensions):
         index_dimensions = maybe_array.index_dimensions
         field_type = maybe_array.field_type
         maybe_array = maybe_array.array
