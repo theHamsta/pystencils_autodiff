@@ -27,7 +27,7 @@ from pystencils_autodiff.tensorflow_jit import _hash
 
 class TorchTensorDestructuring(DestructuringBindingsForFieldClass):
     CLASS_TO_MEMBER_DICT = {
-        FieldPointerSymbol: "data<{dtype}>()",
+        FieldPointerSymbol: "data_ptr<{dtype}>()",
         FieldShapeSymbol: "size({dim})",
         FieldStrideSymbol: "strides()[{dim}]"
     }
