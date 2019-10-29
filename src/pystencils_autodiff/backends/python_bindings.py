@@ -155,7 +155,7 @@ OP_REQUIRES_OK(context,
 
 class PybindFunctionWrapping(JinjaCppFile):
     TEMPLATE = jinja2.Template(
-        """m.def("{{ python_name }}", &{{ cpp_name }}, {% for p in parameters -%}"{{ p }}"_a{{- ", " if not loop.last -}}{% endfor %});"""  # noqa
+        """m.def("{{ python_name }}", &{{ cpp_name }}{% for p in parameters -%}, "{{ p }}"_a{% endfor %});"""  # noqa
     )
 
     required_global_declarations = ["using namespace pybind11::literals;"]
