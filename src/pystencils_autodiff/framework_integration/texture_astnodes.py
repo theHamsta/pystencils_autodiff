@@ -187,7 +187,7 @@ cudaMalloc{ndim}Array(&{array}, &channel_desc_{texture_name}, """ + (
             copy_params = f'cpy_{texture_name}_params'
             return f"""cudaMemcpy3DParms {copy_params}{{}};
 {copy_params}.srcPtr = {{{self._device_ptr},
-                        {self._texture.field.strides[-1] * self._texture.field.shape[-2]},
+                        {self._texture.field.strides[-2] * self._texture.field.dtype.numpy_dtype.itemsize},
                         {self._texture.field.shape[-1]},
                         {self._texture.field.shape[-2]}}};
 {copy_params}.dstArray = {array};
@@ -196,13 +196,12 @@ cudaMalloc{ndim}Array(&{array}, &channel_desc_{texture_name}, """ + (
 cudaMemcpy3D(&{copy_params});"""  # noqa
         elif self._texture.field.ndim == 2:
             # noqa: cudaMemcpy2DToArray(cudaArray_t dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
-
             return f"""cudaMemcpy2DToArray({array},
                     0u,
                     0u,
                     {self._device_ptr},
-                    {self._texture.field.strides[-1]},
-                    {self._texture.field.shape[-1]},
+                    {self._texture.field.strides[-2] * self._texture.field.dtype.numpy_dtype.itemsize},
+                    {self._texture.field.shape[-1] * self._texture.field.dtype.numpy_dtype.itemsize}, // Dafaq, this has to be in bytes, but only columns and only in memcpy2D
                     {self._texture.field.shape[-2]},
                     cudaMemcpyDeviceToDevice);
  """  # noqa
