@@ -11,11 +11,9 @@ waLBerla currently uses `pystencils-walberla <https://pypi.org/project/pystencil
 """
 import itertools
 from collections.abc import Iterable
-from functools import reduce
 from typing import Any, List, Set
 
 import jinja2
-import numpy as np
 
 import pystencils
 import sympy as sp
@@ -23,6 +21,7 @@ from pystencils.astnodes import KernelFunction, Node, NodeOrExpr, ResolvedFieldA
 from pystencils.data_types import TypedSymbol
 from pystencils.kernelparameters import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
 from pystencils_autodiff.framework_integration.printer import FrameworkIntegrationPrinter
+from pystencils_autodiff.framework_integration.texture_astnodes import NativeTextureBinding
 
 
 class DestructuringBindingsForFieldClass(Node):
@@ -87,78 +86,6 @@ class DestructuringBindingsForFieldClass(Node):
 
     def atoms(self, arg_type) -> Set[Any]:
         return self.body.atoms(arg_type) | {s for s in self.symbols_defined if isinstance(s, arg_type)}
-
-
-class NativeTextureBinding(pystencils.backends.cbackend.CustomCodeNode):
-    CODE_TEMPLATE = """cudaResourceDesc {resource_desc}{{}};
-{resource_desc}.resType = cudaResourceTypeLinear;
-{resource_desc}.res.linear.devPtr = {device_ptr};
-{resource_desc}.res.linear.desc.f = {cuda_channel_format};
-{resource_desc}.res.linear.desc.x = {bits_per_channel}; // bits per channel
-{resource_desc}.res.linear.sizeInBytes = {total_size};
-
-cudaTextureDesc {texture_desc}{{}};
-cudaTextureObject_t {texture_object}=0;
-cudaCreateTextureObject(&{texture_object}, &{resource_desc}, &{texture_desc}, nullptr);
-{texture_desc}.readMode = cudaReadModeElementType;
-auto {texture_object}Destroyer = [&](){{
-   cudaDestroyTextureObject({texture_object});
-}};
-    """
-
-    def _get_channel_format_string(self):
-        """
-        From CUDA API documentation:
-
-        ``enum cudaChannelFormatKind``
-
-        Channel format kind
-
-        Enumerator:
-            =============================   ========================
-            cudaChannelFormatKindSigned     Signed channel format.
-            cudaChannelFormatKindUnsigned   Unsigned channel format.
-            cudaChannelFormatKindFloat      Float channel format.
-            cudaChannelFormatKindNone       No channel format.
-            =============================   ========================
-        """
-        dtype = self._device_ptr.dtype.base_type
-        if np.issubdtype(dtype.numpy_dtype, np.signedinteger):
-            return 'cudaChannelFormatKindSigned'
-        elif np.issubdtype(dtype.numpy_dtype, np.unsignedinteger):
-            return 'cudaChannelFormatKindUnsigned'
-        elif np.issubdtype(dtype.numpy_dtype, np.float32):
-            return 'cudaChannelFormatKindFloat'
-        elif np.issubdtype(dtype.numpy_dtype, np.float64):
-            # PyCUDA double texture hack! See pystencils/include/pycuda-helper-modified.hpp
-            return 'cudaChannelFormatKindSigned'
-        else:
-            raise NotImplementedError('dtype not supported for CUDA textures')
-
-    def __init__(self, texture, device_data_ptr, use_texture_objects=True):
-        self._texture = texture
-        self._device_ptr = device_data_ptr
-        self._dtype = self._device_ptr.dtype.base_type.numpy_dtype
-        self._shape = tuple(sp.S(s) for s in self._texture.field.shape)
-        assert use_texture_objects, "without texture objects is not implemented"
-
-        super().__init__(self.get_code(dialect='c', vector_instruction_set=None),
-                         symbols_read={device_data_ptr,
-                                       *[s for s in self._shape if isinstance(s, sp.Symbol)]},
-                         symbols_defined={})
-        self.headers.append("<cuda.h>")
-
-    def get_code(self, dialect, vector_instruction_set):
-        texture_name = self._texture.symbol.name
-        code = self.CODE_TEMPLATE.format(
-            resource_desc='resDesc_' + texture_name,
-            texture_desc='texDesc_' + texture_name,
-            texture_object='tex_' + texture_name,
-            device_ptr=self._device_ptr,
-            cuda_channel_format=self._get_channel_format_string(),
-            bits_per_channel=self._dtype.itemsize * 8,
-            total_size=self._dtype.itemsize * reduce(lambda x, y: x * y, self._shape, 1))
-        return code
 
 
 class KernelFunctionCall(Node):
