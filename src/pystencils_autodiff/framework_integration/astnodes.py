@@ -42,8 +42,8 @@ class DestructuringBindingsForFieldClass(Node):
 
         # TODO: remove when texture support is merged into pystencils
         try:
-            from pystencils.interpolation_astnodes import TextureAccess
-            return set(o.field for o in self.atoms(ResolvedFieldAccess) | self.atoms(TextureAccess))
+            from pystencils.interpolation_astnodes import InterpolatorAccess
+            return set(o.field for o in self.atoms(ResolvedFieldAccess) | self.atoms(InterpolatorAccess))
         except ImportError:
             return set(o.field for o in self.atoms(ResolvedFieldAccess))
 
