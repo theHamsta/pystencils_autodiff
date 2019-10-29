@@ -31,7 +31,8 @@ def compatibility_hacks():
         try:
             import torch
             from pystencils_autodiff.field_tensor_conversion import _torch_tensor_to_numpy_shim
-            kwargs = {k: _torch_tensor_to_numpy_shim(v) for k, v in kwargs.items() if isinstance(v, torch.Tensor)}
+            kwargs = {k: _torch_tensor_to_numpy_shim(v) if isinstance(
+                v, torch.Tensor) else v for k, v in kwargs.items()}
         except ImportError:
             torch = None
         return _pystencils_fields(*args, **kwargs)
