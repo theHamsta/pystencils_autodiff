@@ -13,6 +13,7 @@ import jinja2
 import sympy as sp
 
 import pystencils.backends
+import pystencils.kernelparameters
 
 
 class NativeTextureBinding(pystencils.backends.cbackend.CustomCodeNode):
@@ -209,3 +210,10 @@ cudaMemcpy3D(&{copy_params});"""  # noqa
  """  # noqa
         else:
             raise NotImplementedError()
+
+    @property
+    def undefined_symbols(self):
+        field = self._texture.field
+        return sp.S(field.strides[-2]).free_symbols \
+            | sp.S(sp.Add(*field.shape[-field.ndim:])).free_symbols \
+            | {pystencils.kernelparameters.FieldPointerSymbol(field.name, field.dtype, const=True)}
