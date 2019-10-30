@@ -64,7 +64,7 @@ def create_autograd_function(autodiff_obj, use_cuda):
                 kwargs[field.name] = torch.zeros(
                     field.shape,
                     dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
-                    device=chain(args[0], kwargs.values()).device)
+                    device=next(chain(args, kwargs.values())).device)
         output_tensors = OrderedDict({f.name:
                                       field_to_tensor_dict.get(f, kwargs[f.name])
                                       for f in autodiff_obj.forward_output_fields})
