@@ -17,7 +17,8 @@ import p_tqdm
 
 import pystencils
 import pystencils.gpucuda
-from pystencils.cpu.cpujit import get_cache_config, get_compiler_config, get_pystencils_include_path
+from pystencils.cpu.cpujit import get_cache_config, get_compiler_config
+from pystencils.include import get_pycuda_include_path, get_pystencils_include_path
 from pystencils_autodiff._file_io import read_file, write_file
 
 _hash = hashlib.md5
@@ -31,7 +32,9 @@ else:
 if get_compiler_config()['os'] != 'windows':
     _shared_object_flag = '-shared'
     _output_flag = '-o'
-    _include_flags = ['-I' + sysconfig.get_paths()['include'], '-I' + get_pystencils_include_path()]
+    _include_flags = ['-I' + sysconfig.get_paths()['include'],
+                      '-I' + get_pystencils_include_path(),
+                      '-I' + get_pycuda_include_path()]
     _do_not_link_flag = "-c"
     _position_independent_flag = "-fPIC"
     _compile_env = os.environ.copy()
@@ -41,7 +44,9 @@ else:
     _do_not_link_flag = '-c'
     _output_flag = '-o'
     _shared_object_flag = '/DLL'
-    _include_flags = ['-I' + sysconfig.get_paths()['include'], '-I' + get_pystencils_include_path()]
+    _include_flags = ['-I' + sysconfig.get_paths()['include'],
+                      '-I' + get_pystencils_include_path(),
+                      '-I' + get_pycuda_include_path()]
     _position_independent_flag = "/DTHIS_FLAG_DOES_NOTHING"
     get_compiler_config()['command'] = 'cl.exe'
     config_env = get_compiler_config()['env'] if 'env' in get_compiler_config() else {}

@@ -53,10 +53,18 @@ def create_field_from_array_like(field_name, maybe_array, annotations=None):
     except ImportError:
         torch = None
 
-    if torch:
-        # Torch tensors don't have t.strides but t.stride(dim). Let's fix that!
-        if isinstance(maybe_array, torch.Tensor):
-            maybe_array = _torch_tensor_to_numpy_shim(maybe_array)
+    if 'tensorflow.python.' in str(type(maybe_array)) and 'Tensor' in str(type(maybe_array)):
+        try:
+            # This fails on eager execution
+            return Field.create_fixed_size(maybe_array.name or field_name,
+                                           maybe_array.shape,
+                                           index_dimensions=index_dimensions,
+                                           dtype=maybe_array.dtype.as_numpy_dtype())
+        except Exception:
+            return Field.create_fixed_size(field_name,
+                                           maybe_array.shape,
+                                           index_dimensions=index_dimensions,
+                                           dtype=maybe_array.dtype.as_numpy_dtype())
 
     field = Field.create_from_numpy_array(field_name, maybe_array, index_dimensions)
     field.field_type = field_type

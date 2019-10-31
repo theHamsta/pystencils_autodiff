@@ -184,7 +184,7 @@ def test_valid_boundary_handling_torch_native():
 
 @pytest.mark.parametrize('with_offsets', (False, True))
 @pytest.mark.parametrize('with_cuda',
-                         (False, pytest.param(True, marks=pytest.mark.skipif('CI' in os.environ, reason='SEGFAULT on CI'))))  # noqa
+                         (False, pytest.param(True, marks=pytest.mark.skipif('CI' in os.environ, reason='PYTORCH does not like pycuda'))))  # noqa
 def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
     torch = pytest.importorskip('torch')
     import torch
@@ -233,12 +233,12 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
 @pytest.mark.parametrize('gradient_check', (False, 'with_gradient_check'))
 @pytest.mark.parametrize('with_cuda', (False, pytest.param('with_cuda', marks=pytest.mark.xfail)))
 @pytest.mark.parametrize('with_offsets', (False, 'with_offsets'))
-@pytest.mark.xfail(reason="", strict=False)
+# @pytest.mark.xfail(reason="", strict=False)
 def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):
     pytest.importorskip('tensorflow')
     import tensorflow as tf
 
-    a, b, out = ps.fields("a, b, out: double[21,13]")
+    a, b, out = ps.fields("a, b, out: double[21,13]", layout='fzyx')
     print(a.shape)
 
     if with_offsets:
@@ -269,22 +269,20 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
     with tf.Graph().as_default():
         a_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
         b_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
-        out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda,
-                                                    backend='tensorflow_native')(a=a_tensor,
-                                                                                 b=b_tensor)
+        op = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
+        out_tensor = op(a=a_tensor, b=b_tensor)
 
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
-            sess.run(out_tensor)
 
             if gradient_check:
                 gradient_error = compute_gradient_error_without_border(
                     [a_tensor, b_tensor], [a.shape, b.shape],
                     out_tensor,
                     out.shape,
-                    num_border_pixels=2,
+                    num_border_pixels=0,
                     ndim=2,
-                    debug=False)
+                    debug=True)
                 print('error: %s' % gradient_error.max_error)
                 print('avg error: %s' % gradient_error.avg_error)
 
