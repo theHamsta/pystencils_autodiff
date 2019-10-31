@@ -18,6 +18,7 @@ import sympy as sp
 
 import pystencils
 from pystencils.astnodes import KernelFunction, Node, NodeOrExpr, ResolvedFieldAccess
+from pystencils.backends.cbackend import CustomCodeNode
 from pystencils.data_types import TypedSymbol
 from pystencils.kernelparameters import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
 from pystencils_autodiff.framework_integration.printer import FrameworkIntegrationPrinter
@@ -143,13 +144,22 @@ def generate_kernel_call(kernel_function):
     except ImportError:
         texture_uploads = []
 
+    # debug_print = CustomCodeNode(
+    # 'std::cout << "hallo" << __PRETTY_FUNCTION__ << std::endl;\ngpuErrchk(cudaPeekAtLastError());' \
+    # '\ncudaDeviceSynchronize();', set(), set())
+
     if texture_uploads:
         block = pystencils.astnodes.Block([
+            CudaErrorCheck(),
             *texture_uploads,
-            KernelFunctionCall(kernel_function)
+            CudaErrorCheck(),
+            KernelFunctionCall(kernel_function),
+            CudaErrorCheck(),
         ])
     else:
-        return pystencils.astnodes.Block([KernelFunctionCall(kernel_function)])
+        return pystencils.astnodes.Block([CudaErrorCheck(),
+                                          KernelFunctionCall(kernel_function),
+                                          CudaErrorCheck()])
 
     return block
 
@@ -218,3 +228,63 @@ class JinjaCppFile(Node):
 
     def __repr__(self):
         return f'{str(self.__class__)}:\n {self.TEMPLATE.render(self.ast_dict)}'
+
+
+class CudaErrorCheckDefinition(CustomCodeNode):
+    def __init__(self):
+        super().__init__(self.code, [], [])
+
+    function_name = 'gpuErrchk'
+    code = """
+# ifdef __GNUC__
+# define gpuErrchk(ans) { gpuAssert((ans), __PRETTY_FUNCTION__, __FILE__, __LINE__); }
+inline static void gpuAssert(cudaError_t code, const char* function, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"CUDA error: %s: in %s %s:%d\\n", cudaGetErrorString(code), function, file, line);
+      if (abort) exit(code);
+   }
+}
+# else
+# define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline static void gpuAssert(cudaError_t code, const char* function, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"CUDA error: %s: %s:%d\\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+# endif
+"""
+    headers = '<cuda.h>'
+
+
+class CudaErrorCheck(CustomCodeNode):
+    """
+    Checks whether the last call to the CUDA API was successful and panics in the negative case.
+
+    .. code:: c++
+
+        # define gpuErrchk(ans) { gpuAssert((ans), __PRETTY_FUNCTION__, __FILE__, __LINE__); }
+        inline static void gpuAssert(cudaError_t code, const char* function, const char *file, int line, bool abort=true)
+        {
+           if (code != cudaSuccess)
+           {
+              fprintf(stderr,"CUDA error: %s: %s:%d\\n", cudaGetErrorString(code), file, line);
+              if (abort) exit(code);
+           }
+        }
+
+        ...
+
+        gpuErrchk(cudaPeekAtLastError());
+
+    """  # noqa
+
+    def __init__(self):
+        super().__init__(f'{self.err_check_function.function_name}(cudaPeekAtLastError());', [], [])
+
+    err_check_function = CudaErrorCheckDefinition()
+    required_global_declarations = [err_check_function]
