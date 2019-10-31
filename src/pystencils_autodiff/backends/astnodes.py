@@ -41,7 +41,7 @@ class TensorflowTensorDestructuring(DestructuringBindingsForFieldClass):
     CLASS_TO_MEMBER_DICT = {
         FieldPointerSymbol: "flat<{dtype}>().data()",
         FieldShapeSymbol: "dim_size({dim})",
-        FieldStrideSymbol: "dim_size({dim}) * tensorflow::DataTypeSize({field_name}.dtype())"
+        FieldStrideSymbol: "dim_size({dim})"
     }
 
     CLASS_NAME_TEMPLATE = "tensorflow::Tensor"
