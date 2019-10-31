@@ -12,6 +12,7 @@ import itertools
 
 import pystencils
 from pystencils.astnodes import KernelFunction, ResolvedFieldAccess, SympyAssignment
+from pystencils.interpolation_astnodes import InterpolatorAccess
 
 
 def compatibility_hacks():
@@ -22,7 +23,8 @@ def compatibility_hacks():
 
     def fields_read(self):
         assignments = self.atoms(SympyAssignment)
-        return set().union(itertools.chain.from_iterable([f.field for f in a.rhs.free_symbols if hasattr(f, 'field')]
+        return set().union(itertools.chain.from_iterable([f.field for f in a.rhs.free_symbols
+                                                          | a.rhs.atoms(InterpolatorAccess) if hasattr(f, 'field')]
                                                          for a in assignments))
 
     _pystencils_fields = pystencils.fields
