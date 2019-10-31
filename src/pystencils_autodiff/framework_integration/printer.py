@@ -15,6 +15,12 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         super().__init__(sympy_printer=None,
                          dialect='c')
 
+    def _print(self, node):
+        from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
+        if isinstance(node, JinjaCppFile):
+            node.printer = self
+        return super()._print(node)
+
     def _print_WrapperFunction(self, node):
         super_result = super()._print_KernelFunction(node)
         return super_result.replace('FUNC_PREFIX ', '')

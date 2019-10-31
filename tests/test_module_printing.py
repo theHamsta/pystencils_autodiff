@@ -8,11 +8,12 @@
 
 """
 import pytest
+import sympy
 
 import pystencils
-import sympy
 from pystencils_autodiff import create_backward_assignments
 from pystencils_autodiff.backends.astnodes import PybindModule, TensorflowModule, TorchModule
+from pystencils_autodiff.framework_integration.printer import FrameworkIntegrationPrinter
 
 try:
     from pystencils.interpolation_astnodes import TextureCachedField
@@ -101,5 +102,23 @@ def test_module_printing_globals():
         print(module)
 
 
-if __name__ == "__main__":
-    test_module_printing_globals()
+def test_custom_printer():
+
+    class DoesNotLikeTorchPrinter(FrameworkIntegrationPrinter):
+        def _print_TorchModule(self, node):
+            return 'Error: I don\'t like Torch'
+
+    z, y, x = pystencils.fields("z, y, x: [20,40]")
+
+    forward_assignments = pystencils.AssignmentCollection({
+        z[0, 0]: x[0, 0] * sympy.log(TextureCachedField(x).at(sympy.Matrix((0.43, 3))) * y[0, 0])
+    })
+
+    backward_assignments = create_backward_assignments(forward_assignments)
+
+    forward_ast = pystencils.create_kernel(forward_assignments)
+    forward_ast.function_name = 'forward'
+    backward_ast = pystencils.create_kernel(backward_assignments)
+    backward_ast.function_name = 'backward'
+    module = TorchModule("hallo", [forward_ast, backward_ast])
+    print(DoesNotLikeTorchPrinter()(module))
