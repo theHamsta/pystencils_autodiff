@@ -156,10 +156,12 @@ def generate_kernel_call(kernel_function):
             KernelFunctionCall(kernel_function),
             CudaErrorCheck(),
         ])
-    else:
+    elif kernel_function.backend == 'gpucuda':
         return pystencils.astnodes.Block([CudaErrorCheck(),
                                           KernelFunctionCall(kernel_function),
                                           CudaErrorCheck()])
+    else:
+        return pystencils.astnodes.Block([KernelFunctionCall(kernel_function)])
 
     return block
 
@@ -236,8 +238,8 @@ class CudaErrorCheckDefinition(CustomCodeNode):
 
     function_name = 'gpuErrchk'
     code = """
-# ifdef __GNUC__
-# define gpuErrchk(ans) { gpuAssert((ans), __PRETTY_FUNCTION__, __FILE__, __LINE__); }
+#ifdef __GNUC__
+#define gpuErrchk(ans) { gpuAssert((ans), __PRETTY_FUNCTION__, __FILE__, __LINE__); }
 inline static void gpuAssert(cudaError_t code, const char* function, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess)
@@ -246,8 +248,8 @@ inline static void gpuAssert(cudaError_t code, const char* function, const char 
       if (abort) exit(code);
    }
 }
-# else
-# define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+#else
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline static void gpuAssert(cudaError_t code, const char* function, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess)
@@ -256,9 +258,9 @@ inline static void gpuAssert(cudaError_t code, const char* function, const char 
       if (abort) exit(code);
    }
 }
-# endif
+#endif
 """
-    headers = '<cuda.h>'
+    headers = ['<cuda.h>']
 
 
 class CudaErrorCheck(CustomCodeNode):
@@ -288,3 +290,4 @@ class CudaErrorCheck(CustomCodeNode):
 
     err_check_function = CudaErrorCheckDefinition()
     required_global_declarations = [err_check_function]
+    headers = ['<cuda.h>']
