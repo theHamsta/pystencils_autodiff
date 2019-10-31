@@ -25,6 +25,9 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         super_result = super()._print_KernelFunction(node)
         return super_result.replace('FUNC_PREFIX ', '')
 
+    def _print_TextureDeclaration(self, node):
+        return str(node)
+
     def _print_KernelFunction(self, node):
         if node.backend == 'gpucuda':
             prefix = '#define FUNC_PREFIX __global__\n'
