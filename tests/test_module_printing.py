@@ -122,3 +122,4 @@ def test_custom_printer():
     backward_ast.function_name = 'backward'
     module = TorchModule("hallo", [forward_ast, backward_ast])
     print(DoesNotLikeTorchPrinter()(module))
+

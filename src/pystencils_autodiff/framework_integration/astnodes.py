@@ -208,6 +208,8 @@ class JinjaCppFile(Node):
                               else a)
                              for a in v]
                        for k, v in self.ast_dict.items()}
+
+        # TODO: possibly costly tree traversal
         render_dict.update({"headers": pystencils.backends.cbackend.get_headers(self)})
         render_dict.update({"globals":
                             {self.printer(g) for g in pystencils.backends.cbackend.get_global_declarations(self)}})
