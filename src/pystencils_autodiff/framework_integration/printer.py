@@ -51,7 +51,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
                                                 for i in block_and_thread_numbers['block']) + '}'
             launch_grid = 'dim3{' + ', '.join(self.sympy_printer.doprint(i)
                                               for i in block_and_thread_numbers['grid']) + '}'
-            return f"{function_name}<<< {launch_blocks}, {launch_grid} >>>(\n{indent}{function_arguments});"
+            return f"{function_name} <<< {launch_grid}, {launch_blocks} >>>(\n{indent}{function_arguments});"
         else:
             return f"{function_name}({function_arguments});"
         return node.__repr__()
