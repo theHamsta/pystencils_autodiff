@@ -52,12 +52,6 @@ def create_autograd_function(autodiff_obj, use_cuda):
         # assert all(f.shape == args[i].shape for i, f in enumerate(autodiff_obj.forward_input_fields)
         # if not any(isinstance(s, sp.Symbol) for s in args[i].shape))
         # assert all(f.strides == tuple(args[i].stride(j) for j in range(args[i].ndim))
-        for field in autodiff_obj.forward_output_fields:
-            if field not in kwargs:
-                field_to_tensor_dict[field] = torch.zeros(
-                    field.shape,
-                    dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
-                    device=args[0].device)
 
         kwargs.update({f.name: args[i] for i, f in enumerate(
             autodiff_obj.forward_input_fields) if f in forward_ast.fields_accessed if i < len(args)})
