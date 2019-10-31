@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from itertools import chain
 
+import pystencils
 from pystencils_autodiff.backends._pytorch import numpy_dtype_to_torch
 from pystencils_autodiff.backends.astnodes import TorchModule
 from pystencils_autodiff.tensorflow_jit import _hash
@@ -23,7 +24,9 @@ def create_autograd_function(autodiff_obj, use_cuda):
         forward_ast = autodiff_obj.forward_ast_cpu
         backward_ast = autodiff_obj.backward_ast_cpu
 
-    op_name = f'{autodiff_obj.op_name}_{_hash(str(autodiff_obj).encode()).hexdigest()}'
+    op_name = f'{autodiff_obj.op_name}_{_hash((str(pystencils.show_code(forward_ast))+ str(autodiff_obj)).encode()).hexdigest()}'  # noqa
+    forward_ast.function_name = f'{op_name}_{forward_ast.function_name}'
+    backward_ast.function_name = f'{op_name}_{backward_ast.function_name}'
     module = TorchModule(op_name, [forward_ast, backward_ast])
     compiled_op = module.compile()
 
@@ -40,21 +43,21 @@ def create_autograd_function(autodiff_obj, use_cuda):
         kwargs.update(class_kwargs)
         # TODO: drop contiguous requirement
         if use_cuda:
-            args = [a.contiguous().cuda() if isinstance(a, torch.Tensor) else a for a in args]
-            kwargs = {k: v.contiguous().cuda() if isinstance(v, torch.Tensor) else v for k, v in kwargs.items()}
+            args = [a.cuda().contiguous()if isinstance(a, torch.Tensor) else a for a in args]
+            kwargs = {k: v.cuda().contiguous() if isinstance(v, torch.Tensor) else v for k, v in kwargs.items()}
         else:
-            args = [a.contiguous().cpu() if isinstance(a, torch.Tensor) else a for a in args]
-            kwargs = {k: v.contiguous().cpu() if isinstance(v, torch.Tensor) else v for k, v in kwargs.items()}
+            args = [a.cpu().contiguous() if isinstance(a, torch.Tensor) else a for a in args]
+            kwargs = {k: v.cpu().contiguous() if isinstance(v, torch.Tensor) else v for k, v in kwargs.items()}
 
         # assert all(f.shape == args[i].shape for i, f in enumerate(autodiff_obj.forward_input_fields)
         # if not any(isinstance(s, sp.Symbol) for s in args[i].shape))
         # assert all(f.strides == tuple(args[i].stride(j) for j in range(args[i].ndim))
-        # for i, f in enumerate(autodiff_obj.forward_input_fields))
-        # for field in autodiff_obj.forward_output_fields:
-        # field_to_tensor_dict[field] = torch.zeros(
-        # field.shape,
-        # dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
-        # device=args[0].device)
+        for field in autodiff_obj.forward_output_fields:
+            if field not in kwargs:
+                field_to_tensor_dict[field] = torch.zeros(
+                    field.shape,
+                    dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
+                    device=args[0].device)
 
         kwargs.update({f.name: args[i] for i, f in enumerate(
             autodiff_obj.forward_input_fields) if f in forward_ast.fields_accessed if i < len(args)})
@@ -69,7 +72,6 @@ def create_autograd_function(autodiff_obj, use_cuda):
                                       field_to_tensor_dict.get(f, kwargs[f.name])
                                       for f in autodiff_obj.forward_output_fields})
         field_to_tensor_dict.update(kwargs)
-        kwargs.update(output_tensors)
 
         self.saved_for_backward = kwargs
 
