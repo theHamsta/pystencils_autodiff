@@ -102,7 +102,7 @@ class FunctionCall(Node):
 
     @property
     def args(self):
-        return [p.symbol for p in self.kernel_function.get_parameters()]
+        return [p.symbol for p in self.kernel_function.get_parameters()] + [self.kernel_function]
 
     @property
     def symbols_defined(self) -> Set[sp.Symbol]:
