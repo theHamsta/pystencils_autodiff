@@ -48,11 +48,6 @@ def create_field_from_array_like(field_name, maybe_array, annotations=None):
         index_dimensions = 0
         field_type = FieldType.GENERIC
 
-    try:
-        import torch
-    except ImportError:
-        torch = None
-
     if 'tensorflow.python.' in str(type(maybe_array)) and 'Tensor' in str(type(maybe_array)):
         try:
             # This fails on eager execution

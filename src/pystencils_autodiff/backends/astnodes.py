@@ -169,7 +169,7 @@ setup_pybind11(cfg)
         source_code = self.CPP_IMPORT_PREFIX + str(self)
         hash_str = _hash(source_code.encode()).hexdigest()
         cache_dir = join(get_cache_config()['object_cache'], f'cppimport_{hash_str}')
-        file_name = join(cache_dir,  f'{self.module_name}.cpp')
+        file_name = join(cache_dir, f'{self.module_name}.cpp')
 
         os.makedirs(cache_dir, exist_ok=True)
         if not exists(file_name):
