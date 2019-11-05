@@ -168,18 +168,22 @@ setup_pybind11(cfg)
 
         source_code = self.CPP_IMPORT_PREFIX + str(self)
         hash_str = _hash(source_code.encode()).hexdigest()
-        cache_dir = join(get_cache_config()['object_cache'], f'cppimport_{hash_str}')
-        file_name = join(cache_dir, f'{self.module_name}.cpp')
+        source_code_with_hash = source_code.replace(
+            f'PYBIND11_MODULE({self.module_name}',
+            f'PYBIND11_MODULE(cppimport_{hash_str}')
+
+        cache_dir = join(get_cache_config()['object_cache'])
+        file_name = join(cache_dir, f'cppimport_{hash_str}.cpp')
 
         os.makedirs(cache_dir, exist_ok=True)
         if not exists(file_name):
-            write_file(file_name, source_code)
+            write_file(file_name, source_code_with_hash)
         # TODO: propagate extra headers
         if cache_dir not in sys.path:
             sys.path.append(cache_dir)
 
         try:
-            torch_extension = cppimport.imp(self.module_name)
+            torch_extension = cppimport.imp(f'cppimport_{hash_str}')
         except Exception as e:
             print(e)
             torch_extension = load(self.module_name, [file_name])
