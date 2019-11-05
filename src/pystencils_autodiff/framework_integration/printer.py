@@ -37,7 +37,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
             kernel_code = pystencils.backends.cbackend.generate_c(node, dialect='c', with_globals=False)
         return prefix + kernel_code
 
-    def _print_KernelFunctionCall(self, node):
+    def _print_FunctionCall(self, node):
 
         function = node.kernel_function
         parameters = function.get_parameters()
