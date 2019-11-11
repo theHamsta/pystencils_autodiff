@@ -81,7 +81,6 @@ Backward:
         main_assignments = [a for a in forward_assignments if isinstance(a.lhs, ps.Field.Access)]
         subexpressions = [a for a in forward_assignments if not isinstance(a.lhs, ps.Field.Access)]
         forward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
-        print(forward_assignments)
 
         if boundary_handling == AutoDiffBoundaryHandling.VALID:
             raise NotImplementedError('there seems to be still a bug with valid. -> Use "zeros"')
