@@ -46,7 +46,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         function_arguments = (",\n" + indent) .join("%s" % (s.symbol.name) for s in parameters)
         if function.backend == "gpucuda":
             written_fields = function.fields_written
-            shape = list(written_fields)[0].shape
+            shape = list(written_fields)[0].spatial_shape
             # assert all(shape == f.shape for f in written_fields)
 
             block_and_thread_numbers = function.indexing.call_parameters(shape)
