@@ -78,15 +78,16 @@ Backward:
                 'cpu', 'gpu'], "AutoDiffOp always supports both cpu and gpu"
             del kwargs['target']
 
-        if isinstance(forward_assignments, list):
-            main_assignments = [a for a in forward_assignments if isinstance(a.lhs, ps.Field.Access)]
-            subexpressions = [a for a in forward_assignments if not isinstance(a.lhs, ps.Field.Access)]
-            forward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
+        main_assignments = [a for a in forward_assignments if isinstance(a.lhs, ps.Field.Access)]
+        subexpressions = [a for a in forward_assignments if not isinstance(a.lhs, ps.Field.Access)]
+        forward_assignments = ps.AssignmentCollection(main_assignments, subexpressions)
+        print(forward_assignments)
 
         if boundary_handling == AutoDiffBoundaryHandling.VALID:
             raise NotImplementedError('there seems to be still a bug with valid. -> Use "zeros"')
 
         self._forward_assignments = forward_assignments
+        self._backward_assignments = None
         self._constant_fields = constant_fields
         self._time_constant_fields = time_constant_fields
         self._kwargs = kwargs
@@ -248,9 +249,9 @@ Backward:
         self._forward_input_fields = sorted(list(read_fields), key=lambda x: str(x))
         self._forward_output_fields = sorted(list(write_fields), key=lambda x: str(x))
 
-        read_field_accesses = [
-            a for a in forward_assignments.free_symbols if isinstance(a, ps.Field.Access)]
-        write_field_accesses = [a.lhs for a in forward_assignments]
+        read_field_accesses = [s for s in forward_assignments.free_symbols if isinstance(s, ps.Field.Access)]
+        write_field_accesses = [a.lhs for a in forward_assignments if isinstance(a.lhs, ps.Field.Access)]
+        assert write_field_accesses, "No write accesses found"
 
         # for every field create a corresponding diff field
         diff_read_fields = {f: pystencils_autodiff.AdjointField(f, diff_fields_prefix)
@@ -286,8 +287,7 @@ Backward:
                         inverted_offset = tuple(-v - w for v,
                                                 w in zip(ra.offsets, forward_assignment.lhs.offsets))
                         diff_read_field_sum += sp.diff(forward_assignment.rhs, ra) * \
-                            diff_write_field[inverted_offset](
-                                *diff_write_index)
+                            diff_write_field[inverted_offset](*diff_write_index)
                     if forward_read_field in self._time_constant_fields:
                         # Accumulate in case of time_constant_fields
                         assignment = ps.Assignment(
@@ -334,8 +334,7 @@ Backward:
                 else:
                     raise NotImplementedError()
 
-        backward_assignments = [ps.Assignment(
-            k, sp.Add(*v)) for k, v in backward_assignment_dict.items()]
+        backward_assignments = [ps.Assignment(k, sp.Add(*v)) for k, v in backward_assignment_dict.items()]
 
         try:
 

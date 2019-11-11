@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright © 2019 Stephan Seitz <stephan.seitz@fau.de>
-#
-# Distributed under terms of the GPLv3 license.
-
-"""
-
-"""
 import itertools
 import sympy as sp
 
@@ -18,9 +9,13 @@ from pystencils.simp import sympy_cse
 
 def add_fixed_constant_boundary_handling(assignments, with_cse=True):
 
-    common_shape = next(iter(set().union(itertools.chain.from_iterable(
+    field_accesses = set().union(itertools.chain.from_iterable(
         [a.atoms(Field.Access) for a in assignments]
-    )))).field.spatial_shape
+    ))
+
+    if all(all(o == 0 for o in a.offsets) for a in field_accesses):
+        return assignments
+    common_shape = next(iter(field_accesses)).field.spatial_shape
     ndim = len(common_shape)
 
     def is_out_of_bound(access, shape):
