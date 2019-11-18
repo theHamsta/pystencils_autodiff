@@ -203,7 +203,6 @@ Backward:
         assert _has_exclusive_writes(backward_assignments), "Backward assignments don't have exclusive writes." + \
             " You should consider using 'transposed-forward' mode for resolving those conflicts"
 
-        self._forward_assignments = forward_assignments
         self._forward_read_accesses = read_field_accesses
         self._forward_write_accesses = write_field_accesses
         self._forward_input_fields = list(read_fields)
@@ -242,7 +241,6 @@ Backward:
         read_fields = {s.field for s in read_field_accesses}
         write_fields = {s.field for s in write_field_accesses}
 
-        self._forward_assignments = forward_assignments
         self._forward_read_accesses = read_field_accesses
         self._forward_write_accesses = write_field_accesses
         self._forward_input_fields = sorted(list(read_fields), key=lambda x: str(x))
