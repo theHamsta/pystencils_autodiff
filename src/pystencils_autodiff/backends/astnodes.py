@@ -70,6 +70,10 @@ class TorchModule(JinjaCppFile):
     PYTHON_BINDINGS_CLASS = TorchPythonBindings
     PYTHON_FUNCTION_WRAPPING_CLASS = PybindFunctionWrapping
 
+    @property
+    def backend(self):
+        return 'gpucuda' if self.is_cuda else 'c'
+
     def __init__(self, module_name, kernel_asts):
         """Create a C++ module with forward and optional backward_kernels
 
