@@ -83,6 +83,7 @@ class TorchModule(JinjaCppFile):
                              else k for k in kernel_asts]
         kernel_asts = [k for k in kernel_asts if not isinstance(k, WrapperFunction)]
         self.module_name = module_name
+        self.compiled_file = None
 
         ast_dict = {
             'kernels': kernel_asts,
@@ -107,6 +108,8 @@ class TorchModule(JinjaCppFile):
         build_dir = join(get_cache_config()['object_cache'], self.module_name)
         os.makedirs(build_dir, exist_ok=True)
         file_name = join(build_dir, f'{hash}{file_extension}')
+
+        self.compiled_file = file_name
 
         if not exists(file_name):
             write_file(file_name, source_code)
@@ -134,14 +137,17 @@ class TensorflowModule(TorchModule):
         :param backward_kernel_ast:
         """
 
+        self.compiled_file = None
         super().__init__(module_name, kernel_asts)
 
     def compile(self):
         from pystencils_autodiff.tensorflow_jit import compile_sources_and_load
         if self.is_cuda:
-            return compile_sources_and_load([], cuda_sources=[str(self)])
+            self.compiled_file = compile_sources_and_load([], cuda_sources=[str(self)])
         else:
-            return compile_sources_and_load([str(self)])
+            self.compiled_file = compile_sources_and_load([str(self)])
+        import tensorflow as tf
+        return tf.load_op_library(self.compiled_file)
 
 
 class PybindModule(TorchModule):
