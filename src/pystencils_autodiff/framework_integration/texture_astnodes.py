@@ -198,7 +198,7 @@ cudaMalloc{ndim}Array(&{array}, &channel_desc_{texture_name}, """ + (
 {copy_params}.kind = cudaMemcpyDeviceToDevice;
 cudaMemcpy3D(&{copy_params});"""  # noqa
         elif self._texture.field.ndim == 2:
-            # noqa: cudaMemcpy2DToArray(cudaArray_t dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
+            # noqa, cudaMemcpy2DToArray(cudaArray_t dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
             return f"""cudaMemcpy2DToArray({array},
                     0u,
                     0u,
