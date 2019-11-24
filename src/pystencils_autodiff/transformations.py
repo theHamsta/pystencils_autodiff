@@ -1,5 +1,7 @@
 import itertools
+
 import sympy as sp
+from sympy.matrices.dense import matrix_multiply_elementwise
 
 import pystencils
 from pystencils import Field, x_vector
@@ -32,3 +34,10 @@ def add_fixed_constant_boundary_handling(assignments, with_cse=True):
         return safe_assignments
     else:
         return pystencils.AssignmentCollection(safe_assignments)
+
+
+def get_random_sampling(random_numbers, aabb_min, aabb_max):
+    random_numbers = sp.Matrix(random_numbers)
+    aabb_min = sp.Matrix(aabb_min)
+    aabb_max = sp.Matrix(aabb_max)
+    return matrix_multiply_elementwise(random_numbers, (aabb_max - aabb_min)) + aabb_min
