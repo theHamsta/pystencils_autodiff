@@ -30,10 +30,10 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
 
     def _print_KernelFunction(self, node):
         if node.backend == 'gpucuda':
-            prefix = '#define FUNC_PREFIX __global__\n'
+            prefix = '#define FUNC_PREFIX static __global__\n'
             kernel_code = pystencils.backends.cbackend.generate_c(node, dialect='cuda', with_globals=False)
         else:
-            prefix = '#define FUNC_PREFIX\n'
+            prefix = '#define FUNC_PREFIX static\n'
             kernel_code = pystencils.backends.cbackend.generate_c(node, dialect='c', with_globals=False)
         return prefix + kernel_code
 
