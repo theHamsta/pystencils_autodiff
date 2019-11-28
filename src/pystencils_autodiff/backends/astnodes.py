@@ -148,9 +148,9 @@ class TensorflowModule(TorchModule):
     def compile(self):
         from pystencils_autodiff.tensorflow_jit import compile_sources_and_load
         if self.is_cuda:
-            self.compiled_file = compile_sources_and_load([], cuda_sources=[str(self)])
+            self.compiled_file = compile_sources_and_load([], cuda_sources=[str(self)], compile_only=True)
         else:
-            self.compiled_file = compile_sources_and_load([str(self)])
+            self.compiled_file = compile_sources_and_load([str(self)], compile_only=True)
         import tensorflow as tf
         return tf.load_op_library(self.compiled_file)
 
