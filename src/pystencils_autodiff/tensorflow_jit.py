@@ -175,9 +175,9 @@ def compile_file(file,
                           *additional_compile_flags,
                           _output_flag]
 
-    destination_file = f'{file}_{_hash(".".join(command_prefix).encode()).hexdigest()}{_object_file_extension}'
     if openmp:
         command_prefix.append(_output_flag)
+    destination_file = f'{file}_{_hash(".".join(command_prefix).encode()).hexdigest()}{_object_file_extension}'
 
     if not exists(destination_file) or overwrite_destination_file:
         command = command_prefix + [destination_file]
