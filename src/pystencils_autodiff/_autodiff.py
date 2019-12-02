@@ -85,7 +85,7 @@ def _create_backward_assignments_tf_mad(self, diff_fields_prefix):
                                             w in zip(ra.offsets, forward_assignment.lhs.offsets))
                     diff_read_field_sum += sp.diff(forward_assignment.rhs, ra) * \
                         diff_write_field[inverted_offset](*diff_write_index)
-                if forward_read_field in self._time_constant_fields and self.time_constant_fields is not None:
+                if self.time_constant_fields is not None and forward_read_field in self._time_constant_fields:
                     # Accumulate in case of time_constant_fields
                     assignment = ps.Assignment(
                         diff_read_field.center(), diff_read_field.center() + diff_read_field_sum)
@@ -368,7 +368,7 @@ Backward:
             rhs = rhs[0, 0]
 
             # if field is constant over we time we can accumulate in assignment
-            if read_access.field in self._time_constant_fields and self.time_constant_fields is not None:
+            if self.time_constant_fields is not None and read_access.field in self._time_constant_fields:
                 backward_assignments.append(ps.Assignment(lhs, lhs + rhs))
             else:
                 backward_assignments.append(ps.Assignment(lhs, rhs))
