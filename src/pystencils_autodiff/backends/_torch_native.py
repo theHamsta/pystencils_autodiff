@@ -84,8 +84,9 @@ def create_autograd_function(autodiff_obj, use_cuda):
         assert all(f.shape == grad_outputs[i].shape for i, f in enumerate(grad_fields))
         assert all(f.strides == tuple(grad_outputs[i].stride(j) for j in range(grad_outputs[i].ndim))
                    for i, f in enumerate(grad_fields))
-        assert all(a.is_cuda == use_cuda for a in grad_outputs), "Some of the tensors where on the wrong device. "
-        f"Op was compiled for CUDA: {str(use_cuda)}"
+        assert use_cuda in (True, False), "use_cuda needs to be True or False"
+        assert all(a.is_cuda == use_cuda for a in grad_outputs), (
+            "Some of the tensors where on the wrong device. " f"Op was compiled for CUDA: {str(use_cuda)}")
 
         for field in autodiff_obj.backward_output_fields:
             backward_output_tensors = OrderedDict({f.name: torch.zeros(field.shape,
