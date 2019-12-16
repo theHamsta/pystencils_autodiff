@@ -84,7 +84,7 @@ You can also use the class :class:`pystencils_autodiff.AutoDiffOp` to obtain bot
     op = AutoDiffOp(forward_assignments)
     backward_assignments = op.backward_assignments   
 
-    tensorflow_op = op.create_tensorflow_op(backend='tensorflow_native')
+    tensorflow_op = op.create_tensorflow_op(backend='tensorflow_native', use_cuda=False)
 
 .. testoutput::
    :hide:
@@ -97,7 +97,7 @@ You can also use the class :class:`pystencils_autodiff.AutoDiffOp` to obtain bot
 
 .. testcode::
 
-    torch_op = op.create_tensorflow_op(backend='torch_native')
+    torch_op = op.create_tensorflow_op(backend='torch_native', use_cuda=False)
 
 
 Contents
