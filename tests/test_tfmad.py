@@ -231,7 +231,7 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
-@pytest.mark.parametrize('with_cuda', (False, True))
+@pytest.mark.parametrize('with_cuda', (False, pytest.param(True, marks=pytest.mark.xfail)))
 def test_tfmad_gradient_check_two_outputs(with_cuda):
     torch = pytest.importorskip('torch')
     import torch
