@@ -49,6 +49,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
             shape = list(written_fields)[0].spatial_shape
             # assert all(shape == f.shape for f in written_fields)
 
+            # TODO(seitz): this is not correct for indexed kernels!
             block_and_thread_numbers = function.indexing.call_parameters(shape)
             launch_blocks = 'dim3{' + ', '.join(self.sympy_printer.doprint(i)
                                                 for i in block_and_thread_numbers['block']) + '}'
