@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pytest
+import sympy
 
 import pystencils as ps
 import pystencils_autodiff
@@ -230,6 +231,57 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
+@pytest.mark.parametrize('with_cuda', (False, 'with_cuda'))
+def test_tfmad_gradient_check_two_outputs(with_cuda):
+    torch = pytest.importorskip('torch')
+    import torch
+
+    a, b, out1, out2, out3 = ps.fields("a, b, out1, out2, out3: float64[21,13]")
+
+    assignment_collection = ps.AssignmentCollection({
+        out1.center: a.center + b.center,
+        out2.center: a.center - b.center,
+        out3.center: sympy.exp(b[-1, 0])
+    })
+    print('Forward')
+    print(assignment_collection)
+
+    print('Backward')
+    auto_diff = pystencils_autodiff.AutoDiffOp(assignment_collection,
+                                               boundary_handling='zeros',
+                                               diff_mode='transposed-forward')
+    print(auto_diff.backward_fields)
+    backward = auto_diff.backward_assignments
+    print(backward)
+    print('Forward output fields (to check order)')
+    print(auto_diff.forward_input_fields)
+
+    a_tensor = torch.zeros(*a.shape, dtype=torch.float64, requires_grad=True).contiguous()
+    b_tensor = torch.zeros(*b.shape, dtype=torch.float64, requires_grad=True).contiguous()
+    out1_tensor = torch.zeros(*a.shape, dtype=torch.float64, requires_grad=True).contiguous()
+    out2_tensor = torch.zeros(*b.shape, dtype=torch.float64, requires_grad=True).contiguous()
+    out3_tensor = torch.zeros(*b.shape, dtype=torch.float64, requires_grad=True).contiguous()
+
+    if with_cuda:
+        a_tensor = a_tensor.cuda()
+        b_tensor = b_tensor.cuda()
+        out1_tensor = out1_tensor.cuda()
+        out2_tensor = out2_tensor.cuda()
+        out3_tensor = out3_tensor.cuda()
+
+    function = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='torch_native')
+
+    dict = {
+        a: a_tensor,
+        b: b_tensor,
+        out1_tensor: out1_tensor,
+        out2_tensor: out2_tensor,
+        out3_tensor: out3_tensor,
+    }
+    torch.autograd.gradcheck(function.apply, tuple(
+        [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
+
+
 @pytest.mark.parametrize('gradient_check', (False, 'with_gradient_check'))
 @pytest.mark.parametrize('with_cuda', (False, pytest.param('with_cuda', marks=pytest.mark.xfail)))
 @pytest.mark.parametrize('with_offsets', (False, 'with_offsets'))
@@ -266,27 +318,18 @@ def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradien
 
     # out_tensor = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
     # print(out_tensor)
-    with tf.Graph().as_default():
-        a_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
-        b_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
-        op = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
-        out_tensor = op(a=a_tensor, b=b_tensor)
 
-        with tf.compat.v1.Session() as sess:
-            sess.run(tf.compat.v1.global_variables_initializer())
+    a_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
+    b_tensor = tf.Variable(np.zeros(a.shape, a.dtype.numpy_dtype))
+    op = auto_diff.create_tensorflow_op(use_cuda=with_cuda, backend='tensorflow_native')
 
-            if gradient_check:
-                gradient_error = compute_gradient_error_without_border(
-                    [a_tensor, b_tensor], [a.shape, b.shape],
-                    out_tensor,
-                    out.shape,
-                    num_border_pixels=0,
-                    ndim=2,
-                    debug=True)
-                print('error: %s' % gradient_error.max_error)
-                print('avg error: %s' % gradient_error.avg_error)
-
-                assert any(e < 1e-4 for e in gradient_error.values())
+    theoretical, numerical = tf.test.compute_gradient(
+        op,
+        [a_tensor, b_tensor],
+        delta=0.001
+    )
+    assert np.allclose(theoretical[0], numerical[0])
+    assert np.allclose(theoretical[1], numerical[1])
 
 
 def get_curl(input_field: ps.Field, curl_field: ps.Field):

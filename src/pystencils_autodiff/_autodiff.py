@@ -246,12 +246,12 @@ Backward:
             self._forward_assignments = forward_assignments
             self._forward_read_accesses = None
             self._forward_write_accesses = None
-            self._forward_input_fields = list(forward_assignments.free_fields)
-            self._forward_output_fields = list(forward_assignments.bound_fields)
+            self._forward_input_fields = list(sorted(forward_assignments.free_fields, key=lambda x: str(x)))
+            self._forward_output_fields = list(sorted(forward_assignments.bound_fields, key=lambda x: str(x)))
             self._backward_assignments = backward_assignments
             self._backward_field_map = None
-            self._backward_input_fields = list(backward_assignments.free_fields)
-            self._backward_output_fields = list(backward_assignments.bound_fields)
+            self._backward_input_fields = list(sorted(backward_assignments.free_fields, key=lambda x: str(x)))
+            self._backward_output_fields = list(sorted(backward_assignments.bound_fields, key=lambda x: str(x)))
         else:
             # if no_caching:
             if diff_mode == 'transposed':
@@ -270,12 +270,12 @@ Backward:
                     self._forward_assignments = forward_assignments
                     self._forward_read_accesses = None
                     self._forward_write_accesses = None
-                    self._forward_input_fields = list(forward_assignments.free_fields)
-                    self._forward_output_fields = list(forward_assignments.bound_fields)
+                    self._forward_input_fields = list(sorted(forward_assignments.free_fields, key=lambda x: str(x)))
+                    self._forward_output_fields = list(sorted(forward_assignments.bound_fields, key=lambda x: str(x)))
                     self._backward_assignments = backward_assignments
                     self._backward_field_map = None
-                    self._backward_input_fields = list(backward_assignments.free_fields)
-                    self._backward_output_fields = list(backward_assignments.bound_fields)
+                    self._backward_input_fields = list(sorted(backward_assignments.free_fields, key=lambda x: str(x)))
+                    self._backward_output_fields = list(sorted(backward_assignments.bound_fields, key=lambda x: str(x)))
                     self._backward_field_map = None
             else:
                 raise NotImplementedError()

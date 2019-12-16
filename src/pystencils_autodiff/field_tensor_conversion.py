@@ -64,7 +64,7 @@ def create_field_from_array_like(field_name, maybe_array, annotations=None):
         index_dimensions = 0
         field_type = FieldType.GENERIC
 
-    if 'tensorflow.python.' in str(type(maybe_array)) and 'Tensor' in str(type(maybe_array)):
+    if 'tensorflow' in str(type(maybe_array)) and 'Tensor' in str(type(maybe_array)):
         try:
             # This fails on eager execution
             return Field.create_fixed_size(maybe_array.name or field_name,
@@ -96,7 +96,10 @@ def coerce_to_field(field_name, array_like):
 
 def is_array_like(a):
     import pycuda.gpuarray
-    return (hasattr(a, '__array__') or isinstance(a, pycuda.gpuarray.GPUArray)) and not isinstance(a, sympy.Matrix)
+    return (hasattr(a, '__array__')
+            or isinstance(a, pycuda.gpuarray.GPUArray)
+            or ('tensorflow' in str(type(a)) and 'Tensor' in str(type(a)))
+            or 'torch.Tensor' in str(type(a))) and not isinstance(a, sympy.Matrix)
 
 
 def tf_constant_from_field(field, init_val=0):
