@@ -14,6 +14,7 @@ from pystencils_autodiff.framework_integration.datahandling import PyTorchDataHa
 pystencils_reco = pytest.importorskip('pystencils_reco')
 
 
+@pytest.mark.xfail(reason="Needs datahandling PR integrated into pystencils", strict=False)
 def test_datahandling():
     dh = PyTorchDataHandling((20, 30))
 
