@@ -92,13 +92,13 @@ You can also use the class `AutoDiffOp` to obtain both the assignments (if you a
     op = AutoDiffOp(forward_assignments)
     backward_assignments = op.backward_assignments   
 
-    tensorflow_op = op.create_tensorflow_op(backend='tensorflow_native')
+    tensorflow_op = op.create_tensorflow_op(backend='tensorflow_native', use_cuda=True)
 
 ... or Torch:
 
 .. code-block:: python
 
-    torch_op = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='torch_native')
+    torch_op = op.create_tensorflow_op(backend='torch_native', use_cuda=True)
 
 Test Report and Coverage
 ------------------------
