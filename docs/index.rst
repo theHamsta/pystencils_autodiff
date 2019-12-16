@@ -84,18 +84,20 @@ You can also use the class :class:`pystencils_autodiff.AutoDiffOp` to obtain bot
     op = AutoDiffOp(forward_assignments)
     backward_assignments = op.backward_assignments   
 
-    x_tensor = pystencils.autodiff.tf_variable_from_field(x)
-    y_tensor = pystencils.autodiff.tf_variable_from_field(y)
-    tensorflow_op = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='tensorflow')
+    tensorflow_op = op.create_tensorflow_op(backend='tensorflow_native')
+
+.. testoutput::
+   :hide:
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+    Compiling Tensorflow module...
+    Linking Tensorflow module...
 
 ... or Torch:
 
 .. testcode::
 
-    x_tensor = pystencils.autodiff.torch_tensor_from_field(x, cuda=False, requires_grad=True)
-    y_tensor = pystencils.autodiff.torch_tensor_from_field(y, cuda=False, requires_grad=True)
-
-    z_tensor = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='torch')
+    torch_op = op.create_tensorflow_op(backend='torch_native')
 
 
 Contents

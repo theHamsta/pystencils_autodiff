@@ -92,18 +92,13 @@ You can also use the class `AutoDiffOp` to obtain both the assignments (if you a
     op = AutoDiffOp(forward_assignments)
     backward_assignments = op.backward_assignments   
 
-    x_tensor = pystencils.autodiff.tf_variable_from_field(x)
-    y_tensor = pystencils.autodiff.tf_variable_from_field(y)
-    tensorflow_op = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='tensorflow')
+    tensorflow_op = op.create_tensorflow_op(backend='tensorflow_native')
 
 ... or Torch:
 
 .. code-block:: python
 
-    x_tensor = pystencils.autodiff.torch_tensor_from_field(x, cuda=False, requires_grad=True)
-    y_tensor = pystencils.autodiff.torch_tensor_from_field(y, cuda=False, requires_grad=True)
-
-    z_tensor = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='torch')
+    torch_op = op.create_tensorflow_op({x: x_tensor, y: y_tensor}, backend='torch_native')
 
 Test Report and Coverage
 ------------------------
