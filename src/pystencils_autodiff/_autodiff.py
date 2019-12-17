@@ -300,13 +300,35 @@ Backward:
         self._forward_input_fields = list(forward_assignments.free_fields)
         self._forward_output_fields = list(forward_assignments.bound_fields)
         self._backward_assignments = backward_assignments
-        self._backward_field_map = None
         self._backward_input_fields = list(backward_assignments.free_fields)
         self._backward_output_fields = list(backward_assignments.bound_fields)
-        self._backward_field_map = None
+        self._forward_ast_cpu = None
+        self._backward_ast_cpu = None
+        self._forward_ast_gpu = None
+        self._backward_ast_gpu = None
+        self._forward_kernel_cpu = None
+        self._backward_kernel_cpu = None
+        self._forward_kernel_gpu = None
+        self._backward_kernel_gpu = None
+        self._constant_fields = None
+        self._time_constant_fields = None
+        self._kwargs = state['kwargs']
+        self.op_name = ''
+        self._forward_ast_cpu = None
+        self._backward_ast_cpu = None
+        self._forward_ast_gpu = None
+        self._backward_ast_gpu = None
+        self._forward_kernel_cpu = None
+        self._backward_kernel_cpu = None
+        self._forward_kernel_gpu = None
+        self._backward_kernel_gpu = None
+        self._do_common_subexpression_elimination = None
+        self._boundary_handling = 'ZEROS'
 
     def __getstate__(self):
-        return {'forward_assignments': self._forward_assignments, 'backward_assignments': self.backward_assignments}
+        return {'forward_assignments': self.forward_assignments,
+                'backward_assignments': self.backward_assignments,
+                'kwargs': self._kwargs}
 
     def _create_backward_assignments(self, diff_fields_prefix):
         """
