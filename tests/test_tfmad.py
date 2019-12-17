@@ -58,7 +58,7 @@ def test_tfmad_two_stencils():
 def test_tfmad_gradient_check():
     tf = pytest.importorskip('tensorflow')
 
-    a, b, out = ps.fields("a, b, out: double[21,13]")
+    a, b, out = ps.fields("a, b, out: double[5,6]")
     print(a.shape)
 
     cont = ps.fd.Diff(a, 0) - ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + ps.fd.Diff(
@@ -100,7 +100,7 @@ def test_tfmad_gradient_check():
 def test_tfmad_gradient_check_torch():
     torch = pytest.importorskip('torch')
 
-    a, b, out = ps.fields("a, b, out: float[21,13]")
+    a, b, out = ps.fields("a, b, out: float[5,7]")
 
     cont = 2 * ps.fd.Diff(a, 0) - 1.5 * ps.fd.Diff(a, 1) \
         - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
@@ -136,7 +136,7 @@ def test_valid_boundary_handling_torch_native():
     pytest.importorskip('tensorflow')
     import tensorflow as tf
 
-    a, b, out = ps.fields("a, b, out: double[21,13]")
+    a, b, out = ps.fields("a, b, out: double[10,11]")
     print(a.shape)
 
     cont = 2*ps.fd.Diff(a, 0) - 1.5 * ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
@@ -190,7 +190,7 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
     torch = pytest.importorskip('torch')
     import torch
 
-    a, b, out = ps.fields("a, b, out: float64[21,13]")
+    a, b, out = ps.fields("a, b, out: float64[5,7]")
 
     if with_offsets:
         cont = 2*ps.fd.Diff(a, 0) - 1.5*ps.fd.Diff(a, 1) - ps.fd.Diff(b, 0) + 3 * ps.fd.Diff(b, 1)
