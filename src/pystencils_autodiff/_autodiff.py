@@ -472,6 +472,7 @@ Backward:
 
     @property
     def backward_ast_cpu(self):
+        assert self._backward_assignments, 'No backward assignments!'
         if not self._backward_ast_cpu:
             if (self._boundary_handling == AutoDiffBoundaryHandling.ZEROS or
                     self._boundary_handling == AutoDiffBoundaryHandling.VALID):
@@ -488,6 +489,7 @@ Backward:
 
     @property
     def backward_ast_gpu(self):
+        assert self._backward_assignments, 'No backward assignments!'
         if not self._backward_ast_gpu:
             if (self._boundary_handling == AutoDiffBoundaryHandling.ZEROS or
                     self._boundary_handling == AutoDiffBoundaryHandling.VALID):
