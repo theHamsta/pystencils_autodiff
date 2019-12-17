@@ -62,7 +62,7 @@ def link(object_files,
          destination_file=None,
          overwrite_destination_file=True,
          additional_link_flags=[],
-         link_cudart=True):
+         link_cudart=False):
     """Compiles given :param:`source_file` to a Tensorflow shared Library.
 
     .. warning::
@@ -100,7 +100,7 @@ def link_and_load(object_files,
                   destination_file=None,
                   overwrite_destination_file=True,
                   additional_link_flags=[],
-                  link_cudart=True):
+                  link_cudart=False):
     import tensorflow as tf
 
     destination_file = link(object_files,
@@ -190,7 +190,8 @@ def compile_sources_and_load(host_sources,
                              cuda_sources=[],
                              additional_compile_flags=[],
                              additional_link_flags=[],
-                             compile_only=False):
+                             compile_only=False,
+                             link_cudart=False):
 
     import tensorflow as tf
 
@@ -226,7 +227,7 @@ def compile_sources_and_load(host_sources,
     module_file = link(object_files,
                        overwrite_destination_file=False,
                        additional_link_flags=additional_link_flags,
-                       link_cudart=cuda_sources)
+                       link_cudart=link_cudart and cuda_sources)
     if not compile_only:
         module = tf.load_op_library(module_file)
         if module:
