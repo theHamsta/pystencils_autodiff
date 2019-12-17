@@ -123,7 +123,7 @@ class TorchModule(JinjaCppFile):
                                [file_name],
                                with_cuda=self.is_cuda,
                                extra_cflags=['--std=c++14'],
-                               extra_cuda_cflags=['-std=c++14', '--ccbin', get_compiler_config()['command']],
+                               extra_cuda_cflags=['-std=c++14', '-ccbin', get_compiler_config()['command']],
                                build_directory=build_dir,
                                extra_include_paths=[get_pycuda_include_path(),
                                                     get_pystencils_include_path()])
