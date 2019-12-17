@@ -231,7 +231,10 @@ def test_tfmad_gradient_check_torch_native(with_offsets, with_cuda):
         [dict[f] for f in auto_diff.forward_input_fields]), atol=1e-4, raise_exception=True)
 
 
-@pytest.mark.parametrize('with_cuda', (False, pytest.param(True, marks=pytest.mark.xfail)))
+@pytest.mark.parametrize('with_cuda',
+                         (False, pytest.param(True,
+                                              marks=pytest.mark.skipif('CI' in os.environ,
+                                                                       reason="GPU too old on GITLAB CI"))))
 def test_tfmad_gradient_check_two_outputs(with_cuda):
     torch = pytest.importorskip('torch')
     import torch
@@ -283,7 +286,8 @@ def test_tfmad_gradient_check_two_outputs(with_cuda):
 
 
 @pytest.mark.parametrize('gradient_check', (False, 'with_gradient_check'))
-@pytest.mark.parametrize('with_cuda', (False, pytest.param('with_cuda', marks=pytest.mark.xfail)))
+@pytest.mark.parametrize('with_cuda', (False, pytest.param('with_cuda',
+                                                           marks=pytest.mark.skipif('CI' in os.environ, reason="GPU too old on GITLAB CI"))))
 @pytest.mark.parametrize('with_offsets', (False, 'with_offsets'))
 # @pytest.mark.xfail(reason="", strict=False)
 def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):

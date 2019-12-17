@@ -150,7 +150,7 @@ def test_torch_native_compilation_gpu():
     assert 'call_backward' in dir(torch_extension)
 
 
-@pytest.mark.parametrize('target', (pytest.param('gpu', marks=pytest.mark.xfail), 'cpu'))
+@pytest.mark.skipif('CI' in os.environ, reason="GPU too old on GITLAB CI")
 def test_execute_torch(target):
     import pycuda.autoinit
     module_name = "Ololol" + target

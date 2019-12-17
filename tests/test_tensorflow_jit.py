@@ -8,18 +8,19 @@
 
 """
 
+import os
 from os.path import exists
 
 import pytest
+import sympy
 
 import pystencils
 import pystencils_autodiff
-import sympy
 from pystencils_autodiff import create_backward_assignments
 from pystencils_autodiff.backends.astnodes import TensorflowModule
 
 
-@pytest.mark.xfail(reason="cannot link against cudart on GITLAB CI", strict=False)
+@pytest.mark.skipif('CI' in os.environ, reason="GPU too old on GITLAB CI")
 def test_tensorflow_jit_gpu():
 
     pytest.importorskip('tensorflow')
