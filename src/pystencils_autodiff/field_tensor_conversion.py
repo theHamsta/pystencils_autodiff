@@ -99,7 +99,7 @@ def is_array_like(a):
     return (hasattr(a, '__array__')
             or isinstance(a, pycuda.gpuarray.GPUArray)
             or ('tensorflow' in str(type(a)) and 'Tensor' in str(type(a)))
-            or 'torch.Tensor' in str(type(a))) and not isinstance(a, sympy.Matrix)
+            or 'torch.Tensor' in str(type(a))) and not isinstance(a, (sympy.Matrix, sympy.MutableDenseMatrix))
 
 
 def tf_constant_from_field(field, init_val=0):
