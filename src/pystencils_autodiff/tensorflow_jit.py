@@ -198,7 +198,6 @@ def compile_sources_and_load(host_sources,
     object_files = []
     sources = host_sources + cuda_sources
 
-    print('Compiling Tensorflow module...')
 
     def compile(source):
         is_cuda = source in cuda_sources
@@ -221,7 +220,7 @@ def compile_sources_and_load(host_sources,
         return object_file
 
     # p_tqdm is just a parallel tqdm
-    object_files = p_tqdm.p_umap(compile, sources)
+    object_files = p_tqdm.p_umap(compile, sources, desc='Compiling Tensorflow module')
 
     print('Linking Tensorflow module...')
     module_file = link(object_files,
