@@ -198,7 +198,6 @@ def compile_sources_and_load(host_sources,
     object_files = []
     sources = host_sources + cuda_sources
 
-
     def compile(source):
         is_cuda = source in cuda_sources
 
