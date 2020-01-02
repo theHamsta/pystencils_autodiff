@@ -119,6 +119,9 @@ class TorchModule(JinjaCppFile):
         if not exists(file_name):
             write_file(file_name, source_code)
 
+        # Torch regards CXX
+        os.environ['CXX'] = get_compiler_config()['command']
+
         torch_extension = load(hash,
                                [file_name],
                                with_cuda=self.is_cuda,
