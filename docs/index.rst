@@ -91,7 +91,6 @@ You can also use the class :class:`pystencils_autodiff.AutoDiffOp` to obtain bot
    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
     Compiling Tensorflow module...
-    Linking Tensorflow module...
 
 ... or Torch:
 
