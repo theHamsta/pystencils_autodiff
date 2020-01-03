@@ -206,11 +206,12 @@ setup_pybind11(cfg)
         except Exception as e:
             print(e)
             torch_extension = load(hash,
-                               [file_name],
-                               with_cuda=self.is_cuda,
-                               extra_cflags=['--std=c++14', get_compiler_config()['flags'].replace('--std=c++11', '')],
-                               extra_cuda_cflags=['-std=c++14', '-ccbin', get_compiler_config()['command']],
-                               build_directory=cache_dir,
-                               extra_include_paths=[get_pycuda_include_path(),
-                                                    get_pystencils_include_path()])
+                                   [file_name],
+                                   with_cuda=self.is_cuda,
+                                   extra_cflags=['--std=c++14',
+                                                 get_compiler_config()['flags'].replace('--std=c++11', '')],
+                                   extra_cuda_cflags=['-std=c++14', '-ccbin', get_compiler_config()['command']],
+                                   build_directory=cache_dir,
+                                   extra_include_paths=[get_pycuda_include_path(),
+                                                        get_pystencils_include_path()])
         return torch_extension
