@@ -4,10 +4,10 @@ test:
     pytest
 
 release version: test
-	git tag {{version}}
-	git checkout {{version}}
-	git push --tags -f
-	python3 setup.py sdist
-	twine upload dist/pystencils_autodiff-{{version}}.tar.gz
-	git checkout master
+    git tag {{version}}
+    git checkout {{version}}
+    git push --tags -f
+    python3 setup.py sdist
+    twine upload dist/pystencils_autodiff-{{version}}.tar.gz
+    git checkout master
     
