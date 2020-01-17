@@ -15,6 +15,7 @@ from os.path import dirname, exists, join
 
 from pystencils.astnodes import FieldPointerSymbol, FieldShapeSymbol, FieldStrideSymbol
 from pystencils.cpu.cpujit import get_cache_config, get_compiler_config
+from pystencils.gpucuda.cudajit import get_cubic_interpolation_include_paths
 from pystencils.include import get_pycuda_include_path, get_pystencils_include_path
 from pystencils_autodiff._file_io import read_template_from_file, write_file
 from pystencils_autodiff.backends.python_bindings import (
@@ -100,6 +101,10 @@ class TorchModule(JinjaCppFile):
 
         super().__init__(ast_dict)
 
+    @property
+    def kernel_wrappers(self):
+        return self.ast_dict['kernel_wrappers']
+
     @classmethod
     def generate_wrapper_function(cls, kernel_ast):
         return WrapperFunction(cls.DESTRUCTURING_CLASS(generate_kernel_call(kernel_ast)),
@@ -129,7 +134,8 @@ class TorchModule(JinjaCppFile):
                                extra_cuda_cflags=['-std=c++14', '-ccbin', get_compiler_config()['command']],
                                build_directory=build_dir,
                                extra_include_paths=[get_pycuda_include_path(),
-                                                    get_pystencils_include_path()])
+                                                    get_pystencils_include_path(),
+                                                    *get_cubic_interpolation_include_paths()])
         return torch_extension
 
 

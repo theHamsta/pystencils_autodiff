@@ -90,3 +90,12 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
             "\n" + self._indent + \
             ("\n" + self._indent).join(self._print(node.body).splitlines()) + \
             "\n}"
+
+    def _print_Timeloop(self, node):
+        children_string = '\n   '.join(self._print(c) for c in node.children)
+        return f"""for( {node.loop_symbol.dtype} {node.loop_symbol}={node.loop_start};  {node.loop_symbol}<= {node.loop_end} ; {node.loop_symbol}+= {node.loop_increment} )  {{
+    {children_string}
+}}"""  # noqa
+
+    def _print_SwapBuffer(self, node):
+        return f"""std::swap({node.first_array}, {node.second_array});"""
