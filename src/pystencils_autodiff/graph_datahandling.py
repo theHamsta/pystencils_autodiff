@@ -45,6 +45,9 @@ class DataTransfer:
     def __str__(self):
         return f'DataTransferKind: {self.kind} with {self.field}'
 
+    def __repr__(self):
+        return f'DataTransferKind: {self.kind} with {self.field}'
+
 
 class Swap(DataTransfer):
     def __init__(self, source, destination, gpu):
@@ -52,7 +55,7 @@ class Swap(DataTransfer):
         self.field = source
         self.destination = destination
 
-    def __str__(self):
+    def __repr__(self):
         return f'Swap: {self.field} with {self.destination}'
 
 
@@ -121,6 +124,13 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
         def run(self, time_steps=1):
             self.parent.call_queue.append(TimeloopRun(self, time_steps))
             super().run(time_steps)
+
+        def swap(self, src, dst, is_gpu):
+            if isinstance(src, str):
+                src = self.parent.fields[src]
+            if isinstance(dst, str):
+                dst = self.parent.fields[dst]
+            self._single_step_asts.append(Swap(src, dst, is_gpu))
 
     def __init__(self, *args, **kwargs):
 

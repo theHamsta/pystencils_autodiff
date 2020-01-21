@@ -15,6 +15,8 @@ try:
     from lbmpy.lbstep import LatticeBoltzmannStep
     from pystencils_autodiff.graph_datahandling import GraphDataHandling
     from pystencils.slicing import slice_from_direction
+    from pystencils_autodiff.computationgraph import ComputationGraph
+
 except ImportError:
     pass
 
@@ -65,10 +67,22 @@ def ldc_setup(**kwargs):
 
 def test_graph_datahandling():
 
-    print("--- LDC 2D test ---")
-
     opt_params = {'target': 'gpu', 'gpu_indexing_params': {'block_size': (8, 4, 2)}}
     lbm_step: LatticeBoltzmannStep = ldc_setup(domain_size=(10, 15), optimization=opt_params)
     print(lbm_step._data_handling)
 
     print(lbm_step._data_handling.call_queue)
+
+
+def test_graph_generation():
+
+    opt_params = {'target': 'gpu', 'gpu_indexing_params': {'block_size': (8, 4, 2)}}
+    lbm_step: LatticeBoltzmannStep = ldc_setup(domain_size=(10, 15), optimization=opt_params)
+
+    graph = ComputationGraph(lbm_step._data_handling.call_queue)
+    print("graph.writes: " + str(graph.writes))
+    print("graph.reads: " + str(graph.reads))
+
+    print(graph.to_dot())
+
+    graph.to_dot_file('/tmp/foo.dot', with_code=False)
