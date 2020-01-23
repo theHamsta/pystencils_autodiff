@@ -157,10 +157,10 @@ class FieldAllocation(JinjaCppFile):
 
     TEMPLATE = jinja2.Template("""BlockDataID {{ field_name }}_data = field::addToStorage<{{ field_type }}>( {{ block_forrest }},
                               {{ field_name }}
-     {%- if init_value %}      , {{ init_value }} {% endif %}
-     {%- if layout_str %}      , {{ layout_str }} {% endif %}
-     {%- if num_ghost_layers %}, {{ num_ghost_layers }} {% endif %}
-     {%- if always_initialize %}, {{ always_initialize }} {% endif %})
+     {%- if init_value -%}      , {{ init_value }} {% endif %}
+     {%- if layout_str -%}      , {{ layout_str }} {% endif %}
+     {%- if num_ghost_layers -%}, {{ num_ghost_layers }} {% endif %}
+     {%- if always_initialize -%}, {{ always_initialize }} {% endif %})
         """)  # noqa
 
     def __init__(self, block_forrest, field):
