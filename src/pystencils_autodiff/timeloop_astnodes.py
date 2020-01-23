@@ -143,4 +143,3 @@ class SwapBuffer(CustomNode):
     @property
     def args(self):
         return (self.first_array, self.second_array)
-
