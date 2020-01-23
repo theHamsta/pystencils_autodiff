@@ -214,7 +214,7 @@ class JinjaCppFile(Node):
                            else v)
                        if not isinstance(v, Iterable) or isinstance(v, str)
                        else [(self._print(a)
-                              if not isinstance(a, (pystencils.Field, pystencils.TypedSymbol) and a is not None)
+                              if not isinstance(a, (pystencils.Field, pystencils.TypedSymbol)) and a is not None
                               else a)
                              for a in v]
                        for k, v in self.ast_dict.items()}

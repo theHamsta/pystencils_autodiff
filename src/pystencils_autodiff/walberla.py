@@ -11,6 +11,7 @@
 from os.path import dirname, join
 
 import jinja2
+import sympy as sp
 
 from pystencils.data_types import TypedSymbol
 from pystencils_autodiff._file_io import read_template_from_file
@@ -160,8 +161,8 @@ class FieldAllocation(JinjaCppFile):
      {%- if init_value -%}      , {{ init_value }} {% endif %}
      {%- if layout_str -%}      , {{ layout_str }} {% endif %}
      {%- if num_ghost_layers -%}, {{ num_ghost_layers }} {% endif %}
-     {%- if always_initialize -%}, {{ always_initialize }} {% endif %})
-        """)  # noqa
+     {%- if always_initialize -%}, {{ always_initialize }} {% endif %});
+""")  # noqa
 
     def __init__(self, block_forrest, field):
         self._symbol = TypedSymbol(field.name + '_data', 'BlockDataID')
@@ -181,3 +182,78 @@ class FieldAllocation(JinjaCppFile):
     @property
     def symbols_defined(self):
         return {self.symbol}
+
+
+class WalberlaVector(JinjaCppFile):
+    TEMPLATE = jinja2.Template("""math::Vector{{ndim}}<{{dtype}}>({{offsets}})""")
+
+    def __init__(self, offset, dtype='real_t'):
+        ast_dict = {
+            'offset': offset,
+            'offsets': ', '.join(str(o) for o in offset),
+            'dtype': dtype,
+            'ndim': len(offset),
+        }
+        super().__init__(ast_dict)
+
+    def __sympy__(self):
+        return sp.Matrix(self.ast_dict.offset)
+
+
+class PdfFieldAllocation(FieldAllocation):
+    """
+    .. code: : cpp
+
+        BlockDataID addPdfFieldToStorage(const shared_ptr < BlockStorage_T > & blocks, const std:: string & identifier,
+                                          const LatticeModel_T & latticeModel,
+                                          const Vector3 < real_t > & initialVelocity, const real_t initialDensity,
+                                          const uint_t ghostLayers,
+                                          const field:: Layout & layout = field: : zyxf,
+                                          const Set < SUID > & requiredSelectors     = Set < SUID > : : emptySet(),
+                                          const Set < SUID > & incompatibleSelectors = Set < SUID > : : emptySet() )
+    """
+    TEMPLATE = jinja2.Template("""BlockDataID {{field_name}}_data = lbm::field::addPdfFieldToStorage < {{ field_type }} > ({{ block_forrest }},
+                              {{field_name}},
+                              {{lattice_model}}
+     {%- if initial_velocity -%}      , {{initial_velocity }} {% endif %}
+     {%- if initial_density -%}      , {{initial_density }} {% endif %}
+     {%- if num_ghost_layers -%}, {{num_ghost_layers }} {% endif %});
+""")  # noqa
+
+    def __init__(self, block_forrest, field, lattice_model, initial_velocity=None, initial_density=None):
+        super().__init__(block_forrest, field)
+        if initial_velocity and not isinstance(initial_velocity, WalberlaVector):
+            initial_velocity = WalberlaVector(initial_velocity)
+
+        self.ast_dict.update({
+            'initial_density': initial_density,
+            'lattice_model': lattice_model,
+            'initial_velocity': initial_velocity,
+        })
+
+    headers = ['lbm/field/AddToStorage.h']
+
+
+class FlagFieldAllocation(FieldAllocation):
+    """
+    .. code: : cpp
+
+        template< typename FlagField_T, typename BlockStorage_T >
+        BlockDataID addFlagFieldToStorage( const shared_ptr< BlockStorage_T > & blocks,
+                                           const std::string & identifier,
+                                           const uint_t nrOfGhostLayers = uint_t(1),
+                                           const bool alwaysInitialize = false,
+                                           const std::function< void ( FlagField_T * field, IBlock * const block ) > & initFunction =
+                                              std::function< void ( FlagField_T * field, IBlock * const block ) >(),
+                                           const Set<SUID> & requiredSelectors = Set<SUID>::emptySet(),
+                                           const Set<SUID> & incompatibleSelectors = Set<SUID>::emptySet() )
+    """  # noqa
+    TEMPLATE = jinja2.Template("""BlockDataID {{field_name}}_data = field::addFlagFieldToStorage < {{ field_type }} > ({{ block_forrest }},
+                              {{field_name}}
+     {%- if num_ghost_layers -%}, {{num_ghost_layers }} {% endif %});
+""")  # noqa
+
+    def __init__(self, block_forrest, field):
+        super().__init__(block_forrest, field)
+
+    headers = ['field/AddToStorage.h']
