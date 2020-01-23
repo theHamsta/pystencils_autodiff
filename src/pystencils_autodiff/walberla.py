@@ -172,7 +172,7 @@ class FieldAllocation(JinjaCppFile):
         }
         super().__init__(ast_dict)
 
-    headers = ['"fields/GhostLayerField.h"']
+    headers = ['"field/GhostLayerField.h"']
 
     @property
     def symbol(self):
