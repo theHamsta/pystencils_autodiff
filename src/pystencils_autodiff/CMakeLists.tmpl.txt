@@ -1,0 +1,6 @@
+waLBerla_link_files_to_builddir( *.prm )
+waLBerla_add_executable ( NAME autogen
+                          FILES {%- for f in files_to_compile %}
+                                {{ f }} 
+                                {%- endfor %}
+                          DEPENDS blockforest core cuda field lbm geometry timeloop gui )

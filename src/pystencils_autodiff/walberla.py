@@ -53,6 +53,14 @@ class WalberlaModule(JinjaCppFile):
         JinjaCppFile.__init__(self, ast_dict)
 
 
+class CMakeLists(JinjaCppFile):
+    TEMPLATE = read_template_from_file(join(dirname(__file__), 'CMakeLists.tmpl.txt'))
+
+    def __init__(self, files_to_compile):
+        ast_dict = {'files_to_compile': files_to_compile} # we try to avoid evil globbing
+        JinjaCppFile.__init__(self, ast_dict)
+
+
 class WalberlaMain(JinjaCppFile):
 
     TEMPLATE = jinja2.Template("""

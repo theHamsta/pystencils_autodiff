@@ -17,7 +17,7 @@ import pystencils
 import pystencils_walberla.codegen
 from pystencils.astnodes import Block, EmptyLine
 from pystencils_autodiff.walberla import (
-    AllocateAllFields, DefinitionsHeader, InitBoundaryHandling, LbCommunicationSetup,
+    AllocateAllFields, CMakeLists, DefinitionsHeader, InitBoundaryHandling, LbCommunicationSetup,
     ResolveUndefinedSymbols, RunTimeLoop, SweepCreation, SweepOverAllBlocks, TimeLoop,
     UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 
@@ -104,10 +104,21 @@ class WaldUndWiesenSimulation():
         self._codegen_context.write_file("UserDefinitions.h",
                                          str(DefinitionsHeader(self._lb_model_name, self._flag_field_dtype)))
 
+    def _create_cmake_file(self):
+        try:
+            self._codegen_context.write_file("CMakeLists.txt",
+                                             str(CMakeLists([f for f in self._codegen_context.files_written()
+                                                             if f.endswith('.cpp') or f.endswith('.cu')])))
+        except AttributeError:
+            self._codegen_context.write_file("CMakeLists.txt",
+                                             str(CMakeLists([f for f in self._codegen_context.files.keys()
+                                                             if f.endswith('.cpp') or f.endswith('.cu')])))
+
     def write_files(self):
         self._create_helper_files()
         self._create_module()
         self._create_defintions_header()
+        self._create_cmake_file()  # has to be called last
 
     @property
     def boundary_conditions(self):
