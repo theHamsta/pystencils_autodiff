@@ -753,5 +753,3 @@ for( auto& block : *{{block_forest}}) {{sweep_class_name | lower() }}(&block);""
                     'sweep_class_name': functor.ast_dict.sweep_class_name,
                     'block_forest': block_forest}
         super().__init__(ast_dict)
-
-    headers = ['<algorithm>']
