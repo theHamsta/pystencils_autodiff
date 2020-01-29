@@ -78,7 +78,10 @@ def test_wald_wiesen_lbm():
     with ManualCodeGenerationContext() as ctx:
         from test_graph_datahandling import ldc_setup
         opt_params = {'target': 'gpu'}
-        lbm_step = ldc_setup(domain_size=(30, 30), optimization=opt_params, fixed_loop_sizes=False)
+        import sympy as sp
+        lid_velocity = sp.symbols('lid_velocity')
+        lbm_step = ldc_setup(domain_size=(30, 30), optimization=opt_params,
+                             fixed_loop_sizes=False, lid_velocity=lid_velocity)
 
         sim = WaldUndWiesenSimulation(lbm_step.data_handling,
                                       ctx,
@@ -108,4 +111,3 @@ def test_resolve_parameters():
     ])))
 
     print(module)
-

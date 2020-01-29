@@ -48,6 +48,7 @@ class WaldUndWiesenSimulation():
         self._kernel_class_generator = WaldUndWiesenSimulation._get_sweep_class_name()
         self._with_gui = False
         self._with_gui_default = False
+        self._boundary_kernels = {}
 
     def _create_helper_files(self) -> Dict[str, str]:
         if self._lb_rule:
@@ -56,8 +57,8 @@ class WaldUndWiesenSimulation():
                                                   refinement_scaling=self._refinement_scaling)
             if self._boundary_handling:
                 for bc in self.boundary_conditions:
-                    lbmpy_walberla.generate_boundary(
-                        self._codegen_context, pascalcase(bc.name), bc, self._lb_rule.method)
+                    self._boundary_kernels.update({bc.name: lbmpy_walberla.generate_boundary(
+                        self._codegen_context, pascalcase(bc.name), bc, self._lb_rule.method)})
 
     def _create_module(self):
         if self._lb_rule:
@@ -87,8 +88,12 @@ class WaldUndWiesenSimulation():
             ResolveUndefinedSymbols(
                 Block([
                     field_allocations,
-                    InitBoundaryHandling(self._block_forest.blocks, flag_field_id,
-                                         pdf_field_id, self.boundary_conditions)
+                    InitBoundaryHandling(self._block_forest.blocks,
+                                         flag_field_id,
+                                         pdf_field_id,
+                                         self.boundary_conditions,
+                                         self._boundary_kernels,
+                                         self._field_allocations)
                     if self._boundary_handling else EmptyLine(),
                     LbCommunicationSetup(self._lb_model_name,
                                          pdf_field_id)

@@ -526,8 +526,7 @@ else {
 }
 {%- else %}
 timeloop.run();
-{%- endif %}
-    """)  # noqa
+{%- endif %}""")  # noqa
 
     def __init__(self, block_forest, timeloop, with_gui=False, use_gui_default='false'):
         self.density_name = "DensityAdaptor"
@@ -684,7 +683,7 @@ class InitBoundaryHandling(JinjaCppFile):
 {% endfor %}
 """)  # noqa
 
-    def __init__(self, block_forest, flag_field_id, pdf_field_id, boundary_conditions):
+    def __init__(self, block_forest, flag_field_id, pdf_field_id, boundary_conditions, boundary_kernel: dict, field_allocations):
         self.fluid = FlagUidDefinition("fluid")
         ast_dict = {'fluid_uid_definition': self.fluid,
                     'geometry_initialization': BoundaryHandlingFromConfig(block_forest,
@@ -694,20 +693,51 @@ class InitBoundaryHandling(JinjaCppFile):
                                                                              b,
                                                                              pdf_field_id,
                                                                              flag_field_id,
-                                                                             self.fluid.symbol)
+                                                                             self.fluid.symbol,
+                                                                             boundary_kernel[b.name],
+                                                                             field_allocations)
                                              for b in boundary_conditions]
                     }
         super().__init__(ast_dict)
 
     headers = ['"cuda/FieldCopy.h"', '"geometry/InitBoundaryHandling.h"']
+    @property
+    def undefined_symbols(self):
+        rtn = super().undefined_symbols
+        for b in self.ast_dict.generated_boundaries:
+            rtn = rtn | b.undefined_symbols
+        return rtn
 
 
 class GeneratedBoundaryInitialization(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""lbm::{{ boundary_condition }} {{ identifier }}( {{ block_forest }}, {{ pdf_field_id }} );
+    TEMPLATE = jinja2.Template("""lbm::{{ boundary_condition }} {{ identifier }}( {{ block_forest }}, {{ pdf_field_id }}{{ parameter_str }} );
 {{ identifier }}.fillFromFlagField<FlagField_T>( {{ block_forest }}, {{ flag_field_id }}, FlagUID("{{ boundary_condition }}"), {{ fluid_uid }} );
 """)  # noqa
 
-    def __init__(self, block_forest, boundary_condition, pdf_field_id, flag_field_id, fluid_uid):
+    def __init__(self,
+                 block_forest,
+                 boundary_condition,
+                 pdf_field_id,
+                 flag_field_id,
+                 fluid_uid,
+                 kernel,
+                 field_allocations):
+        def resolve_parameter(p):
+            if kernel.target == 'cpu':
+                dict = field_allocations._cpu_allocations
+            else:
+                dict = field_allocations._gpu_allocations
+
+            return dict.get(p.symbol.name.replace('_data_', ''), p).symbol
+        parameters = kernel.get_parameters()
+        parameter_ids = [resolve_parameter(p)
+                         for p in parameters
+                         if (p.is_field_pointer or not p.is_field_parameter) and
+                         p.symbol.name not in ('_data_indexVector', '_data_pdfs', 'indexVectorSize',)]
+        parameter_str = ', '.join(p.name for p in parameter_ids)
+        if parameter_str:
+            parameter_str = ', ' + parameter_str
+
         self.fluid = FlagUidDefinition("fluid")
         ast_dict = {'block_forest': block_forest,
                     'boundary_condition': pascalcase(boundary_condition.name),
@@ -715,6 +745,8 @@ class GeneratedBoundaryInitialization(JinjaCppFile):
                     'pdf_field_id': pdf_field_id,
                     'fluid_uid': fluid_uid,
                     'flag_field_id': flag_field_id,
+                    'parameter_ids': parameter_ids,
+                    'parameter_str': parameter_str
                     }
         super().__init__(ast_dict)
 
@@ -728,27 +760,40 @@ class GeneratedBoundaryInitialization(JinjaCppFile):
         # TypedSymbol(self.ast_dict.identifier, 'FlagUID'),
         return {TypedSymbol(self.ast_dict.identifier, f'lbm::{self.ast_dict.boundary_condition}')}
 
+    @property
+    def undefined_symbols(self):
+        return super().undefined_symbols | set(self.ast_dict.parameter_ids)
+
 
 class SweepCreation(JinjaCppFile):
     TEMPLATE = jinja2.Template("""{{ sweep_class_name }}( {{ parameter_str }} )""")  # noqa
 
     def __init__(self, sweep_class_name: str, field_allocation: AllocateAllFields, ast, parameters_to_ignore=None):
+        def resolve_parameter(p):
+            if ast.target == 'cpu':
+                dict = field_allocation._cpu_allocations
+            else:
+                dict = field_allocation._gpu_allocations
+
+            return dict.get(p.symbol.name.replace('_data_', ''), p).symbol
+
         parameters = ast.get_parameters()
-        parameter_ids = [field_allocation._cpu_allocations[p.symbol.name.replace('_data_', '')].symbol.name
-                         if ast.target == 'cpu'
-                         else field_allocation._gpu_allocations[p.symbol.name.replace('_data_', '')].symbol.name
+        parameter_ids = [resolve_parameter(p)
                          for p in parameters
-                         if p.is_field_pointer or not p.is_field_parameter
-                         ]
+                         if p.is_field_pointer or not p.is_field_parameter]
 
         ast_dict = {'sweep_class_name': sweep_class_name,
                     'parameter_ids': parameter_ids,
-                    'parameter_str': ', '.join(parameter_ids)}
+                    'parameter_str': ', '.join(p.name for p in parameter_ids)}
         super().__init__(ast_dict)
 
     @property
     def headers(self):
         return [f'"{self.ast_dict.sweep_class_name}.h"']
+
+    @property
+    def undefined_symbols(self):
+        return set(self.ast_dict.parameter_ids)
 
 
 class SweepOverAllBlocks(JinjaCppFile):
