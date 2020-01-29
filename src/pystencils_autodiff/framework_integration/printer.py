@@ -1,3 +1,5 @@
+import sympy as sp
+
 import pystencils.backends.cbackend
 from pystencils.kernelparameters import FieldPointerSymbol
 
@@ -12,14 +14,17 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
     """
 
     def __init__(self):
-        super().__init__(sympy_printer=None,
-                         dialect='c')
+        super().__init__(dialect='c')
 
     def _print(self, node):
         from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
         if isinstance(node, JinjaCppFile):
             node.printer = self
-        return super()._print(node)
+
+        if isinstance(node, sp.Expr):
+            return self.sympy_printer._print(node)
+        else:
+            return super()._print(node)
 
     def _print_WrapperFunction(self, node):
         super_result = super()._print_KernelFunction(node)
