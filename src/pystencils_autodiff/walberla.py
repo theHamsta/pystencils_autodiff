@@ -755,23 +755,3 @@ for( auto& block : *{{block_forest}}) {{sweep_class_name | lower() }}(&block);""
         super().__init__(ast_dict)
 
     headers = ['<algorithm>']
-
-
-# class GetSweep(JinjaCppFile):
-    # TEMPLATE = jinja2.Template("""std::function<void(*domain_decomposition::IBlock)>({{ sweep_class }})""")  # noqa
-
-    # def __init__(self, sweep_class: SweepCreation):
-
-    # ast_dict = {'sweep_class': sweep_class, }
-    # super().__init__(ast_dict)
-
-    # headers = ['"domain_decomposition/IBlock.h"']
-
-
-# class MakeSharedFunctor(JinjaCppFile):
-    # TEMPLATE = jinja2.Template("""makeSharedSweep{{ functor }}(&{{block_forest}})""")  # noqa
-
-    # def __init__(self, functor, block_forest):
-    # ast_dict = {'functor': functor,
-    # 'block_forest': block_forest}
-    # super().__init__(ast_dict)
