@@ -7,19 +7,20 @@
 
 """
 
+import itertools
 from typing import Dict
 
 import sympy as sp
-from stringcase import pascalcase
+from stringcase import camelcase, pascalcase
 
 import lbmpy_walberla
 import pystencils
 import pystencils_walberla.codegen
 from pystencils.astnodes import Block, EmptyLine
 from pystencils_autodiff.walberla import (
-    AllocateAllFields, CMakeLists, DefinitionsHeader, InitBoundaryHandling, LbCommunicationSetup,
-    ResolveUndefinedSymbols, RunTimeLoop, SweepCreation, SweepOverAllBlocks, TimeLoop,
-    UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
+    AllocateAllFields, CMakeLists, DefinitionsHeader, FieldCopy, InitBoundaryHandling,
+    LbCommunicationSetup, ResolveUndefinedSymbols, RunTimeLoop, SwapFields, SweepCreation,
+    SweepOverAllBlocks, TimeLoop, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 
 
 class WaldUndWiesenSimulation():
@@ -35,7 +36,8 @@ class WaldUndWiesenSimulation():
                  codegen_context,
                  boundary_handling: pystencils.boundaries.BoundaryHandling = None,
                  lb_rule=None,
-                 refinement_scaling=None):
+                 refinement_scaling=None,
+                 boundary_handling_target='gpu'):
         self._data_handling = graph_data_handling
         self._lb_rule = lb_rule
         self._refinement_scaling = refinement_scaling
@@ -49,6 +51,17 @@ class WaldUndWiesenSimulation():
         self._with_gui = False
         self._with_gui_default = False
         self._boundary_kernels = {}
+        self._boundary_handling_target = boundary_handling_target
+        pystencils_walberla.codegen.generate_pack_info_for_field(
+            self._codegen_context,
+            'PackInfo',
+            pystencils.Field.create_generic(graph_data_handling.fields['ldc_pdf'].name,
+                                            graph_data_handling.fields['ldc_pdf'].spatial_dimensions,
+                                            graph_data_handling.fields['ldc_pdf'].dtype.numpy_dtype,
+                                            graph_data_handling.fields['ldc_pdf'].index_dimensions,
+                                            index_shape=graph_data_handling.fields['ldc_pdf'].index_shape,),
+            target=self._boundary_handling_target)
+        self._packinfo_class = 'PackInfo'
 
     def _create_helper_files(self) -> Dict[str, str]:
         if self._lb_rule:
@@ -58,7 +71,13 @@ class WaldUndWiesenSimulation():
             if self._boundary_handling:
                 for bc in self.boundary_conditions:
                     self._boundary_kernels.update({bc.name: lbmpy_walberla.generate_boundary(
-                        self._codegen_context, pascalcase(bc.name), bc, self._lb_rule.method)})
+                        self._codegen_context,
+                        pascalcase(bc.name),
+                        bc,
+                        self._lb_rule.method,
+                        target=self._boundary_handling_target)},
+                    )
+                    self._bh_cycler = itertools.cycle(self._boundary_kernels.keys())
 
     def _create_module(self):
         if self._lb_rule:
@@ -77,10 +96,11 @@ class WaldUndWiesenSimulation():
 
         if self._lb_rule:
             pdf_field_id = field_allocations._gpu_allocations.get(
-                'ldc_pdfSrc', field_allocations._cpu_allocations['ldc_pdfSrc']).symbol
+                'ldc_pdf', field_allocations._cpu_allocations['ldc_pdf']).symbol
         else:
             pdf_field_id = None
 
+        self._data_handling.merge_swaps_with_kernel_calls()
         call_nodes = filter(lambda x: x, [self._graph_to_sweep(c) for c in self._data_handling.call_queue])
 
         module = WalberlaModule(WalberlaMain(Block([
@@ -96,7 +116,9 @@ class WaldUndWiesenSimulation():
                                          self._field_allocations)
                     if self._boundary_handling else EmptyLine(),
                     LbCommunicationSetup(self._lb_model_name,
-                                         pdf_field_id)
+                                         pdf_field_id,
+                                         self._packinfo_class,
+                                         self._boundary_handling_target)
                     if self._lb_rule else EmptyLine(),
                     *call_nodes
                 ]), self.parameter_config_block)
@@ -130,28 +152,79 @@ class WaldUndWiesenSimulation():
         return self._boundary_handling._boundary_object_to_boundary_info.keys()
 
     def _graph_to_sweep(self, c):
-        from pystencils_autodiff.graph_datahandling import KernelCall, TimeloopRun
+        from pystencils_autodiff.graph_datahandling import KernelCall, TimeloopRun, DataTransferKind, DataTransfer
 
         if isinstance(c, KernelCall):
             sweep_class_name = next(self._kernel_class_generator)
             pystencils_walberla.codegen.generate_sweep(
                 self._codegen_context, sweep_class_name, c.kernel.ast)
-            rtn = SweepOverAllBlocks(SweepCreation(sweep_class_name, self._field_allocations,
-                                                   c.kernel.ast), self._block_forest.blocks)
+            rtn = SweepOverAllBlocks(SweepCreation(sweep_class_name,
+                                                   self._field_allocations,
+                                                   c.kernel.ast,
+                                                   parameters_to_ignore=[s[1].name for s in c.tmp_field_swaps]),
+                                     self._block_forest.blocks)
 
         elif isinstance(c, TimeloopRun):
             sweeps = []
             for a in c.timeloop._single_step_asts:
-                if 'indexField' in [f.name for f in a.fields_accessed]:
-                    continue
-                sweep_class_name = next(self._kernel_class_generator)
-                pystencils_walberla.codegen.generate_sweep(
-                    self._codegen_context, sweep_class_name, a)
-                sweeps.append(SweepCreation(sweep_class_name, self._field_allocations, a))
+                if isinstance(a, KernelCall):
+                    if 'indexField' in [f.name for f in a.kernel.ast.fields_accessed]:
+                        bh = next(self._bh_cycler)
+                        sweeps.append(camelcase(bh))
+                        continue
+                    sweep_class_name = next(self._kernel_class_generator)
+                    pystencils_walberla.codegen.generate_sweep(
+                        self._codegen_context, sweep_class_name, a.kernel.ast, field_swaps=a.tmp_field_swaps)
+                    sweeps.append(SweepCreation(sweep_class_name,
+                                                self._field_allocations,
+                                                a.kernel.ast,
+                                                parameters_to_ignore=[s[1].name for s in a.tmp_field_swaps]))
+
+                elif isinstance(c, DataTransfer):
+                    if c.kind in (DataTransferKind.HOST_COMMUNICATION, DataTransferKind.DEVICE_COMMUNICATION):
+                        src = self._field_allocations._cpu_allocations[c.field.name].symbol
+                        dst = self._field_allocations._cpu_allocations[c.destination.name].symbol
+                        rtn = SwapFields(src, dst)
+                    elif c.kind == DataTransferKind.DEVICE_SWAP:
+                        src = self._field_allocations._gpu_allocations[c.field.name].symbol
+                        dst = self._field_allocations._gpu_allocations[c.destination.name].symbol
+                        rtn = SwapFields(src, dst)
+                    elif c.kind == DataTransferKind.HOST_TO_DEVICE:
+                        src = self._field_allocations._cpu_allocations[c.field.name].symbol
+                        dst = self._field_allocations._gpu_allocations[c.field.name].symbol
+                        rtn = FieldCopy(self._block_forest.blocks, src, c.field, False, dst, c.field, True)
+                    elif c.kind == DataTransferKind.DEVICE_TO_HOST:
+                        src = self._field_allocations._gpu_allocations[c.field.name].symbol
+                        dst = self._field_allocations._cpu_allocations[c.field.name].symbol
+                        rtn = FieldCopy(self._block_forest.blocks, src, c.field, True, dst, c.field, False)
+                    else:
+                        rtn = None
+                else:
+                    print(f'time {c}')
 
             loop = TimeLoop(self._block_forest.blocks, [], sweeps, [], sp.S(c.time_steps))
             rtn = Block([loop, RunTimeLoop(self._block_forest.blocks, loop, self._with_gui, self._with_gui_default)])
 
+        elif isinstance(c, DataTransfer):
+            if c.kind == DataTransferKind.HOST_SWAP:
+                src = self._field_allocations._cpu_allocations[c.field.name].symbol
+                dst = self._field_allocations._cpu_allocations[c.destination.name].symbol
+                rtn = SwapFields(src, dst)
+            elif c.kind == DataTransferKind.DEVICE_SWAP:
+                src = self._field_allocations._gpu_allocations[c.field.name].symbol
+                dst = self._field_allocations._gpu_allocations[c.destination.name].symbol
+                rtn = SwapFields(src, dst)
+            elif c.kind == DataTransferKind.HOST_TO_DEVICE:
+                src = self._field_allocations._cpu_allocations[c.field.name].symbol
+                dst = self._field_allocations._gpu_allocations[c.field.name].symbol
+                rtn = FieldCopy(self._block_forest.blocks, src, c.field, False, dst, c.field, True)
+            elif c.kind == DataTransferKind.DEVICE_TO_HOST:
+                src = self._field_allocations._gpu_allocations[c.field.name].symbol
+                dst = self._field_allocations._cpu_allocations[c.field.name].symbol
+                rtn = FieldCopy(self._block_forest.blocks, src, c.field, True, dst, c.field, False)
+            else:
+                rtn = None
         else:
-            return None
+            rtn = None
+
         return rtn

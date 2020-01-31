@@ -7,6 +7,7 @@
 """
 
 """
+from copy import copy
 from enum import Enum
 
 import numpy as np
@@ -35,6 +36,17 @@ class DataTransferKind(str, Enum):
 
     def is_transfer(self):
         return self in [self.HOST_TO_DEVICE, self.DEVICE_TO_HOST, self.SWAP]
+
+
+# class BoundaryHandling:
+    # def __init__(self, field: pystencils.Field):
+        # self.field = field
+
+    # def __str__(self):
+        # return f'BoundaryHandling on {self.field}'
+
+    # def __repr__(self):
+        # return self.__str__()
 
 
 class DataTransfer:
@@ -67,9 +79,10 @@ class Communication(DataTransfer):
 
 
 class KernelCall:
-    def __init__(self, kernel: pystencils.kernel_wrapper.KernelWrapper, kwargs):
+    def __init__(self, kernel: pystencils.kernel_wrapper.KernelWrapper, kwargs, tmp_field_swaps=[]):
         self.kernel = kernel
         self.kwargs = kwargs
+        self.tmp_field_swaps = tmp_field_swaps
 
     def __str__(self):
         return "Call " + str(self.kernel.ast.function_name)
@@ -91,7 +104,7 @@ class TimeloopRun:
 
     @property
     def asts(self):
-        return self.timeloop._single_step_asts
+        return [s.kernel.ast for s in self.timeloop._single_step_asts if hasattr(s, 'kernel')]
 
 
 class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
@@ -113,17 +126,22 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
             self._single_step_functions.append(f)
 
         def add_call(self, functor, argument_list):
-            for argument_dict in argument_list:
-                self._single_step_asts.append((functor, argument_dict) if not hasattr(functor, 'ast') else functor.ast)
-
-            if hasattr(functor, 'kernel'):
-                functor = functor.kernel
-            if not isinstance(argument_list, list):
-                argument_list = [argument_list]
+            if hasattr(functor, 'ast'):
+                self._single_step_asts.append(KernelCall(functor, {}))
+            else:
+                former_queue = self.parent.call_queue
+                self.parent.call_queue = []
+                #
+                functor(*argument_list)
+                self._single_step_asts.extend(self.parent.call_queue)
+                self.parent.call_queue = former_queue
 
         def run(self, time_steps=1):
-            self.parent.call_queue.append(TimeloopRun(self, time_steps))
+            former_call_queue = copy(self.parent.call_queue)
+            self.parent.call_queue = []
             super().run(time_steps)
+            self.parent.call_queue = former_call_queue
+            former_call_queue.append(TimeloopRun(self, time_steps))
 
         def swap(self, src, dst, is_gpu):
             if isinstance(src, str):
@@ -135,10 +153,20 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
     def __init__(self, *args, **kwargs):
 
         self.call_queue = []
+        self._timeloop_record = None
         super().__init__(*args, **kwargs)
 
-    def add_array(self, name, values_per_cell=1, dtype=np.float64, latex_name=None, ghost_layers=None, layout=None,
-                  cpu=True, gpu=None, alignment=False, field_type=FieldType.GENERIC):
+    def add_array(self,
+                  name,
+                  values_per_cell=1,
+                  dtype=np.float64,
+                  latex_name=None,
+                  ghost_layers=None,
+                  layout=None,
+                  cpu=True,
+                  gpu=None,
+                  alignment=False,
+                  field_type=FieldType.GENERIC):
 
         super().add_array(name,
                           values_per_cell,
@@ -189,10 +217,17 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
             self.call_queue.append(DataTransfer(self._fields[name], DataTransferKind.HOST_TO_DEVICE))
 
     def synchronization_function(self, names, stencil=None, target=None, **_):
-        for name in names:
-            gpu = target == 'gpu'
-            self.call_queue.append(Communication(self._fields[name], stencil, gpu))
-        super().synchronization_function(names, stencil=None, target=None, **_)
+        def func():
+            for name in names:
+                gpu = target == 'gpu'
+                self.call_queue.append(Communication(self._fields[name], stencil, gpu))
+            pystencils.datahandling.SerialDataHandling.synchronization_function(self,
+                                                                                names,
+                                                                                stencil=None,
+                                                                                target=None,
+                                                                                **_)
+
+        return func
 
     def __str__(self):
         return '\n'.join(str(c) for c in self.call_queue)
@@ -204,6 +239,23 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
              slice_obj=None, ghost_layers=False, inner_ghost_layers=False) -> None:
         self.call_queue.append('Fill ' + array_name)
         super().fill(array_name, val, value_idx, slice_obj, ghost_layers, inner_ghost_layers)
+
+    def merge_swaps_with_kernel_calls(self, call_queue=None):
+        # TODO(seitz): should be moved to ComputationGraph
+
+        if call_queue is None:
+            call_queue = self.call_queue
+
+        relevant_swaps = [(swap, predecessor) for (swap, predecessor) in zip(call_queue[1:], call_queue[:-1])
+                          if isinstance(swap, Swap) and isinstance(predecessor, KernelCall)]
+        for s, pred in relevant_swaps:
+            call_queue.remove(s)
+            if (s.field, s.destination) not in pred.tmp_field_swaps:
+                pred.tmp_field_swaps.append((s.field, s.destination))
+
+        for t in call_queue:
+            if isinstance(t, TimeloopRun):
+                self.merge_swaps_with_kernel_calls(t.timeloop._single_step_asts)
 
     # TODO
     # def reduce_float_sequence(self, sequence, operation, all_reduce=False) -> np.array:

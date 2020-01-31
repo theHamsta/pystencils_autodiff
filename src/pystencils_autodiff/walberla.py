@@ -17,9 +17,16 @@ from stringcase import camelcase, pascalcase
 
 import pystencils
 from pystencils.astnodes import SympyAssignment
-from pystencils.data_types import TypedSymbol
+from pystencils.data_types import TypedSymbol, create_type
 from pystencils_autodiff._file_io import read_template_from_file
 from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
+
+
+def _make_field_type(field, on_gpu):
+    from pystencils_walberla.jinja_filters import make_field_type, get_field_fsize
+    f_size = get_field_fsize(field)
+
+    return make_field_type(pystencils.data_types.get_base_type(field.dtype), f_size, on_gpu)
 
 
 class FieldType(JinjaCppFile):
@@ -27,10 +34,8 @@ class FieldType(JinjaCppFile):
     TEMPLATE = jinja2.Template("{{ field_type }}")
 
     def __init__(self, field: pystencils.Field, on_gpu: bool):
-        from pystencils_walberla.jinja_filters import make_field_type, get_field_fsize
 
-        f_size = get_field_fsize(field)
-        field_type = make_field_type(pystencils.data_types.get_base_type(field.dtype), f_size, on_gpu)
+        field_type = _make_field_type(field, on_gpu)
 
         ast_dict = {'on_gpu': on_gpu,
                     'field_type': field_type
@@ -393,16 +398,22 @@ class FillFromFlagField(JinjaCppFile):
 
 class LbCommunicationSetup(JinjaCppFile):
 
-    TEMPLATE = jinja2.Template("""blockforest::communication::UniformBufferedScheme<lbm::{{ lb_model_type }}::CommunicationStencil> {{ communication }}( blocks );
-{{ communication }}.addPackInfo( make_shared< lbm::PdfFieldPackInfo<lbm::{{ lb_model_type }}> >( {{ pdf_id }} ) );
+    TEMPLATE = jinja2.Template("""
+{{CommonicationScheme}}<lbm::{{ lb_model_type }}::CommunicationStencil> {{ communication }}( blocks );
+{{ communication }}.addPackInfo( make_shared< {{ packinfo_class }} >( {{ pdf_id }} ) );
  """)  # noqa
 
-    def __init__(self, lb_model_type, pdf_id):
+    def __init__(self, lb_model_type, pdf_id, packinfo_class, gpu):
         self._symbol = TypedSymbol('communication', 'auto')
+        self.gpu = gpu
+
         ast_dict = {
             'lb_model_type': lb_model_type,
             'pdf_id': pdf_id,
             'communication': self._symbol,
+            'packinfo_class': packinfo_class,
+            'CommonicationScheme': ('cuda::communication::UniformGPUScheme'
+                                    if gpu else 'blockforest::communication::UniformBufferedScheme')
         }
         super().__init__(ast_dict)
 
@@ -414,7 +425,14 @@ class LbCommunicationSetup(JinjaCppFile):
     def symbols_defined(self):
         return {self.symbol}
 
-    headers = ['"blockforest/communication/UniformBufferedScheme.h"', '"lbm/communication/PdfFieldPackInfo.h"']
+    @property
+    def headers(self):
+        if self.gpu:
+            return ['"cuda/communication/UniformGPUScheme.h"', '"lbm/communication/PdfFieldPackInfo.h"', '"PackInfo.h"']
+        else:
+            return ['"blockforest/communication/UniformBufferedScheme.h"',
+                    '"lbm/communication/PdfFieldPackInfo.h"',
+                    '"PackInfo.h"']
 
 
 class BeforeFunction(JinjaCppFile):
@@ -488,6 +506,40 @@ class TimeLoop(JinjaCppFile):
         return {self.symbol}
 
     headers = ['"timeloop/all.h"']
+
+
+class ForLoop(JinjaCppFile):
+
+    TEMPLATE = jinja2.Template("""
+for( {{node.loop_symbol.dtype}} {{node.loop_symbol}} = {{node.loop_start}}; {{node.loop_symbol}} <= {{node.loop_end}}; {{node.loop_symbol}}+= {{node.loop_increment}} )  {
+{%- for c in children %}
+{{ c | indent(3) }}
+{%- endfor -%}
+}
+""")  # noqa
+
+    def __init__(self,
+                 loop_start,
+                 loop_end,
+                 children,
+                 loop_symbol=TypedSymbol('t_', create_type('int64')),
+                 loop_increment=1):
+        ast_dict = {
+            'loop_symbol': loop_symbol,
+            'loop_start': loop_start,
+            'loop_end': loop_end,
+            'children': children,
+            'loop_increment': loop_increment
+        }
+        super().__init__(ast_dict)
+
+    @property
+    def loop_symbol(self):
+        return self.ast_dict.loop_symbol
+
+    @property
+    def symbols_defined(self):
+        return {self.loop_symbol}
 
 
 class U_Rho_Adaptor(JinjaCppFile):
@@ -683,7 +735,13 @@ class InitBoundaryHandling(JinjaCppFile):
 {% endfor %}
 """)  # noqa
 
-    def __init__(self, block_forest, flag_field_id, pdf_field_id, boundary_conditions, boundary_kernel: dict, field_allocations):
+    def __init__(self,
+                 block_forest,
+                 flag_field_id,
+                 pdf_field_id,
+                 boundary_conditions,
+                 boundary_kernel: dict,
+                 field_allocations):
         self.fluid = FlagUidDefinition("fluid")
         ast_dict = {'fluid_uid_definition': self.fluid,
                     'geometry_initialization': BoundaryHandlingFromConfig(block_forest,
@@ -768,7 +826,11 @@ class GeneratedBoundaryInitialization(JinjaCppFile):
 class SweepCreation(JinjaCppFile):
     TEMPLATE = jinja2.Template("""{{ sweep_class_name }}( {{ parameter_str }} )""")  # noqa
 
-    def __init__(self, sweep_class_name: str, field_allocation: AllocateAllFields, ast, parameters_to_ignore=None):
+    def __init__(self,
+                 sweep_class_name: str,
+                 field_allocation: AllocateAllFields,
+                 ast,
+                 parameters_to_ignore=[]):
         def resolve_parameter(p):
             if ast.target == 'cpu':
                 dict = field_allocation._cpu_allocations
@@ -780,7 +842,8 @@ class SweepCreation(JinjaCppFile):
         parameters = ast.get_parameters()
         parameter_ids = [resolve_parameter(p)
                          for p in parameters
-                         if p.is_field_pointer or not p.is_field_parameter]
+                         if (p.is_field_pointer and p.symbol.field_name not in parameters_to_ignore)
+                         or not p.is_field_parameter]
 
         ast_dict = {'sweep_class_name': sweep_class_name,
                     'parameter_ids': parameter_ids,
@@ -806,3 +869,52 @@ for( auto& block : *{{block_forest}}) {{sweep_class_name | lower() }}(&block);""
                     'sweep_class_name': functor.ast_dict.sweep_class_name,
                     'block_forest': block_forest}
         super().__init__(ast_dict)
+
+
+class FieldCopy(JinjaCppFile):
+    TEMPLATE = jinja2.Template("""cuda::fieldCpy<{{ src_type }}, {{ dst_type }}>({{ block_forest }}, {{ src_id }}, {{ dst_id }});""")  # noqa
+
+    def __init__(self, block_forest, src_id, src_field, src_gpu, dst_id, dst_field, dst_gpu):
+        src_type = _make_field_type(src_field, src_gpu)
+        dst_type = _make_field_type(dst_field, dst_gpu)
+        ast_dict = {'src_id': src_id,
+                    'dst_id': dst_id,
+                    'src_type': src_type,
+                    'dst_type': dst_type,
+                    'block_forest': block_forest}
+        super().__init__(ast_dict)
+
+    headers = ['"cuda/FieldCopy.h"']
+
+
+class SwapFields(JinjaCppFile):
+    """
+     .. warn::
+
+         Prefer temporary fields in sweeps over this class! Two full fields have higher memory usage.
+
+    """
+    TEMPLATE = jinja2.Template("""std::swap({{field_id0}}, {{field_id1}});""")
+
+    def __init__(self, field_id0, field_id1):
+        ast_dict = {'field_id0': field_id0,
+                    'field_id1': field_id1}
+        super().__init__(ast_dict)
+
+    headers = ["<algorithm>"]
+
+
+class Communication(JinjaCppFile):
+    """
+     .. warn::
+
+         Prefer temporary fields in sweeps over this class! Two full fields have higher memory usage.
+
+    """
+    TEMPLATE = jinja2.Template("""communication()""")
+
+    def __init__(self, gpu):
+        ast_dict = {'gpu': gpu}
+        super().__init__(ast_dict)
+
+    headers = ["<algorithm>"]

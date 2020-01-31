@@ -12,9 +12,8 @@ from os.path import dirname, join
 
 import numpy as np
 
-import lbmpy_walberla
 import pystencils
-from lbmpy.creationfunctions import create_lb_collision_rule, create_lbm_kernel
+from lbmpy.creationfunctions import create_lb_collision_rule
 from pystencils.astnodes import Block, EmptyLine, SympyAssignment
 from pystencils.data_types import TypedSymbol, create_type
 from pystencils_autodiff._file_io import write_file
@@ -82,6 +81,8 @@ def test_wald_wiesen_lbm():
         lid_velocity = sp.symbols('lid_velocity')
         lbm_step = ldc_setup(domain_size=(30, 30), optimization=opt_params,
                              fixed_loop_sizes=False, lid_velocity=lid_velocity)
+
+        # del lbm_step.data_handling.gpu_arrays.ldc_pdf_tmp
 
         sim = WaldUndWiesenSimulation(lbm_step.data_handling,
                                       ctx,
