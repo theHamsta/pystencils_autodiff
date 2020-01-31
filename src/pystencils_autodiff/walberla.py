@@ -12,6 +12,7 @@ from abc import ABC
 from os.path import dirname, join
 
 import jinja2
+import numpy as np
 import sympy as sp
 from stringcase import camelcase, pascalcase
 
@@ -208,7 +209,7 @@ BlockDataID {{ field_name }}_data_gpu = cuda::addGPUFieldToStorage<{{ field_type
                                     {{ usePitchedMem }} );
 {%- else -%}
 BlockDataID {{ field_name }}_data = field::addToStorage<{{ field_type }}>( {{ block_forest }},
-                              "{{ field_name }}"
+                                    "{{ field_name }}"
      {%- if init_value -%}      , {{ init_value }}{% endif %}
      {%- if layout -%}      , {{ layout }}{% endif %}
      {%- if num_ghost_layers -%}, {{ num_ghost_layers }} {% endif %}
@@ -216,7 +217,7 @@ BlockDataID {{ field_name }}_data = field::addToStorage<{{ field_type }}>( {{ bl
 {%- endif %}
 """)  # noqa
 
-    def __init__(self, block_forest, field, on_gpu=False, usePitchedMem=True, num_ghost_layers=1):
+    def __init__(self, block_forest, field, on_gpu=False, usePitchedMem=True, num_ghost_layers=1, ):
         self._symbol = TypedSymbol(field.name + ('_data_gpu' if on_gpu else '_data'), 'BlockDataID')
         ast_dict = {
             'block_forest': block_forest,
@@ -247,6 +248,13 @@ BlockDataID {{ field_name }}_data = field::addToStorage<{{ field_type }}>( {{ bl
                 else ['"field/AddToStorage.h"'])
 
 
+class FlagFieldAllocation(FieldAllocation):
+    """We need this special class to pass waLBerla's runtime type checks"""
+    TEMPLATE = jinja2.Template("""BlockDataID {{ field_name }}_data = field::addFlagFieldToStorage<FlagField_T>({{ block_forest }},
+                                    "{{ field_name }}");
+""")  # noqa
+
+
 class WalberlaVector(JinjaCppFile):
     TEMPLATE = jinja2.Template("""math::Vector{{ndim}}<{{dtype}}>({{offsets}})""")
 
@@ -261,65 +269,6 @@ class WalberlaVector(JinjaCppFile):
 
     def __sympy__(self):
         return sp.Matrix(self.ast_dict.offset)
-
-
-class PdfFieldAllocation(FieldAllocation):
-    """
-    .. code: : cpp
-
-        BlockDataID addPdfFieldToStorage(const shared_ptr < BlockStorage_T > & blocks, const std:: string & identifier,
-                                          const LatticeModel_T & latticeModel,
-                                          const Vector3 < real_t > & initialVelocity, const real_t initialDensity,
-                                          const uint_t ghostLayers,
-                                          const field:: Layout & layout = field: : zyxf,
-                                          const Set < SUID > & requiredSelectors     = Set < SUID > : : emptySet(),
-                                          const Set < SUID > & incompatibleSelectors = Set < SUID > : : emptySet() )
-    """
-    TEMPLATE = jinja2.Template("""BlockDataID {{field_name}}_data = lbm::field::addPdfFieldToStorage < {{ field_type }} > ({{ block_forest }},
-                              {{field_name}},
-                              {{lattice_model}}
-     {%- if initial_velocity -%}      , {{initial_velocity }} {% endif %}
-     {%- if initial_density -%}      , {{initial_density }} {% endif %}
-     {%- if num_ghost_layers -%}, {{num_ghost_layers }} {% endif %});
-""")  # noqa
-
-    def __init__(self, block_forest, field, lattice_model, initial_velocity=None, initial_density=None, on_gpu=False):
-        super().__init__(block_forest, field, on_gpu)
-        if initial_velocity and not isinstance(initial_velocity, WalberlaVector):
-            initial_velocity = WalberlaVector(initial_velocity)
-
-        self.ast_dict.update({
-            'initial_density': initial_density,
-            'lattice_model': lattice_model,
-            'initial_velocity': initial_velocity,
-        })
-
-    headers = ['"lbm/field/AddToStorage.h"']
-
-
-class FlagFieldAllocation(FieldAllocation):
-    """
-    .. code: : cpp
-
-        template< typename FlagField_T, typename BlockStorage_T >
-        BlockDataID addFlagFieldToStorage( const shared_ptr< BlockStorage_T > & blocks,
-                                           const std::string & identifier,
-                                           const uint_t nrOfGhostLayers = uint_t(1),
-                                           const bool alwaysInitialize = false,
-                                           const std::function< void ( FlagField_T * field, IBlock * const block ) > & initFunction =
-                                              std::function< void ( FlagField_T * field, IBlock * const block ) >(),
-                                           const Set<SUID> & requiredSelectors = Set<SUID>::emptySet(),
-                                           const Set<SUID> & incompatibleSelectors = Set<SUID>::emptySet() )
-    """  # noqa
-    TEMPLATE = jinja2.Template("""BlockDataID {{field_name}}_data = field::addFlagFieldToStorage < {{ field_type }} > ({{ block_forest }},
-                              {{field_name}}
-     {%- if num_ghost_layers -%}, {{num_ghost_layers }} {% endif %});
-""")  # noqa
-
-    def __init__(self, block_forest, field, on_gpu=False):
-        super().__init__(block_forest, field, on_gpu)
-
-    headers = ['"field/AddToStorage.h"']
 
 
 class FlagUidDefinition(JinjaCppFile):
@@ -693,6 +642,15 @@ class DefineKernelObjects(JinjaCppFile):
         JinjaCppFile.__init__(self, ast_dict)
 
 
+def _allocate_field(block_forest, field, on_gpu):
+    # TODO: hack!
+    if np.issubdtype(field.dtype.numpy_dtype, np.integer) and 'flag' in field.name.lower():
+        assert on_gpu is False
+        return FlagFieldAllocation(block_forest, field)
+    else:
+        return FieldAllocation(block_forest, field, on_gpu=on_gpu)
+
+
 class AllocateAllFields(JinjaCppFile):
 
     TEMPLATE = jinja2.Template("""
@@ -731,13 +689,13 @@ class AllocateAllFields(JinjaCppFile):
 
     @property
     def _cpu_allocations(self):
-        return {s: FieldAllocation(self.block_forest, self.data_handling.fields[s])
+        return {s: _allocate_field(self.block_forest, self.data_handling.fields[s], on_gpu=False)
                 for s in self.data_handling.cpu_arrays.keys()}
         # if not (self.data_handling.fields[s].index_shape == self.lb_index_shape)}
 
     @property
     def _gpu_allocations(self):
-        return {s: FieldAllocation(self.block_forest, self.data_handling.fields[s], on_gpu=True)
+        return {s: _allocate_field(self.block_forest, self.data_handling.fields[s], on_gpu=True)
                 for s in self.data_handling.gpu_arrays.keys()}
         # if not (self.data_handling.fields[s].index_shape == self.lb_index_shape)}
 
@@ -914,7 +872,7 @@ static inline auto sweep(walberla::shared_ptr<BlockStorage_T> blocks, Functor_T 
 
 
 class FieldCopy(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""cuda::fieldCpy < {{src_type }}, {{dst_type }} > ({{block_forest }}, {{src_id }}, {{dst_id }}); """)  # noqa
+    TEMPLATE = jinja2.Template("""cuda::fieldCpy< {{src_type }}, {{dst_type }} > ({{block_forest }}, {{src_id }}, {{dst_id }}); """)  # noqa
 
     def __init__(self, block_forest, src_id, src_field, src_gpu, dst_id, dst_field, dst_gpu):
         src_type = _make_field_type(src_field, src_gpu)

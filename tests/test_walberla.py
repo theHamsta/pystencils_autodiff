@@ -19,7 +19,7 @@ from pystencils.data_types import TypedSymbol, create_type
 from pystencils_autodiff._file_io import write_file
 from pystencils_autodiff.graph_datahandling import GraphDataHandling
 from pystencils_autodiff.walberla import (
-    DefinitionsHeader, FieldAllocation, FlagFieldAllocation, GetParameter, PdfFieldAllocation,
+    DefinitionsHeader, FieldAllocation, FlagFieldAllocation, GetParameter,
     ResolveUndefinedSymbols, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 from pystencils_autodiff.wald_und_wiesen_simulation import WaldUndWiesenSimulation
 from pystencils_walberla.cmake_integration import ManualCodeGenerationContext
@@ -44,8 +44,6 @@ def test_walberla():
         SympyAssignment(crazy_plus_one, number_symbol + 1),
         EmptyLine(),
         FieldAllocation(block_forest.blocks, x, on_gpu=False),
-        PdfFieldAllocation(block_forest.blocks, pdf, 'LbModel_T', on_gpu=True),
-        PdfFieldAllocation(block_forest.blocks, pdf2, 'LbModel_T', [0, 0, 0], 1, on_gpu=True),
         FlagFieldAllocation(block_forest.blocks, flags)
     ])
 
