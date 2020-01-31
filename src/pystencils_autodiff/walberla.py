@@ -918,4 +918,3 @@ class Communication(JinjaCppFile):
         super().__init__(ast_dict)
 
     headers = ["<algorithm>"]
-    headers = ["<algorithm>"]
