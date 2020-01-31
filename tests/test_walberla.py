@@ -93,6 +93,29 @@ def test_wald_wiesen_lbm():
                 file.write(v)
 
 
+def test_global_idx():
+    sys.path.append(dirname(__file__))
+    with ManualCodeGenerationContext() as ctx:
+        from pystencils_walberla.special_symbols import current_global_idx, aabb_min_x
+
+        dh = GraphDataHandling((20, 30))
+        my_array = dh.add_array('my_array')
+
+        ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, sum(current_global_idx))]).compile()
+        dh.run_kernel(ast, simulate_only=True)
+        ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, aabb_min_x)]).compile()
+        dh.run_kernel(ast, simulate_only=True)
+
+        sim = Simulation(dh, ctx)
+        sim.write_files()
+
+        dir = '/localhome/seitz_local/projects/walberla/apps/foo/'
+        os.makedirs(dir, exist_ok=True)
+        for k, v in ctx.files.items():
+            with open(join(dir, k), 'w') as file:
+                file.write(v)
+
+
 def test_resolve_parameters():
     sym = TypedSymbol('s', create_type('double'))
     sym2 = TypedSymbol('t', create_type('double'))
