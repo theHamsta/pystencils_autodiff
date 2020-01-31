@@ -27,8 +27,6 @@ from pystencils_walberla.cmake_integration import ManualCodeGenerationContext
 
 def test_walberla():
     x, y = pystencils.fields('x, y:  float32[3d]')
-    pdf = pystencils.fields('pdf(27):  float32[3d]')
-    pdf2 = pystencils.fields('pdf2(27):  float32[3d]')
     flags = pystencils.fields('flag_field:  float32[3d]')
 
     foo_symbol = TypedSymbol('foo', np.bool)
