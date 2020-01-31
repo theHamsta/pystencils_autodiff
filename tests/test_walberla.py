@@ -18,10 +18,10 @@ from pystencils.astnodes import Block, EmptyLine, SympyAssignment
 from pystencils.data_types import TypedSymbol, create_type
 from pystencils_autodiff._file_io import write_file
 from pystencils_autodiff.graph_datahandling import GraphDataHandling
-from pystencils_autodiff.walberla import (
-    DefinitionsHeader, FieldAllocation, FlagFieldAllocation, GetParameter,
-    ResolveUndefinedSymbols, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 from pystencils_autodiff.simulation import Simulation
+from pystencils_autodiff.walberla import (
+    DefinitionsHeader, FieldAllocation, FlagFieldAllocation, GetParameter, ResolveUndefinedSymbols,
+    UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 from pystencils_walberla.cmake_integration import ManualCodeGenerationContext
 
 
@@ -81,9 +81,9 @@ def test_wald_wiesen_lbm():
         del lbm_step.data_handling.gpu_arrays.ldc_pdf_tmp
 
         sim = Simulation(lbm_step.data_handling,
-                                      ctx,
-                                      lbm_step.boundary_handling,
-                                      create_lb_collision_rule(lbm_step.method, optimization=opt_params))
+                         ctx,
+                         lbm_step.boundary_handling,
+                         create_lb_collision_rule(lbm_step.method, optimization=opt_params))
         sim.write_files()
 
         dir = '/localhome/seitz_local/projects/walberla/apps/autogen/'
