@@ -511,10 +511,10 @@ class TimeLoop(JinjaCppFile):
 class ForLoop(JinjaCppFile):
 
     TEMPLATE = jinja2.Template("""
-for( {{node.loop_symbol.dtype}} {{node.loop_symbol}} = {{node.loop_start}}; {{node.loop_symbol}} <= {{node.loop_end}}; {{node.loop_symbol}}+= {{node.loop_increment}} )  {
-{%- for c in children %}
-{{ c | indent(3) }}
-{%- endfor -%}
+for( {{loop_symbol.dtype}} {{loop_symbol}} = {{loop_start}}; {{loop_symbol}} < {{loop_end}}; {{loop_symbol}} += {{loop_increment}} ) {
+   {%- for c in children %}
+   {{ c | indent(3) -}}
+   {% endfor %}
 }
 """)  # noqa
 
@@ -670,6 +670,27 @@ class FieldCopyFunctor(JinjaCppFile):
         super().__init__(ast_dict)
 
     headers = ['"cuda/FieldCopy.h"']
+
+
+class DefineKernelObjects(JinjaCppFile):
+
+    TEMPLATE = jinja2.Template("""
+// Kernels
+{% for k in kernels -%}
+{{ k }}
+{% endfor %}
+// Execution
+{{ block  }}
+""")  # noqa
+
+    def __init__(self, block):
+        self.sweeps = block.atoms(SweepOverAllBlocks)
+        self.kernels = [SympyAssignment(k.ast_dict.functor.symbol, k.ast_dict.functor,
+                                        is_const=False, use_auto=True) for k in self.sweeps]
+        ast_dict = {'block': block,
+                    'kernels': self.kernels,
+                    }
+        JinjaCppFile.__init__(self, ast_dict)
 
 
 class AllocateAllFields(JinjaCppFile):
@@ -849,6 +870,7 @@ class SweepCreation(JinjaCppFile):
                     'parameter_ids': parameter_ids,
                     'parameter_str': ', '.join(p.name for p in parameter_ids)}
         super().__init__(ast_dict)
+        self.symbol = TypedSymbol(self.ast_dict.sweep_class_name.lower(), self.ast_dict.sweep_class_name)
 
     @property
     def headers(self):
@@ -858,11 +880,17 @@ class SweepCreation(JinjaCppFile):
     def undefined_symbols(self):
         return set(self.ast_dict.parameter_ids)
 
+    @property
+    def symbols_defined(self):
+        return {self.symbol}
+
+    def __sympy__(self):
+        return self.symbol
+
 
 class SweepOverAllBlocks(JinjaCppFile):
     # TEMPLATE = jinja2.Template("""std::for_each({{block_forest}}->begin(), {{block_forest}}->end(), {{functor}});""")  # noqa
-    TEMPLATE = jinja2.Template("""auto {{sweep_class_name | lower() }} = {{functor}};
-for( auto& block : *{{block_forest}}) {{sweep_class_name | lower() }}(&block);""")  # noqa
+    TEMPLATE = jinja2.Template("""sweep({{block_forest}}, {{sweep_class_name | lower() }});""")
 
     def __init__(self, functor: SweepCreation, block_forest):
         ast_dict = {'functor': functor,
@@ -870,9 +898,23 @@ for( auto& block : *{{block_forest}}) {{sweep_class_name | lower() }}(&block);""
                     'block_forest': block_forest}
         super().__init__(ast_dict)
 
+    @property
+    def symbols_undefined(self):
+        return {self.ast_dict.functor.symbol}
+
+    @property
+    def required_global_declarations(self):
+        return ["""template < class BlockStorage_T, class Functor_T >
+static inline auto sweep(walberla::shared_ptr<BlockStorage_T> blocks, Functor_T functor) -> void {
+   for ( auto& block : *blocks ) {
+      functor(&block);
+   }
+}
+"""]
+
 
 class FieldCopy(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""cuda::fieldCpy<{{ src_type }}, {{ dst_type }}>({{ block_forest }}, {{ src_id }}, {{ dst_id }});""")  # noqa
+    TEMPLATE = jinja2.Template("""cuda::fieldCpy < {{src_type }}, {{dst_type }} > ({{block_forest }}, {{src_id }}, {{dst_id }}); """)  # noqa
 
     def __init__(self, block_forest, src_id, src_field, src_gpu, dst_id, dst_field, dst_gpu):
         src_type = _make_field_type(src_field, src_gpu)
@@ -911,10 +953,11 @@ class Communication(JinjaCppFile):
          Prefer temporary fields in sweeps over this class! Two full fields have higher memory usage.
 
     """
-    TEMPLATE = jinja2.Template("""communication()""")
+    TEMPLATE = jinja2.Template("""communication();""")
 
     def __init__(self, gpu):
         ast_dict = {'gpu': gpu}
         super().__init__(ast_dict)
 
+    headers = ["<algorithm>"]
     headers = ["<algorithm>"]

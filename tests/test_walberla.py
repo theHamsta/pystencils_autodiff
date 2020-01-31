@@ -82,7 +82,7 @@ def test_wald_wiesen_lbm():
         lbm_step = ldc_setup(domain_size=(30, 30), optimization=opt_params,
                              fixed_loop_sizes=False, lid_velocity=lid_velocity)
 
-        # del lbm_step.data_handling.gpu_arrays.ldc_pdf_tmp
+        del lbm_step.data_handling.gpu_arrays.ldc_pdf_tmp
 
         sim = WaldUndWiesenSimulation(lbm_step.data_handling,
                                       ctx,
