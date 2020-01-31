@@ -21,7 +21,7 @@ from pystencils_autodiff.graph_datahandling import GraphDataHandling
 from pystencils_autodiff.walberla import (
     DefinitionsHeader, FieldAllocation, FlagFieldAllocation, GetParameter,
     ResolveUndefinedSymbols, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
-from pystencils_autodiff.wald_und_wiesen_simulation import Simulation
+from pystencils_autodiff.simulation import Simulation
 from pystencils_walberla.cmake_integration import ManualCodeGenerationContext
 
 
