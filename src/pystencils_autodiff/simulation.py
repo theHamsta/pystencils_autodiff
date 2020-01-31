@@ -22,7 +22,7 @@ from pystencils_autodiff.walberla import (
     SweepCreation, SweepOverAllBlocks, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 
 
-class WaldUndWiesenSimulation():
+class Simulation():
     def _get_sweep_class_name(prefix='Kernel'):
 
         ctr = 0
@@ -46,7 +46,7 @@ class WaldUndWiesenSimulation():
         self._boundary_handling = boundary_handling
         self._lb_model_name = 'GeneratedLatticeModel'
         self._flag_field_dtype = 'uint32_t'
-        self._kernel_class_generator = WaldUndWiesenSimulation._get_sweep_class_name()
+        self._kernel_class_generator = Simulation._get_sweep_class_name()
         self._with_gui = False
         self._with_gui_default = False
         self._boundary_kernels = {}

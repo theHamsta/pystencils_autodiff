@@ -21,7 +21,7 @@ from pystencils_autodiff.graph_datahandling import GraphDataHandling
 from pystencils_autodiff.walberla import (
     DefinitionsHeader, FieldAllocation, FlagFieldAllocation, GetParameter,
     ResolveUndefinedSymbols, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
-from pystencils_autodiff.wald_und_wiesen_simulation import WaldUndWiesenSimulation
+from pystencils_autodiff.wald_und_wiesen_simulation import Simulation
 from pystencils_walberla.cmake_integration import ManualCodeGenerationContext
 
 
@@ -66,7 +66,7 @@ def test_wald_wiesen_simulation():
         dh.add_arrays('x, y')
         dh.add_arrays('w, z', gpu=True)
 
-        sim = WaldUndWiesenSimulation(dh, ctx)
+        sim = Simulation(dh, ctx)
         print(sim._create_module())
 
 
@@ -82,7 +82,7 @@ def test_wald_wiesen_lbm():
 
         del lbm_step.data_handling.gpu_arrays.ldc_pdf_tmp
 
-        sim = WaldUndWiesenSimulation(lbm_step.data_handling,
+        sim = Simulation(lbm_step.data_handling,
                                       ctx,
                                       lbm_step.boundary_handling,
                                       create_lb_collision_rule(lbm_step.method, optimization=opt_params))
