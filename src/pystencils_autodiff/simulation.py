@@ -155,9 +155,6 @@ class Simulation():
                 ]), self.parameter_config_block
             )
         ])))
-        from pystencils_autodiff.framework_integration.printer import DebugFrameworkPrinter
-
-        module.printer = DebugFrameworkPrinter()
 
         self._codegen_context.write_file("main.cpp", str(module))
         return module
