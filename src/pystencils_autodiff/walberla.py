@@ -62,8 +62,10 @@ class WalberlaModule(JinjaCppFile):
 class CMakeLists(JinjaCppFile):
     TEMPLATE = read_template_from_file(join(dirname(__file__), 'CMakeLists.tmpl.txt'))
 
-    def __init__(self, files_to_compile):
-        ast_dict = {'files_to_compile': files_to_compile}  # we try to avoid evil globbing
+    def __init__(self, cmake_target_name, files_to_compile, depends):
+        ast_dict = {'files_to_compile': files_to_compile,  # we try to avoid evil globbing
+                    'cmake_target_name': cmake_target_name,
+                    'depends': depends}
         JinjaCppFile.__init__(self, ast_dict)
 
 
@@ -138,7 +140,9 @@ class DefinitionsHeader(JinjaCppFile):
     TEMPLATE = read_template_from_file(join(dirname(__file__), 'walberla_user_defintions.tmpl.hpp'))
 
     def __init__(self, lb_model_name, flag_field_type):
-        self.headers = ['<cstdint>', '"lbm/field/PdfField.h"', f'"{lb_model_name}.h"', '"field/FlagField.h"']
+        self.headers = ['<cstdint>',  '"field/FlagField.h"']
+        if lb_model_name:
+            self.headers.append(f'"{lb_model_name}.h"')
         super().__init__({'lb_model_name': lb_model_name, 'flag_field_type': flag_field_type})
 
 
@@ -256,12 +260,11 @@ class FlagFieldAllocation(FieldAllocation):
 
 
 class WalberlaVector(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""math::Vector{{ndim}}<{{dtype}}>({{offsets}})""")
+    TEMPLATE = jinja2.Template("""math::Vector{{ndim}}<{{dtype}}>({{offset | join(', ')}})""")
 
     def __init__(self, offset, dtype='real_t'):
         ast_dict = {
             'offset': offset,
-            'offsets': ', '.join(str(o) for o in offset),
             'dtype': dtype,
             'ndim': len(offset),
         }
@@ -553,16 +556,19 @@ timeloop.run();
 
 class CppObjectConstruction(JinjaCppFile, pystencils.astnodes.SympyAssignment):
 
-    TEMPLATE = jinja2.Template("""{{  symbol.dtype  }} {{ symbol }}({{ arg_list }});""")  # noqa
+    TEMPLATE = jinja2.Template("""{{  symbol.dtype  }} {{ symbol }}({{ args | join(', ') }});""")  # noqa
 
     def __init__(self, symbol, args):
         JinjaCppFile.__init__(self, {})
         self.ast_dict.update({
             'symbol': symbol,
             'args': args,
-            'arg_list': ', '.join(self.printer(a) for a in args)
         })
         pystencils.astnodes.SympyAssignment.__init__(self, symbol, 1)
+
+    @property
+    def symbol(self):
+        return self.lhs
 
 
 class ResolveUndefinedSymbols(JinjaCppFile):
@@ -658,10 +664,12 @@ class AllocateAllFields(JinjaCppFile):
 {% for c in cpu_arrays %}
 {{- c }}
 {% endfor %}
+{%- if gpu_arrays -%}
 // GPU Arrays
 {% for g in gpu_arrays %}
 {{- g }}
 {% endfor %}
+{%- endif %}
 {{ block  }}
 """)  # noqa
 
@@ -747,7 +755,7 @@ class InitBoundaryHandling(JinjaCppFile):
 
 
 class GeneratedBoundaryInitialization(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""lbm::{{ boundary_condition }} {{ identifier }}( {{ block_forest }}, {{ pdf_field_id }}{{ parameter_str }} );
+    TEMPLATE = jinja2.Template("""lbm::{{ boundary_condition }} {{ identifier }}( {{ block_forest }}, {{ parameter_ids | join(', ') }} );
 {{ identifier }}.fillFromFlagField<FlagField_T>( {{ block_forest }}, {{ flag_field_id }}, FlagUID("{{ boundary_condition }}"), {{ fluid_uid }} );
 """)  # noqa
 
@@ -771,9 +779,6 @@ class GeneratedBoundaryInitialization(JinjaCppFile):
                          for p in parameters
                          if (p.is_field_pointer or not p.is_field_parameter) and
                          p.symbol.name not in ('_data_indexVector', '_data_pdfs', 'indexVectorSize',)]
-        parameter_str = ', '.join(p.name for p in parameter_ids)
-        if parameter_str:
-            parameter_str = ', ' + parameter_str
 
         self.fluid = FlagUidDefinition("fluid")
         ast_dict = {'block_forest': block_forest,
@@ -782,8 +787,7 @@ class GeneratedBoundaryInitialization(JinjaCppFile):
                     'pdf_field_id': pdf_field_id,
                     'fluid_uid': fluid_uid,
                     'flag_field_id': flag_field_id,
-                    'parameter_ids': parameter_ids,
-                    'parameter_str': parameter_str
+                    'parameter_ids': [pdf_field_id] + parameter_ids,
                     }
         super().__init__(ast_dict)
 
@@ -803,13 +807,17 @@ class GeneratedBoundaryInitialization(JinjaCppFile):
 
 
 class SweepCreation(JinjaCppFile):
-    TEMPLATE = jinja2.Template("""{{ sweep_class_name }}( {{ parameter_str }} )""")  # noqa
+    TEMPLATE = jinja2.Template("""{{ sweep_class_name }}( {{ parameter_ids | join(', ') }} )""")  # noqa
 
     def __init__(self,
                  sweep_class_name: str,
                  field_allocation: AllocateAllFields,
                  ast,
                  parameters_to_ignore=[]):
+
+        import pystencils_walberla.jinja_filters
+        parameters_to_ignore += pystencils_walberla.jinja_filters.SPECIAL_SYMBOL_NAMES
+
         def resolve_parameter(p):
             if ast.target == 'cpu':
                 dict = field_allocation._cpu_allocations
@@ -822,11 +830,11 @@ class SweepCreation(JinjaCppFile):
         parameter_ids = [resolve_parameter(p)
                          for p in parameters
                          if (p.is_field_pointer and p.symbol.field_name not in parameters_to_ignore)
-                         or not p.is_field_parameter]
+                         or not p.is_field_parameter and p.symbol.name not in parameters_to_ignore]
 
         ast_dict = {'sweep_class_name': sweep_class_name,
                     'parameter_ids': parameter_ids,
-                    'parameter_str': ', '.join(p.name for p in parameter_ids)}
+                    }
         super().__init__(ast_dict)
         self.symbol = TypedSymbol(self.ast_dict.sweep_class_name.lower(), self.ast_dict.sweep_class_name)
 
@@ -837,6 +845,8 @@ class SweepCreation(JinjaCppFile):
     @property
     def undefined_symbols(self):
         return set(self.ast_dict.parameter_ids)
+
+    free_symbols = undefined_symbols
 
     @property
     def symbols_defined(self):
@@ -918,3 +928,27 @@ class Communication(JinjaCppFile):
         super().__init__(ast_dict)
 
     headers = ["<algorithm>"]
+
+
+class VdbWriter(CppObjectConstruction):
+    def __init__(self, block_forest):
+        symbol = TypedSymbol('vdb', 'walberla_openvdb::OpenVdbFieldWriter')
+        super().__init__(symbol, block_forest)
+
+    headers = ['"walberla_openvdb/OpenVdbFieldWriter.h"']
+
+
+class WriteVdb(SweepOverAllBlocks):
+    TEMPLATE = jinja2.Template(
+        """{{vdb_writer}}.beginFile({{file_prefix}}{% if time %}, optional<float>({{time}}){% endif %});
+{% for f in fields %}
+{{ vdb_writer }}.addField<{{ f.dtype }}, {{ f.vdb_type }}>( {{f.id}}, {{f.name}} );
+{% endfor %}
+{{vdb_writer}}.writeFile();""")
+
+    def __init__(self, fields_to_write, block_forest):
+        functor = VdbWriter(block_forest)
+        ast_dict = {'functor': functor,
+                    'vdb_writer': functor.symbol,
+                    'block_forest': block_forest}
+        super().__init__(ast_dict)

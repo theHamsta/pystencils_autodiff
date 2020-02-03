@@ -83,7 +83,8 @@ def test_wald_wiesen_lbm():
         sim = Simulation(lbm_step.data_handling,
                          ctx,
                          lbm_step.boundary_handling,
-                         create_lb_collision_rule(lbm_step.method, optimization=opt_params))
+                         create_lb_collision_rule(lbm_step.method, optimization=opt_params),
+                         cmake_target_name='autogen')
         sim.write_files()
 
         dir = '/localhome/seitz_local/projects/walberla/apps/autogen/'
@@ -98,15 +99,15 @@ def test_global_idx():
     with ManualCodeGenerationContext() as ctx:
         from pystencils_walberla.special_symbols import current_global_idx, aabb_min_x
 
-        dh = GraphDataHandling((20, 30))
+        dh = GraphDataHandling((20, 30, 40))
         my_array = dh.add_array('my_array')
 
-        ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, sum(current_global_idx))]).compile()
-        dh.run_kernel(ast, simulate_only=True)
         ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, aabb_min_x)]).compile()
         dh.run_kernel(ast, simulate_only=True)
+        # ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, sum(current_global_idx))]).compile()
+        # dh.run_kernel(ast, simulate_only=True)
 
-        sim = Simulation(dh, ctx)
+        sim = Simulation(dh, ctx, cmake_target_name='foo')
         sim.write_files()
 
         dir = '/localhome/seitz_local/projects/walberla/apps/foo/'

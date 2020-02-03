@@ -164,6 +164,7 @@ def generate_kernel_call(kernel_function):
 
 class JinjaCppFile(Node):
     TEMPLATE: jinja2.Template = None
+    NOT_PRINT_TYPES = (pystencils.Field, pystencils.TypedSymbol, bool)
 
     def __init__(self, ast_dict):
         self.ast_dict = pystencils.utils.DotDict(ast_dict)
@@ -174,18 +175,23 @@ class JinjaCppFile(Node):
     def args(self):
         """Returns all arguments/children of this node."""
         ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, str))]
-        iterables_of_ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, Iterable)]
+        iterables_of_ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, Iterable)
+                                  and not isinstance(a, str)]
         return ast_nodes + list(itertools.chain.from_iterable(iterables_of_ast_nodes))
 
     @property
     def symbols_defined(self):
         """Set of symbols which are defined by this node."""
-        return set()
+        return set(itertools.chain.from_iterable(a.symbols_defined
+                                                 for a in self.args
+                                                 if hasattr(a, 'symbols_defined')))
 
     @property
     def undefined_symbols(self):
         """Symbols which are used but are not defined inside this node."""
-        return set()
+        return set(itertools.chain.from_iterable(a.undefined_symbols
+                                                 for a in self.args
+                                                 if hasattr(a, 'undefined_symbols'))) - self.symbols_defined
 
     def _print(self, node):
         if isinstance(node, Node):
@@ -210,11 +216,11 @@ class JinjaCppFile(Node):
     def __str__(self):
         assert self.TEMPLATE, f"Template of {self.__class__} must be set"
         render_dict = {k: (self._print(v)
-                           if not isinstance(v, (pystencils.Field, pystencils.TypedSymbol, bool)) and v is not None
+                           if not isinstance(v, self.NOT_PRINT_TYPES) and v is not None
                            else v)
                        if not isinstance(v, Iterable) or isinstance(v, str)
                        else [(self._print(a)
-                              if not isinstance(a, (pystencils.Field, pystencils.TypedSymbol, bool)) and a is not None
+                              if not isinstance(a, self.NOT_PRINT_TYPES) and a is not None
                               else a)
                              for a in v]
                        for k, v in self.ast_dict.items()}

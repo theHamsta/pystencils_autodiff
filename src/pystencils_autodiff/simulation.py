@@ -16,15 +16,42 @@ import lbmpy_walberla
 import pystencils
 import pystencils_walberla.codegen
 from pystencils.astnodes import Block, EmptyLine
+from pystencils.cpu.cpujit import get_headers
 from pystencils_autodiff.walberla import (
     AllocateAllFields, CMakeLists, Communication, DefineKernelObjects, DefinitionsHeader, FieldCopy,
     ForLoop, InitBoundaryHandling, LbCommunicationSetup, ResolveUndefinedSymbols, SwapFields,
     SweepCreation, SweepOverAllBlocks, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
 
+WALBERLA_MODULES = ["blockforest",
+                    "boundary",
+                    "communication",
+                    "core",
+                    "cuda",
+                    "domain_decomposition",
+                    "executiontree",
+                    "fft",
+                    "field",
+                    "gather",
+                    "geometry",
+                    "gui",
+                    "lbm",
+                    "mesa_pd",
+                    "mesh",
+                    "pde",
+                    "pe",
+                    "pe_coupling",
+                    "postprocessing",
+                    "python_coupling",
+                    "simd",
+                    "sqlite",
+                    "stencil",
+                    "timeloop",
+                    "vtk",
+                    "walberla_openvdb"]
+
 
 class Simulation():
     def _get_sweep_class_name(prefix='Kernel'):
-
         ctr = 0
         while True:
             yield f'{prefix}{ctr}'
@@ -36,7 +63,8 @@ class Simulation():
                  boundary_handling: pystencils.boundaries.BoundaryHandling = None,
                  lb_rule=None,
                  refinement_scaling=None,
-                 boundary_handling_target='gpu'):
+                 boundary_handling_target='gpu',
+                 cmake_target_name='autogen_app'):
         self._data_handling = graph_data_handling
         self._lb_rule = lb_rule
         self._refinement_scaling = refinement_scaling
@@ -53,6 +81,7 @@ class Simulation():
         self._boundary_handling_target = boundary_handling_target
         self._data_handling.merge_swaps_with_kernel_calls()
         self._packinfo_class = 'PackInfo'
+        self.cmake_target_name = cmake_target_name
 
     def _create_helper_files(self) -> Dict[str, str]:
 
@@ -109,11 +138,11 @@ class Simulation():
                 Block([
                     field_allocations,
                     InitBoundaryHandling(self._block_forest.blocks,
-                                             flag_field_id,
-                                             pdf_field_id,
-                                             self.boundary_conditions,
-                                             self._boundary_kernels,
-                                             self._field_allocations)
+                                         flag_field_id,
+                                         pdf_field_id,
+                                         self.boundary_conditions,
+                                         self._boundary_kernels,
+                                         self._field_allocations)
                     if self._boundary_handling else EmptyLine(),
                     LbCommunicationSetup(self._lb_model_name,
                                          pdf_field_id,
@@ -126,27 +155,47 @@ class Simulation():
                 ]), self.parameter_config_block
             )
         ])))
+        from pystencils_autodiff.framework_integration.printer import DebugFrameworkPrinter
+
+        module.printer = DebugFrameworkPrinter()
 
         self._codegen_context.write_file("main.cpp", str(module))
         return module
 
     def _create_defintions_header(self):
         self._codegen_context.write_file("UserDefinitions.h",
-                                         str(DefinitionsHeader(self._lb_model_name, self._flag_field_dtype)))
+                                         str(DefinitionsHeader(self._lb_model_name if self._lb_rule else None,
+                                                               self._flag_field_dtype)))
 
-    def _create_cmake_file(self):
+    def _create_cmake_file(self, extra_dependencis=[]):
+        walberla_dependencies = []
+        import re
+        regex = re.compile(r'^["<](\w*)/.*[>$"]')
+        headers = get_headers(self._module)
+        for h in headers:
+            match = regex.match(h)
+            if match:
+                module = match[1]
+                if module in WALBERLA_MODULES:
+                    walberla_dependencies.append(module)
+
+        dependencies = walberla_dependencies + extra_dependencis
         try:
             self._codegen_context.write_file("CMakeLists.txt",
-                                             str(CMakeLists([f for f in self._codegen_context.files_written()
-                                                             if f.endswith('.cpp') or f.endswith('.cu')])))
+                                             str(CMakeLists(self.cmake_target_name,
+                                                            [f for f in self._codegen_context.files_written()
+                                                             if f.endswith('.cpp') or f.endswith('.cu')],
+                                                            depends=dependencies)))
         except AttributeError:
             self._codegen_context.write_file("CMakeLists.txt",
-                                             str(CMakeLists([f for f in self._codegen_context.files.keys()
-                                                             if f.endswith('.cpp') or f.endswith('.cu')])))
+                                             str(CMakeLists(self.cmake_target_name,
+                                                            [f for f in self._codegen_context.files.keys()
+                                                             if f.endswith('.cpp') or f.endswith('.cu')],
+                                                            depends=dependencies)))
 
     def write_files(self):
         self._create_helper_files()
-        self._create_module()
+        self._module = self._create_module()
         self._create_defintions_header()
         self._create_cmake_file()  # has to be called last
 
