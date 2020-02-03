@@ -104,3 +104,15 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
 
     def _print_SwapBuffer(self, node):
         return f"""std::swap({node.first_array}, {node.second_array});"""
+
+
+class DebugFrameworkPrinter(FrameworkIntegrationPrinter):
+
+    def _print(self, node):
+        if isinstance(node, sp.Expr):
+            return self.sympy_printer._print(node)
+        elif isinstance(node, pystencils.astnodes.Node):
+            return super()._print(node) + f'/* {node.__class__.__name__} symbols_undefined: {node.undefined_symbols}, symbols_defined: {node.symbols_defined}, args {[a if isinstance(a,str) else a.__class__.__name__ for a in node.args]} */'  # noqa
+
+        else:
+            return super()._print(node)
