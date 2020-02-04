@@ -229,6 +229,7 @@ class JinjaCppFile(Node):
         render_dict.update({"globals": sorted({
             self.printer(g) for g in pystencils.backends.cbackend.get_global_declarations(self)
         }, key=str)})
+        # self.TEMPLATE.environment = self.ENVIROMENT
 
         return self.TEMPLATE.render(render_dict)
 

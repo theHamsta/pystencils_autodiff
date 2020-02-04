@@ -4,3 +4,7 @@ waLBerla_add_executable ( NAME {{ cmake_target_name }}
                                 {{ f }} 
                                 {%- endfor %}
                           DEPENDS {{depends | join(' ')}})
+
+{% if 'walberla_openvdb' in depends %}
+target_link_libraries( {{ cmake_target_name }} tbb boundary openvdb Half IexMath Iex IlmThread Imath)
+{% endif %}

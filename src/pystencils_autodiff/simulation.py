@@ -18,9 +18,10 @@ import pystencils_walberla.codegen
 from pystencils.astnodes import Block, EmptyLine
 from pystencils.cpu.cpujit import get_headers
 from pystencils_autodiff.walberla import (
-    AllocateAllFields, CMakeLists, Communication, DefineKernelObjects, DefinitionsHeader, FieldCopy,
-    ForLoop, InitBoundaryHandling, LbCommunicationSetup, ResolveUndefinedSymbols, SwapFields,
-    SweepCreation, SweepOverAllBlocks, UniformBlockforestFromConfig, WalberlaMain, WalberlaModule)
+    AllocateAllFields, CMakeLists, Communication, DefineKernelObjects, DefinitionsHeader,
+    FieldCopy, InitBoundaryHandling, LbCommunicationSetup, ResolveUndefinedSymbols, SwapFields,
+    SweepCreation, SweepOverAllBlocks, TimeLoopNode, UniformBlockforestFromConfig, WalberlaMain,
+    WalberlaModule, WriteVdb)
 
 WALBERLA_MODULES = ["blockforest",
                     "boundary",
@@ -64,7 +65,8 @@ class Simulation():
                  lb_rule=None,
                  refinement_scaling=None,
                  boundary_handling_target='gpu',
-                 cmake_target_name='autogen_app'):
+                 cmake_target_name='autogen_app',
+                 write_out_stuff=True):
         self._data_handling = graph_data_handling
         self._lb_rule = lb_rule
         self._refinement_scaling = refinement_scaling
@@ -82,6 +84,9 @@ class Simulation():
         self._data_handling.merge_swaps_with_kernel_calls()
         self._packinfo_class = 'PackInfo'
         self.cmake_target_name = cmake_target_name
+        self._write_out_stuff = write_out_stuff
+        self._fluid_uid = None
+        self._debug = None
 
     def _create_helper_files(self) -> Dict[str, str]:
 
@@ -132,18 +137,23 @@ class Simulation():
 
         call_nodes = filter(lambda x: x, [self._graph_to_sweep(c) for c in self._data_handling.call_queue])
 
+        init_boundary_handling = (InitBoundaryHandling(self._block_forest.blocks,
+                                                       flag_field_id,
+                                                       pdf_field_id,
+                                                       self.boundary_conditions,
+                                                       self._boundary_kernels,
+                                                       self._field_allocations)
+                                  if self._boundary_handling
+                                  else EmptyLine())
+        if hasattr(init_boundary_handling, 'fluid'):
+            self._fluid_uid = init_boundary_handling.fluid
+
         module = WalberlaModule(WalberlaMain(Block([
             self._block_forest,
             ResolveUndefinedSymbols(
                 Block([
                     field_allocations,
-                    InitBoundaryHandling(self._block_forest.blocks,
-                                         flag_field_id,
-                                         pdf_field_id,
-                                         self.boundary_conditions,
-                                         self._boundary_kernels,
-                                         self._field_allocations)
-                    if self._boundary_handling else EmptyLine(),
+                    init_boundary_handling,
                     LbCommunicationSetup(self._lb_model_name,
                                          pdf_field_id,
                                          self._packinfo_class,
@@ -156,6 +166,9 @@ class Simulation():
             )
         ])))
 
+        if self._debug:
+            from pystencils_autodiff.framework_integration.printer import DebugFrameworkPrinter
+            module.printer = DebugFrameworkPrinter()
         self._codegen_context.write_file("main.cpp", str(module))
         return module
 
@@ -177,6 +190,7 @@ class Simulation():
                     walberla_dependencies.append(module)
 
         dependencies = walberla_dependencies + extra_dependencis
+
         try:
             self._codegen_context.write_file("CMakeLists.txt",
                                              str(CMakeLists(self.cmake_target_name,
@@ -201,7 +215,8 @@ class Simulation():
         return self._boundary_handling._boundary_object_to_boundary_info.keys()
 
     def _graph_to_sweep(self, c):
-        from pystencils_autodiff.graph_datahandling import KernelCall, TimeloopRun, DataTransferKind, DataTransfer
+        from pystencils_autodiff.graph_datahandling import (
+            KernelCall, TimeloopRun, DataTransferKind, DataTransfer, FieldOutput)
 
         if isinstance(c, KernelCall):
 
@@ -223,7 +238,7 @@ class Simulation():
 
         elif isinstance(c, TimeloopRun):
             sweeps = [self._graph_to_sweep(s) for s in c.timeloop._single_step_asts]
-            rtn = ForLoop(0, c.time_steps, sweeps)
+            rtn = TimeLoopNode(0, c.time_steps, sweeps)
 
         elif isinstance(c, DataTransfer):
             if c.kind == DataTransferKind.HOST_SWAP:
@@ -246,7 +261,10 @@ class Simulation():
                 rtn = Communication(self._boundary_handling_target == 'gpu')
             else:
                 rtn = None
+        elif isinstance(c, FieldOutput):
+            rtn = WriteVdb(self._block_forest, c.output_path, c.fields, c.flag_field, self._fluid_uid)
         else:
             rtn = None
 
+        return rtn
         return rtn

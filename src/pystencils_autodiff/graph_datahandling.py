@@ -88,6 +88,16 @@ class KernelCall:
         return "Call " + str(self.kernel.ast.function_name)
 
 
+class FieldOutput:
+    def __init__(self, fields, output_path, flag_field):
+        self.fields = fields
+        self.output_path = output_path
+        self.flag_field = flag_field
+
+    def __str__(self):
+        return "Writing fields " + str(self.fields)
+
+
 class TimeloopRun:
     def __init__(self, timeloop, time_steps):
         self.timeloop = timeloop
@@ -257,6 +267,12 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
         for t in call_queue:
             if isinstance(t, TimeloopRun):
                 self.merge_swaps_with_kernel_calls(t.timeloop._single_step_asts)
+
+    def save_fields(self, fields, output_path, flag_field=None):
+        if isinstance(fields, str):
+            fields = [fields]
+        fields = [self.fields[f] if isinstance(f, str) else f for f in fields]
+        self.call_queue.append(FieldOutput(fields, output_path, flag_field))
 
     # TODO
     # def reduce_float_sequence(self, sequence, operation, all_reduce=False) -> np.array:

@@ -8,7 +8,7 @@
 """
 import os
 import sys
-from os.path import dirname, join
+from os.path import dirname, expanduser, join
 
 import numpy as np
 
@@ -102,12 +102,14 @@ def test_global_idx():
         dh = GraphDataHandling((20, 30, 40))
         my_array = dh.add_array('my_array')
 
-        ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, aabb_min_x)]).compile()
+        ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, aabb_min_x + pystencils.x_)]).compile()
         dh.run_kernel(ast, simulate_only=True)
+        dh.save_fields('my_array', expanduser('~/foo'))
         # ast = pystencils.create_kernel([pystencils.Assignment(my_array.center, sum(current_global_idx))]).compile()
         # dh.run_kernel(ast, simulate_only=True)
 
         sim = Simulation(dh, ctx, cmake_target_name='foo')
+        sim._debug = False
         sim.write_files()
 
         dir = '/localhome/seitz_local/projects/walberla/apps/foo/'

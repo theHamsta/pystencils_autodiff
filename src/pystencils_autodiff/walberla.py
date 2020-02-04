@@ -15,6 +15,7 @@ import jinja2
 import numpy as np
 import sympy as sp
 from stringcase import camelcase, pascalcase
+from sympy.core.cache import cacheit
 
 import pystencils
 from pystencils.astnodes import SympyAssignment
@@ -28,6 +29,43 @@ def _make_field_type(field, on_gpu):
     f_size = get_field_fsize(field)
 
     return make_field_type(pystencils.data_types.get_base_type(field.dtype), f_size, on_gpu)
+
+
+class BlockDataID(TypedSymbol):
+    """
+    Local cell interval in global index coordinates
+    """
+    def __new__(cls, *args, **kwds):
+        obj = BlockDataID.__xnew_cached_(cls, *args, **kwds)
+        return obj
+
+    def __new_stage2__(cls, field, on_gpu, *args, **kwargs):
+        name = field.name + ('_data_gpu' if on_gpu else '_data')
+        obj = super(BlockDataID, cls).__xnew__(cls,
+                                               name,
+                                               'BlockDataID',
+                                               *args,
+                                               **kwargs)
+        obj.field = field
+        obj.on_gpu = on_gpu
+        return obj
+
+    __xnew__ = staticmethod(__new_stage2__)
+    __xnew_cached_ = staticmethod(cacheit(__new_stage2__))
+
+    def _hashable_content(self):
+        return super()._hashable_content(), self.on_gpu
+
+    def __getnewargs__(self):
+        return self.name, self.on_gpu
+
+    @property
+    def walberla_field_type(self):
+        return _make_field_type(self.field, self.on_gpu)
+
+    @property
+    def walberla_field_type(self):
+        return _make_field_type(self.field, self.on_gpu)
 
 
 class FieldType(JinjaCppFile):
@@ -222,7 +260,7 @@ BlockDataID {{ field_name }}_data = field::addToStorage<{{ field_type }}>( {{ bl
 """)  # noqa
 
     def __init__(self, block_forest, field, on_gpu=False, usePitchedMem=True, num_ghost_layers=1, ):
-        self._symbol = TypedSymbol(field.name + ('_data_gpu' if on_gpu else '_data'), 'BlockDataID')
+        self._symbol = BlockDataID(field, on_gpu)
         ast_dict = {
             'block_forest': block_forest,
             'field_name': field.name,
@@ -570,6 +608,13 @@ class CppObjectConstruction(JinjaCppFile, pystencils.astnodes.SympyAssignment):
     def symbol(self):
         return self.lhs
 
+    def __sympy__(self):
+        return self.symbol
+
+    @property
+    def symbols_defined(self):
+        return {self.symbol}
+
 
 class ResolveUndefinedSymbols(JinjaCppFile):
 
@@ -640,8 +685,12 @@ class DefineKernelObjects(JinjaCppFile):
 
     def __init__(self, block):
         self.sweeps = block.atoms(SweepOverAllBlocks)
-        self.kernels = [SympyAssignment(k.ast_dict.functor.symbol, k.ast_dict.functor,
-                                        is_const=False, use_auto=True) for k in self.sweeps]
+        self.kernels = [k.ast_dict.functor if isinstance(k.ast_dict.functor, SympyAssignment)
+                        else SympyAssignment(k.ast_dict.functor.symbol, k.ast_dict.functor,
+                                             is_const=False, use_auto=True)
+
+
+                        for k in self.sweeps]
         ast_dict = {'block': block,
                     'kernels': self.kernels,
                     }
@@ -867,7 +916,7 @@ class SweepOverAllBlocks(JinjaCppFile):
         super().__init__(ast_dict)
 
     @property
-    def symbols_undefined(self):
+    def undefined_symbols(self):
         return {self.ast_dict.functor.symbol}
 
     @property
@@ -884,13 +933,11 @@ static inline auto sweep(walberla::shared_ptr<BlockStorage_T> blocks, Functor_T 
 class FieldCopy(JinjaCppFile):
     TEMPLATE = jinja2.Template("""cuda::fieldCpy< {{src_type }}, {{dst_type }} > ({{block_forest }}, {{src_id }}, {{dst_id }}); """)  # noqa
 
-    def __init__(self, block_forest, src_id, src_field, src_gpu, dst_id, dst_field, dst_gpu):
-        src_type = _make_field_type(src_field, src_gpu)
-        dst_type = _make_field_type(dst_field, dst_gpu)
+    def __init__(self, block_forest, src_id, dst_id,):
         ast_dict = {'src_id': src_id,
                     'dst_id': dst_id,
-                    'src_type': src_type,
-                    'dst_type': dst_type,
+                    'src_type': src_id.walberla_field_type,
+                    'dst_type': dst_id.walberla_field_type,
                     'block_forest': block_forest}
         super().__init__(ast_dict)
 
@@ -933,22 +980,52 @@ class Communication(JinjaCppFile):
 class VdbWriter(CppObjectConstruction):
     def __init__(self, block_forest):
         symbol = TypedSymbol('vdb', 'walberla_openvdb::OpenVdbFieldWriter')
-        super().__init__(symbol, block_forest)
+        super().__init__(symbol, [block_forest.blocks])
 
     headers = ['"walberla_openvdb/OpenVdbFieldWriter.h"']
+
+    @property
+    def dtype(self):
+        return self.symbol.dtype
+
+    @property
+    def free_symbols(self):
+        return {}
 
 
 class WriteVdb(SweepOverAllBlocks):
     TEMPLATE = jinja2.Template(
-        """{{vdb_writer}}.beginFile({{file_prefix}}{% if time %}, optional<float>({{time}}){% endif %});
-{% for f in fields %}
-{{ vdb_writer }}.addField<{{ f.dtype }}, {{ f.vdb_type }}>( {{f.id}}, {{f.name}} );
+        """{{vdb_writer}}.beginFile("{{output_path}}"{% if time %}, optional<float>({{time}}){% endif %});
+{% for f in fields  %}
+{%- if flag_field_id -%}
+{{ vdb_writer }}.addFieldFiltered<{{ f.walberla_field_type }}, VdbGrid_T<float>, FlagField_T>( {{f}}, "{{f}}", {{ flag_field_id }}, {{ fluid_uid }});
+{%- else -%}
+{{ vdb_writer }}.addField<{{ f.walberla_field_type }}, VdbGrid_T<float>>( {{f}}, "{{f}}");
+{%- endif -%}
 {% endfor %}
-{{vdb_writer}}.writeFile();""")
+{{vdb_writer}}.writeFile();""")  # noqa
 
-    def __init__(self, fields_to_write, block_forest):
+    def __init__(self, block_forest, output_path, fields_to_write, flag_field_id, fluid_uid, time=None):
         functor = VdbWriter(block_forest)
-        ast_dict = {'functor': functor,
+        ast_dict = {'fields': [BlockDataID(f, on_gpu=False) for f in fields_to_write],
+                    'output_path': output_path,
                     'vdb_writer': functor.symbol,
-                    'block_forest': block_forest}
-        super().__init__(ast_dict)
+                    'flag_field_id': flag_field_id,
+                    'fluid_uid': fluid_uid,
+                    'functor': functor,
+                    'block_forest': block_forest,
+                    'time': time}
+        JinjaCppFile.__init__(self, ast_dict)
+
+    required_global_declarations = ["""template < typename T >
+using VdbGrid_T = openvdb::Grid < typename openvdb::tree::Tree4 < T, 5, 4, 3 >::Type >;"""]
+
+    @property
+    def undefined_symbols(self):
+        return {self.ast_dict.vdb_writer}
+
+
+class TimeLoopNode(ForLoop):
+    @property
+    def time(self):
+        return self.loop_symbol
