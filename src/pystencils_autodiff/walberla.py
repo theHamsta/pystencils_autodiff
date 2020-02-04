@@ -63,10 +63,6 @@ class BlockDataID(TypedSymbol):
     def walberla_field_type(self):
         return _make_field_type(self.field, self.on_gpu)
 
-    @property
-    def walberla_field_type(self):
-        return _make_field_type(self.field, self.on_gpu)
-
 
 class FieldType(JinjaCppFile):
 
