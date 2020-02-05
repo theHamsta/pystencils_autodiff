@@ -681,12 +681,10 @@ class DefineKernelObjects(JinjaCppFile):
 
     def __init__(self, block):
         self.sweeps = block.atoms(SweepOverAllBlocks)
-        self.kernels = [k.ast_dict.functor if isinstance(k.ast_dict.functor, SympyAssignment)
-                        else SympyAssignment(k.ast_dict.functor.symbol, k.ast_dict.functor,
-                                             is_const=False, use_auto=True)
-
-
-                        for k in self.sweeps]
+        self.kernels = sorted({k.ast_dict.functor if isinstance(k.ast_dict.functor, SympyAssignment)
+                               else SympyAssignment(k.ast_dict.functor.symbol, k.ast_dict.functor,
+                                                    is_const=False, use_auto=True)
+                               for k in self.sweeps}, key=str)
         ast_dict = {'block': block,
                     'kernels': self.kernels,
                     }

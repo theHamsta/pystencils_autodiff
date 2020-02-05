@@ -177,6 +177,8 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
                   gpu=None,
                   alignment=False,
                   field_type=FieldType.GENERIC):
+        if layout is None:
+            layout = self.default_layout
 
         rtn = super().add_array(name,
                                 values_per_cell,
@@ -188,6 +190,22 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
                                 gpu,
                                 alignment,
                                 field_type)
+
+        # Weird code happening in super class
+        if not hasattr(values_per_cell, '__len__'):
+            values_per_cell = (values_per_cell, )
+        if len(values_per_cell) == 1 and values_per_cell[0] == 1:
+            values_per_cell = ()
+
+        rtn = self._fields[name] = pystencils.Field.create_generic(name,
+                                                                   self.dim,
+                                                                   dtype,
+                                                                   index_dimensions=len(values_per_cell),
+                                                                   layout=layout,
+                                                                   index_shape=values_per_cell,
+                                                                   field_type=field_type)
+        rtn.latex_name = latex_name
+
         if cpu:
             self.call_queue.append(DataTransfer(self._fields[name], DataTransferKind.HOST_ALLOC))
         if gpu:
