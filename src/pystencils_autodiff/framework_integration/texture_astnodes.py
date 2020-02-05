@@ -128,25 +128,26 @@ auto channel_desc_{{texture_name}} = {{channel_desc}};
 {{ create_array }}
 {{ copy_array }}
     cudaDeviceSynchronize();
-{{ texture_name }}.addressMode[0] = cudaAddressModeBorder;
-{{ texture_name }}.addressMode[1] = cudaAddressModeBorder;
-{{ texture_name }}.addressMode[2] = cudaAddressModeBorder;
-{{ texture_name }}.filterMode = cudaFilterModeLinear;
-{{ texture_name }}.normalized = false;
-cudaBindTextureToArray(&{{texture_name}}, {{array}}, &channel_desc_{{texture_name}});
+{{texture_namespace}}{{ texture_name }}.addressMode[0] = cudaAddressModeBorder;
+{{texture_namespace}}{{ texture_name }}.addressMode[1] = cudaAddressModeBorder;
+{{texture_namespace}}{{ texture_name }}.addressMode[2] = cudaAddressModeBorder;
+{{texture_namespace}}{{ texture_name }}.filterMode = cudaFilterModeLinear;
+{{texture_namespace}}{{ texture_name }}.normalized = false;
+cudaBindTextureToArray(&{{texture_namespace}}{{texture_name}}, {{array}}, &channel_desc_{{texture_name}});
 std::shared_ptr<void> {{array}}Destroyer(nullptr, [&](...){
     cudaDeviceSynchronize();
     cudaFreeArray({{array}});
-    cudaUnbindTexture({{texture_name}});
+    cudaUnbindTexture({{texture_namespace}}{{texture_name}});
 });
     """)
 
-    def __init__(self, texture, device_data_ptr, use_texture_objects=True):
+    def __init__(self, texture, device_data_ptr, use_texture_objects=True, texture_namespace=''):
         self._texture = texture
         self._device_ptr = device_data_ptr
         self._dtype = self._device_ptr.dtype.base_type
         self._shape = tuple(sp.S(s) for s in self._texture.field.shape)
         self._ndim = texture.field.ndim
+        self._texture_namespace = texture_namespace
         assert use_texture_objects, "without texture objects is not implemented"
 
         super().__init__(self.get_code(dialect='c', vector_instruction_set=None),
@@ -155,7 +156,7 @@ std::shared_ptr<void> {{array}}Destroyer(nullptr, [&](...){
                          symbols_defined={})
         self.headers = ['<memory>', '<cuda.h>', '<cuda_runtime_api.h>']
 
-    def get_code(self, dialect, vector_instruction_set):
+    def get_code(self, dialect='', vector_instruction_set=''):
         texture_name = self._texture.symbol.name
         code = self.CODE_TEMPLATE_CUDA_ARRAY.render(
             resource_desc='resDesc_' + texture_name,
@@ -164,6 +165,7 @@ std::shared_ptr<void> {{array}}Destroyer(nullptr, [&](...){
             texture_object='tex_' + texture_name,
             array='array_' + texture_name,
             texture_name=texture_name,
+            texture_namespace=self._texture_namespace + '::',
             ndim=self._ndim,
             device_ptr=self._device_ptr,
             create_array=self._get_create_array_call(),
