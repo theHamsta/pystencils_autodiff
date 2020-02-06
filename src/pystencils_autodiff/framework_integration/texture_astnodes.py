@@ -107,7 +107,8 @@ class NativeTextureBinding(pystencils.backends.cbackend.CustomCodeNode):
             float                       maxMipmapLevelClamp;
         };
     """  # noqa
-    CODE_TEMPLATE_LINEAR = jinja2.Template("""cudaResourceDesc {{resource_desc}}{};
+    CODE_TEMPLATE_LINEAR = jinja2.Template("""
+cudaResourceDesc {{resource_desc}}{};
 {{resource_desc}}.resType = cudaResourceTypeLinear;
 {{resource_desc}}.res.linear.devPtr = {{device_ptr}};
 {{resource_desc}}.res.linear.desc.f = {{cuda_channel_format}};
@@ -124,6 +125,7 @@ auto {{texture_object}}Destroyer = std::unique_ptr(nullptr, [&](){
     """)
     CODE_TEMPLATE_PITCHED2D = jinja2.Template(""" !!! TODO!!! """)
     CODE_TEMPLATE_CUDA_ARRAY = jinja2.Template("""
+#   pragma GCC diagnostic ignored "-Wconversion"
 auto channel_desc_{{texture_name}} = {{channel_desc}};
 {{ create_array }}
 {{ copy_array }}
@@ -139,7 +141,8 @@ std::shared_ptr<void> {{array}}Destroyer(nullptr, [&](...){
     cudaFreeArray({{array}});
     cudaUnbindTexture({{texture_namespace}}{{texture_name}});
 });
-    """)
+#   pragma GCC diagnostic pop
+""")
 
     def __init__(self, texture, device_data_ptr, use_texture_objects=True, texture_namespace=''):
         self._texture = texture

@@ -176,7 +176,8 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
                   cpu=True,
                   gpu=None,
                   alignment=False,
-                  field_type=FieldType.GENERIC):
+                  field_type=FieldType.GENERIC,
+                  shape=None):
         if layout is None:
             layout = self.default_layout
 
@@ -197,13 +198,22 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
         if len(values_per_cell) == 1 and values_per_cell[0] == 1:
             values_per_cell = ()
 
-        rtn = self._fields[name] = pystencils.Field.create_generic(name,
-                                                                   self.dim,
-                                                                   dtype,
-                                                                   index_dimensions=len(values_per_cell),
-                                                                   layout=layout,
-                                                                   index_shape=values_per_cell,
-                                                                   field_type=field_type)
+        if shape:
+            rtn = self._fields[name] = pystencils.Field.create_fixed_size(name,
+                                                                          shape,
+                                                                          index_dimensions=len(values_per_cell),
+                                                                          layout=layout,
+                                                                          dtype=dtype,
+                                                                          field_type=field_type)
+        else:
+            rtn = self._fields[name] = pystencils.Field.create_generic(name,
+                                                                       self.dim,
+                                                                       dtype,
+                                                                       index_dimensions=len(values_per_cell),
+                                                                       layout=layout,
+                                                                       index_shape=values_per_cell,
+                                                                       field_type=field_type)
+
         rtn.latex_name = latex_name
 
         if cpu:
