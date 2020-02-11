@@ -13,6 +13,7 @@ import jinja2
 import stringcase
 
 from pystencils.astnodes import KernelFunction
+from pystencils.backends.cbackend import CustomCodeNode
 from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
 
 
@@ -158,7 +159,7 @@ class PybindFunctionWrapping(JinjaCppFile):
         """m.def("{{ python_name }}", &{{ cpp_name }}{% for p in parameters -%}, "{{ p }}"_a{% endfor %});"""  # noqa
     )
 
-    required_global_declarations = ["using namespace pybind11::literals;"]
+    required_global_declarations = [CustomCodeNode("using namespace pybind11::literals;", (), ())]
     headers = ['<pybind11/pybind11.h>',
                '<pybind11/stl.h>']
 
