@@ -174,7 +174,7 @@ class JinjaCppFile(Node):
     @property
     def args(self):
         """Returns all arguments/children of this node."""
-        ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, str))]
+        ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, sp.Expr, str))]
         iterables_of_ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, Iterable)
                                   and not isinstance(a, str)]
         return ast_nodes + list(itertools.chain.from_iterable(iterables_of_ast_nodes))
@@ -184,14 +184,14 @@ class JinjaCppFile(Node):
         """Set of symbols which are defined by this node."""
         return set(itertools.chain.from_iterable(a.symbols_defined
                                                  for a in self.args
-                                                 if hasattr(a, 'symbols_defined')))
+                                                 if isinstance(a, Node)))
 
     @property
     def undefined_symbols(self):
         """Symbols which are used but are not defined inside this node."""
-        return set(itertools.chain.from_iterable(a.undefined_symbols
+        return set(itertools.chain.from_iterable(a.undefined_symbols if isinstance(a, Node) else a.free_symbols
                                                  for a in self.args
-                                                 if hasattr(a, 'undefined_symbols'))) - self.symbols_defined
+                                                 if isinstance(a, (Node, sp.Expr)))) - self.symbols_defined
 
     def _print(self, node):
         if isinstance(node, Node):
@@ -296,3 +296,25 @@ class CudaErrorCheck(CustomCodeNode):
     err_check_function = CudaErrorCheckDefinition()
     required_global_declarations = [err_check_function]
     headers = ['<cuda.h>']
+
+
+class DynamicFunction(sp.Function):
+    """
+    Function that is passed as an argument to a kernel.
+    Can be printed for example as `std::function` or as a functor template.
+    """
+
+    def __new__(cls, typed_function_symbol, return_dtype, *args):
+        return sp.Function.__new__(cls, typed_function_symbol, return_dtype, *args)
+
+    @property
+    def function_dtype(self):
+        return self.args[0].dtype
+
+    @property
+    def dtype(self):
+        return self.args[1].dtype
+
+    @property
+    def name(self):
+        return self.args[0].name

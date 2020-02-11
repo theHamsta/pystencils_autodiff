@@ -1,7 +1,9 @@
 import sympy as sp
 
 import pystencils.backends.cbackend
+from pystencils.data_types import TypedSymbol
 from pystencils.kernelparameters import FieldPointerSymbol
+from pystencils_autodiff.framework_integration.types import TemplateType
 
 
 class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
@@ -15,12 +17,12 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
 
     def __init__(self):
         super().__init__(dialect='c')
+        self.sympy_printer.__class__._print_DynamicFunction = self._print_DynamicFunction
 
     def _print(self, node):
         from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
         if isinstance(node, JinjaCppFile):
             node.printer = self
-
         if isinstance(node, sp.Expr):
             return self.sympy_printer._print(node)
         else:
@@ -40,6 +42,12 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         else:
             prefix = '#define FUNC_PREFIX static\n'
             kernel_code = pystencils.backends.cbackend.generate_c(node, dialect='c', with_globals=False)
+        template_types = sorted([x.dtype for x in node.atoms(TypedSymbol)
+                                 if isinstance(x.dtype, TemplateType)], key=str)
+        template_types = list(map(lambda x: 'class ' + str(x), template_types))
+        if template_types:
+            prefix = f'{prefix}template <{",".join(template_types)}>\n'
+
         return prefix + kernel_code
 
     def _print_FunctionCall(self, node):
@@ -83,7 +91,8 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
                                                                 if hasattr(u, 'field_name')
                                                                 else u.field_names[0]]),
                                        field_name=(u.field_name if hasattr(u, "field_name") else ""),
-                                       dim=("" if type(u) == FieldPointerSymbol else u.coordinate)
+                                       dim=("" if type(u) == FieldPointerSymbol else u.coordinate),
+                                       dim_letter=("" if type(u) == FieldPointerSymbol else 'xyz'[u.coordinate])
                                    )
                                    )
                                   for u in undefined_field_symbols
@@ -105,14 +114,28 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
     def _print_SwapBuffer(self, node):
         return f"""std::swap({node.first_array}, {node.second_array});"""
 
+    def _print_DynamicFunction(self, expr):
+        name = expr.name
+        arg_str = ', '.join(self._print(a) for a in expr.args[2:])
+        return f'{name}({arg_str})'
+
 
 class DebugFrameworkPrinter(FrameworkIntegrationPrinter):
+    """
+    Printer with information on nodes inlined in code as comments.
+
+    Should not be used in production, will modify your SymPy printer, destroy your whole life!
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.sympy_printer._old_print = self.sympy_printer._print
+        self.sympy_printer.__class__._print = self._print
 
     def _print(self, node):
         if isinstance(node, sp.Expr):
-            return self.sympy_printer._print(node)
+            return self.sympy_printer._old_print(node) + f'/* {node.__class__.__name__}: free_symbols: {node.free_symbols} */'  # noqa
         elif isinstance(node, pystencils.astnodes.Node):
             return super()._print(node) + f'/* {node.__class__.__name__} symbols_undefined: {node.undefined_symbols}, symbols_defined: {node.symbols_defined}, args {[a if isinstance(a,str) else a.__class__.__name__ for a in node.args]} */'  # noqa
-
         else:
             return super()._print(node)

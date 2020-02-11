@@ -10,8 +10,6 @@
 
 import itertools
 
-import sympy as sp
-
 import pystencils
 from pystencils.astnodes import KernelFunction, ResolvedFieldAccess, SympyAssignment
 from pystencils.interpolation_astnodes import InterpolatorAccess
@@ -44,7 +42,6 @@ def compatibility_hacks():
     pystencils.fields = fields
     KernelFunction.fields_read = property(fields_read)
     KernelFunction.fields_written = property(fields_written)
-    sp.Expr.undefined_symbols = sp.Expr.free_symbols
 
 
 compatibility_hacks()
