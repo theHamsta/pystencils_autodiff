@@ -305,7 +305,11 @@ class DynamicFunction(sp.Function):
     """
 
     def __new__(cls, typed_function_symbol, return_dtype, *args):
-        return sp.Function.__new__(cls, typed_function_symbol, return_dtype, *args)
+        obj = sp.Function.__new__(cls, typed_function_symbol, return_dtype, *args)
+        if hasattr(return_dtype, 'shape'):
+            obj.shape = return_dtype.shape
+
+        return obj
 
     @property
     def function_dtype(self):
@@ -318,3 +322,9 @@ class DynamicFunction(sp.Function):
     @property
     def name(self):
         return self.args[0].name
+
+    def __str__(self):
+        return f'{self.name}({", ".join(str(a) for a in self.args[2:])})'
+
+    def __repr__(self):
+        return self.__str__()
