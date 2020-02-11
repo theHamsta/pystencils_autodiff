@@ -62,7 +62,7 @@ def test_dynamic_matrix_location_dependent():
     A = TypedMatrixSymbol('A', 3, 1, create_type('double'), 'Vector3<double>')
 
     my_fun_call = DynamicFunction(TypedSymbol('my_fun',
-                                              'std: : function < Vector3 < double > (int, int, int) >'),
+                                              'std::function< Vector3 < double >(int, int, int) >'),
                                   A.dtype,
                                   *pystencils.x_vector(3))
 
