@@ -7,5 +7,9 @@
 
 #pragma once
 
+{% for header in headers -%}
+#include {{ header }}
+{% endfor %}
+
 {{ declarations | join('\n\n') }}
 
