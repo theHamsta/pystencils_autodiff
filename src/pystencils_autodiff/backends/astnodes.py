@@ -31,6 +31,28 @@ def get_cubic_interpolation_include_paths():
             join(dirname(pystencils.gpucuda.__file__), 'CubicInterpolationCUDA', 'code', 'internal')]
 
 
+class Header(JinjaCppFile):
+    TEMPLATE = read_template_from_file(join(dirname(__file__), 'module.tmpl.hpp'))
+
+    def __init__(self, exported_functions, module_name):
+        ast_dict = {
+            'declarations': exported_functions,
+            'module_name': module_name,
+        }
+
+        super().__init__(ast_dict)
+
+    def __str__(self):
+        self.printer._signatureOnly = True
+        rtn = JinjaCppFile.__str__(self)
+        self.printer._signatureOnly = False
+        return rtn
+
+    @property
+    def backend(self):
+        return 'c'
+
+
 class TorchTensorDestructuring(DestructuringBindingsForFieldClass):
     CLASS_TO_MEMBER_DICT = {
         FieldPointerSymbol: "data_ptr<{dtype}>()",
@@ -142,6 +164,10 @@ class TorchModule(JinjaCppFile):
                                                     get_pystencils_include_path(),
                                                     *get_cubic_interpolation_include_paths()])
         return torch_extension
+
+    @property
+    def header(self):
+        return Header(self.ast_dict.kernel_wrappers, self.module_name)
 
 
 class TensorflowModule(TorchModule):

@@ -174,7 +174,7 @@ class JinjaCppFile(Node):
     @property
     def args(self):
         """Returns all arguments/children of this node."""
-        ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, sp.Expr, str))]
+        ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, (Node, sp.Expr))]
         iterables_of_ast_nodes = [a for a in self.ast_dict.values() if isinstance(a, Iterable)
                                   and not isinstance(a, str)]
         return ast_nodes + list(itertools.chain.from_iterable(iterables_of_ast_nodes))
@@ -194,7 +194,7 @@ class JinjaCppFile(Node):
                                                  if isinstance(a, (Node, sp.Expr)))) - self.symbols_defined
 
     def _print(self, node):
-        if isinstance(node, Node):
+        if isinstance(node, (Node, sp.Expr)):
             return self.printer(node)
         else:
             return str(node)
@@ -345,3 +345,8 @@ class MeshNormalFunctor(DynamicFunction):
 
     def __getnewargs__(self):
         return self.mesh_name, self.dtype.base_dtype, self.args[2:]
+
+    @property
+    def name(self):
+        return self.mesh_name
+    

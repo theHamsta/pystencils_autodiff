@@ -18,6 +18,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
     def __init__(self):
         super().__init__(dialect='c')
         self.sympy_printer.__class__._print_DynamicFunction = self._print_DynamicFunction
+        self.sympy_printer.__class__._print_MeshNormalFunctor = self._print_DynamicFunction
 
     def _print(self, node):
         from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
@@ -30,6 +31,8 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
 
     def _print_WrapperFunction(self, node):
         super_result = super()._print_KernelFunction(node)
+        if self._signatureOnly:
+            super_result += ';'
         return super_result.replace('FUNC_PREFIX ', '')
 
     def _print_TextureDeclaration(self, node):
@@ -47,8 +50,12 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         template_types = list(map(lambda x: 'class ' + str(x), template_types))
         if template_types:
             prefix = f'{prefix}template <{",".join(template_types)}>\n'
+        if self._signatureOnly:
+            suffix = ';'
+        else:
+            suffix = ''
 
-        return prefix + kernel_code
+        return prefix + kernel_code + suffix
 
     def _print_FunctionCall(self, node):
 
@@ -118,6 +125,14 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         name = expr.name
         arg_str = ', '.join(self._print(a) for a in expr.args[2:])
         return f'{name}({arg_str})'
+
+    def _print_CustomCodeNode(self, node):
+        super_code = super()._print_CustomCodeNode(node)
+        if super_code:
+            # Without leading new line
+            return super_code[1:]
+        else:
+            return super_code
 
 
 class DebugFrameworkPrinter(FrameworkIntegrationPrinter):
