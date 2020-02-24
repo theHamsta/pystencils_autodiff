@@ -12,4 +12,3 @@
 {% endfor %}
 
 {{ declarations | join('\n\n') }}
-

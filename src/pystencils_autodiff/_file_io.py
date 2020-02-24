@@ -18,7 +18,7 @@ _hash = hashlib.md5
 
 
 def read_template_from_file(file):
-    return jinja2.Template(read_file(file))
+    return jinja2.Template(read_file(file), undefined=jinja2.StrictUndefined)
 
 
 def read_file(file):

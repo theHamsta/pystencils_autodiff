@@ -166,7 +166,7 @@ class JinjaCppFile(Node):
     TEMPLATE: jinja2.Template = None
     NOT_PRINT_TYPES = (pystencils.Field, pystencils.TypedSymbol, bool)
 
-    def __init__(self, ast_dict):
+    def __init__(self, ast_dict={}):
         self.ast_dict = pystencils.utils.DotDict(ast_dict)
         self.printer = FrameworkIntegrationPrinter()
         Node.__init__(self)
@@ -349,4 +349,35 @@ class MeshNormalFunctor(DynamicFunction):
     @property
     def name(self):
         return self.mesh_name
-    
+
+
+class CustomFunctionDeclaration(JinjaCppFile):
+    TEMPLATE = jinja2.Template("""{{function_name}}({{ args | join(', ') }});""", undefined=jinja2.StrictUndefined)
+
+    def __init__(self, function_name, args):
+        super().__init__({})
+        self.ast_dict.update({
+            'function_name': function_name,
+            'args': [f'{self._print(a.dtype)} {self._print(a)}' for a in args]
+        })
+
+    @property
+    def function_name(self):
+        return self.ast_dict.function_name
+
+
+class CustomFunctionCall(JinjaCppFile):
+    TEMPLATE = jinja2.Template("""{{function_name}}({{ args | join(', ') }});""", undefined=jinja2.StrictUndefined)
+
+    def __init__(self, function_name, *args, fields_accessed=[]):
+        ast_dict = {
+            'function_name': function_name,
+            'args': args,
+            'fields_accessed': [f.center for f in fields_accessed]
+        }
+        super().__init__(ast_dict)
+        self.required_global_declarations = [CustomFunctionDeclaration(self.ast_dict.function_name, self.ast_dict.args)]
+
+    @property
+    def symbols_defined(self):
+        return set(self.ast_dict.fields_accessed)

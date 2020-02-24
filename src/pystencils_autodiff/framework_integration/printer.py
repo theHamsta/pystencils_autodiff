@@ -19,6 +19,8 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         super().__init__(dialect='c')
         self.sympy_printer.__class__._print_DynamicFunction = self._print_DynamicFunction
         self.sympy_printer.__class__._print_MeshNormalFunctor = self._print_DynamicFunction
+        self.sympy_printer.__class__._print_MatrixElement = self._print_MatrixElement
+        self.sympy_printer.__class__._print_TypedMatrixElement = self._print_MatrixElement
 
     def _print(self, node):
         from pystencils_autodiff.framework_integration.astnodes import JinjaCppFile
@@ -125,6 +127,15 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         name = expr.name
         arg_str = ', '.join(self._print(a) for a in expr.args[2:])
         return f'{name}({arg_str})'
+
+    def _print_MatrixElement(self, expr):
+        name = expr.name
+        if expr.args[0].args[1] == 1 or expr.args[0].args[2] == 1 or (hasattr(expr.args[0], 'linear_indexing')
+                                                                      and expr.args[0].linear_indexing):
+            return f'{name}[{self._print(expr.args[1])}]'
+        else:
+            arg_str = ', '.join(self._print(a) for a in expr.args[1:])
+            return f'{name}({arg_str})'
 
     def _print_CustomCodeNode(self, node):
         super_code = super()._print_CustomCodeNode(node)

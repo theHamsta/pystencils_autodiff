@@ -15,7 +15,6 @@ import numpy as np
 import pystencils.datahandling
 import pystencils.kernel_wrapper
 import pystencils.timeloop
-from pystencils.data_types import create_type
 from pystencils.field import FieldType
 
 
@@ -62,6 +61,19 @@ class DataTransfer:
         return f'DataTransferKind: {self.kind} with {self.field}'
 
 
+class GhostTensorExtraction:
+    def __init__(self, field: pystencils.Field, on_gpu: bool, with_ghost_layers=False):
+        self.field = field
+        self.on_gpu = on_gpu
+        self.with_ghost_layers = with_ghost_layers
+
+    def __str__(self):
+        return f'GhostTensorExtraction: {self.field}, on_gpu: {self.on_gpu}'
+
+    def __repr__(self):
+        return self.__str__(self)
+
+
 class Swap(DataTransfer):
     def __init__(self, source, destination, gpu):
         self.kind = DataTransferKind.DEVICE_SWAP if gpu else DataTransferKind.HOST_SWAP
@@ -87,6 +99,13 @@ class KernelCall:
 
     def __str__(self):
         return "Call " + str(self.kernel.ast.function_name)
+
+    @property
+    def ast(self):
+        if isinstance(self.kernel, pystencils.astnodes.Node):
+            return self.kernel
+        else:
+            return self.kernel.ast
 
 
 class FieldOutput:
@@ -320,6 +339,11 @@ class GraphDataHandling(pystencils.datahandling.SerialDataHandling):
             fields = [fields]
         fields = [self.fields[f] if isinstance(f, str) else f for f in fields]
         self.call_queue.append(FieldOutput(fields, output_path, flag_field))
+
+    def extract_tensor(self, field, on_gpu, with_ghost_layers=False):
+        if isinstance(field, str):
+            field = self.fields[field]
+        self.call_queue.append(GhostTensorExtraction(field, on_gpu, with_ghost_layers))
 
     # TODO
     # def reduce_float_sequence(self, sequence, operation, all_reduce=False) -> np.array:

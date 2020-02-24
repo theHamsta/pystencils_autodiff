@@ -102,7 +102,7 @@ class TorchModule(JinjaCppFile):
     def backend(self):
         return 'gpucuda' if self.is_cuda else 'c'
 
-    def __init__(self, module_name, kernel_asts, with_python_bindings=True):
+    def __init__(self, module_name, kernel_asts, with_python_bindings=True, wrap_wrapper_functions=False):
         """Create a C++ module with forward and optional backward_kernels
 
         :param forward_kernel_ast: one or more kernel ASTs (can have any C dialect)
@@ -111,7 +111,7 @@ class TorchModule(JinjaCppFile):
         if not isinstance(kernel_asts, Iterable):
             kernel_asts = [kernel_asts]
         wrapper_functions = [self.generate_wrapper_function(k)
-                             if not isinstance(k, WrapperFunction)
+                             if not isinstance(k, WrapperFunction) or wrap_wrapper_functions
                              else k for k in kernel_asts]
         kernel_asts = [k for k in kernel_asts if not isinstance(k, WrapperFunction)]
         self.module_name = module_name

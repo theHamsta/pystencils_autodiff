@@ -168,7 +168,7 @@ std::shared_ptr<void> {{array}}Destroyer(nullptr, [&](...){
             texture_object='tex_' + texture_name,
             array='array_' + texture_name,
             texture_name=texture_name,
-            texture_namespace=self._texture_namespace + '::',
+            texture_namespace=self._texture_namespace + '::' if self._texture_namespace else '',
             ndim=self._ndim,
             device_ptr=self._device_ptr,
             create_array=self._get_create_array_call(),
