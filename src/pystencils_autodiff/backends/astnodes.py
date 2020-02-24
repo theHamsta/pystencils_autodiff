@@ -137,7 +137,7 @@ class TorchModule(JinjaCppFile):
         return WrapperFunction(cls.DESTRUCTURING_CLASS(generate_kernel_call(kernel_ast)),
                                function_name='call_' + kernel_ast.function_name)
 
-    def compile(self):
+    def compile(self, extra_source_files=[], extra_cuda_flags=[], with_cuda=None):
         from torch.utils.cpp_extension import load
         file_extension = '.cu' if self.is_cuda else '.cpp'
         source_code = str(self)
@@ -155,10 +155,12 @@ class TorchModule(JinjaCppFile):
         os.environ['CXX'] = get_compiler_config()['command']
 
         torch_extension = load(hash,
-                               [file_name],
-                               with_cuda=self.is_cuda,
-                               extra_cflags=['--std=c++14', get_compiler_config()['flags'].replace('--std=c++11', '')],
-                               extra_cuda_cflags=['-std=c++14', '-ccbin', get_compiler_config()['command']],
+                               [file_name] + extra_source_files,
+                               with_cuda=self.is_cuda or with_cuda,
+                               extra_cflags=['--std=c++14', get_compiler_config()
+                                             ['flags'].replace('--std=c++11', '')],
+                               extra_cuda_cflags=['-std=c++14', '-ccbin',
+                                                  get_compiler_config()['command']] + extra_cuda_flags,
                                build_directory=build_dir,
                                extra_include_paths=[get_pycuda_include_path(),
                                                     get_pystencils_include_path(),
