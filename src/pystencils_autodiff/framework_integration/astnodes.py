@@ -43,10 +43,11 @@ class DestructuringBindingsForFieldClass(Node):
         """Set of Field instances: fields which are accessed inside this kernel function"""
 
         from pystencils.interpolation_astnodes import InterpolatorAccess
-        return (set(o.field for o in self.atoms(ResolvedFieldAccess)
-                    | self.atoms(InterpolatorAccess))
-                | set(itertools.chain.from_iterable((k.kernel_function.fields_accessed
-                                                     for k in self.atoms(FunctionCall)))))
+        return set(itertools.chain.from_iterable(((a.field for a in self.atoms(pystencils.Field.Access)),
+                                                  (a.field for a in self.atoms(InterpolatorAccess)),
+                                                  (a.field for a in self.atoms(ResolvedFieldAccess))),)) \
+            | set(itertools.chain.from_iterable((k.kernel_function.fields_accessed
+                                                 for k in self.atoms(FunctionCall))))
 
     def __init__(self, body):
         super(DestructuringBindingsForFieldClass, self).__init__()
@@ -133,6 +134,9 @@ class WrapperFunction(pystencils.astnodes.KernelFunction):
 
 
 def generate_kernel_call(kernel_function):
+    if isinstance(kernel_function, CustomFunctionCall):
+        return kernel_function
+
     from pystencils.interpolation_astnodes import InterpolatorAccess
     from pystencils.kernelparameters import FieldPointerSymbol
 
@@ -152,6 +156,7 @@ def generate_kernel_call(kernel_function):
             FunctionCall(kernel_function),
             CudaErrorCheck(),
         ])
+
     elif kernel_function.backend == 'gpucuda':
         return pystencils.astnodes.Block([CudaErrorCheck(),
                                           FunctionCall(kernel_function),
@@ -385,3 +390,11 @@ class CustomFunctionCall(JinjaCppFile):
     @property
     def symbols_defined(self):
         return set(self.ast_dict.fields_accessed)
+
+    @property
+    def function_name(self):
+        return self.ast_dict.function_name
+
+    @property
+    def undefined_symbols(self):
+        return set(self.ast_dict.args)

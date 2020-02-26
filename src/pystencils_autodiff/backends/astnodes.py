@@ -108,12 +108,14 @@ class TorchModule(JinjaCppFile):
         :param forward_kernel_ast: one or more kernel ASTs (can have any C dialect)
         :param backward_kernel_ast:
         """
+        from pystencils_autodiff.framework_integration.astnodes import CustomFunctionCall
+
         if not isinstance(kernel_asts, Iterable):
             kernel_asts = [kernel_asts]
         wrapper_functions = [self.generate_wrapper_function(k)
-                             if not isinstance(k, WrapperFunction) or wrap_wrapper_functions
+                             if not isinstance(k, WrapperFunction)
                              else k for k in kernel_asts]
-        kernel_asts = [k for k in kernel_asts if not isinstance(k, WrapperFunction)]
+        kernel_asts = [k for k in kernel_asts if not isinstance(k, (WrapperFunction, CustomFunctionCall))]
         self.module_name = module_name
         self.compiled_file = None
 
@@ -137,7 +139,12 @@ class TorchModule(JinjaCppFile):
         return WrapperFunction(cls.DESTRUCTURING_CLASS(generate_kernel_call(kernel_ast)),
                                function_name='call_' + kernel_ast.function_name)
 
-    def compile(self, extra_source_files=[], extra_cuda_flags=[], with_cuda=None, build_dir=None):
+    def compile(self,
+                extra_source_files=[],
+                extra_cuda_flags=[],
+                with_cuda=None,
+                build_dir=None,
+                compile_module_name=None):
         from torch.utils.cpp_extension import load
         file_extension = '.cu' if self.is_cuda else '.cpp'
         source_code = str(self)
@@ -147,7 +154,7 @@ class TorchModule(JinjaCppFile):
         os.makedirs(build_dir, exist_ok=True)
         file_name = join(build_dir, f'{hash}{file_extension}')
 
-        self.compiled_file = file_name
+        self.compiled_file = (join(build_dir, compile_module_name) or file_name).replace('.cpp', '') + '.so'
 
         if not exists(file_name):
             write_file(file_name, source_code)
@@ -155,7 +162,7 @@ class TorchModule(JinjaCppFile):
         # Torch regards CXX
         os.environ['CXX'] = get_compiler_config()['command']
 
-        torch_extension = load(hash,
+        torch_extension = load(compile_module_name or hash,
                                [file_name] + extra_source_files,
                                with_cuda=self.is_cuda or with_cuda,
                                extra_cflags=['--std=c++14', get_compiler_config()
