@@ -95,7 +95,8 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         destructuring_bindings = ["%s %s = %s.%s;" %
                                   (u.dtype,
                                    u.name,
-                                   u.field_name if hasattr(u, 'field_name') else u.field_names[0],
+                                   (u.field_name if hasattr(u, 'field_name') else u.field_names[0])
+                                   + (node.field_suffix if hasattr(node, 'field_suffix') else ''),
                                    node.CLASS_TO_MEMBER_DICT[u.__class__].format(
                                        dtype=(u.dtype.base_type if type(u) == FieldPointerSymbol
                                               else fields_dtype[u.field_name
