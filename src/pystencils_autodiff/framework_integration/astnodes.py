@@ -401,9 +401,22 @@ class CustomFunctionCall(JinjaCppFile):
         return set(self.ast_dict.fields_accessed)
 
     @property
+    def fields_accessed(self):
+        return [f.name for f in self.ast_dict.fields_accessed]
+
+    @property
     def function_name(self):
         return self.ast_dict.function_name
 
     @property
     def undefined_symbols(self):
-        return set(self.ast_dict.args)
+        return set(self.ast_dict.args) 
+
+    def subs(self, subs_dict):
+        self.ast_dict.args = list(map(lambda x: x.subs(subs_dict), self.ast_dict.args))
+
+    def atoms(self, types=None):
+        if types:
+            return set(a for a in self.args if isinstance(a, types))
+        else:
+            return set(self.args)
