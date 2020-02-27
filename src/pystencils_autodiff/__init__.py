@@ -8,6 +8,7 @@ from pystencils_autodiff._autodiff import (
     AutoDiffAstPair, AutoDiffBoundaryHandling, AutoDiffOp, DiffModes, create_backward_assignments,
     get_jacobian_of_assignments)
 from pystencils_autodiff.field_tensor_conversion import ArrayWrapper, coerce_to_field
+from pystencils_autodiff.framework_integration.printer import show_code, show_code_debug
 
 __all__ = ['backends',
            'AdjointField',
@@ -19,7 +20,9 @@ __all__ = ['backends',
            'DiffModes',
            'AutoDiffBoundaryHandling',
            'ArrayWrapper',
-           'coerce_to_field']
+           'coerce_to_field',
+           'show_code',
+           'show_code_debug']
 
 sys.modules['pystencils.autodiff'] = pystencils_autodiff
 sys.modules['pystencils.autodiff.backends'] = pystencils_autodiff.backends

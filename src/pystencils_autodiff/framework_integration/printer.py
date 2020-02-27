@@ -1,3 +1,5 @@
+import functools
+
 import sympy as sp
 
 import pystencils.backends.cbackend
@@ -165,3 +167,7 @@ class DebugFrameworkPrinter(FrameworkIntegrationPrinter):
             return super()._print(node) + f'/* {node.__class__.__name__} symbols_undefined: {node.undefined_symbols}, symbols_defined: {node.symbols_defined}, args {[a if isinstance(a,str) else a.__class__.__name__ for a in node.args]} */'  # noqa
         else:
             return super()._print(node)
+
+
+show_code = functools.partial(pystencils.show_code, custom_backend=FrameworkIntegrationPrinter())
+show_code_debug = functools.partial(pystencils.show_code, custom_backend=DebugFrameworkPrinter())
