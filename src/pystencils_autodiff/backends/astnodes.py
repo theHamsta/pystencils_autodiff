@@ -55,7 +55,7 @@ class Header(JinjaCppFile):
 
 class TorchTensorDestructuring(DestructuringBindingsForFieldClass):
     CLASS_TO_MEMBER_DICT = {
-        FieldPointerSymbol: "data_ptr<{dtype}>()",
+        FieldPointerSymbol: "data<{dtype}>()",
         FieldShapeSymbol: "size({dim})",
         FieldStrideSymbol: "strides()[{dim}]"
     }
