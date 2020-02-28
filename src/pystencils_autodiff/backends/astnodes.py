@@ -154,7 +154,7 @@ class TorchModule(JinjaCppFile):
         os.makedirs(build_dir, exist_ok=True)
         file_name = join(build_dir, f'{hash}{file_extension}')
 
-        self.compiled_file = (join(build_dir, compile_module_name) or file_name).replace('.cpp', '') + '.so'
+        self.compiled_file = join(build_dir, compile_module_name or file_name).replace('.cpp', '') + '.so'
 
         if not exists(file_name):
             write_file(file_name, source_code)
