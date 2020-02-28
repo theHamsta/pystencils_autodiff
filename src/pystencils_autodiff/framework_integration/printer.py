@@ -119,7 +119,7 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
 
     def _print_Timeloop(self, node):
         children_string = '\n   '.join(self._print(c) for c in node.children)
-        return f"""for( {node.loop_symbol.dtype} {node.loop_symbol}={node.loop_start};  {node.loop_symbol}<= {node.loop_end} ; {node.loop_symbol}+= {node.loop_increment} )  {{
+        return f"""for( {node.loop_symbol.dtype} {node.loop_symbol}={node.loop_start};  {node.loop_symbol}<= {node.loop_end} ; {node.loop_symbol} += {node.loop_increment} ) {{
     {children_string}
 }}"""  # noqa
 
@@ -171,4 +171,3 @@ class DebugFrameworkPrinter(FrameworkIntegrationPrinter):
 
 
 show_code = functools.partial(pystencils.show_code, custom_backend=FrameworkIntegrationPrinter())
-show_code_debug = functools.partial(pystencils.show_code, custom_backend=DebugFrameworkPrinter())
