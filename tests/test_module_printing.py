@@ -110,11 +110,7 @@ def test_custom_printer():
         z[0, 0]: x[0, 0] * sympy.log(TextureCachedField(x).at(sympy.Matrix((0.43, 3))) * y[0, 0])
     })
 
-    backward_assignments = create_backward_assignments(forward_assignments)
-
     forward_ast = pystencils.create_kernel(forward_assignments)
     forward_ast.function_name = 'forward'
-    backward_ast = pystencils.create_kernel(backward_assignments)
-    backward_ast.function_name = 'backward'
-    module = TorchModule("hallo", [forward_ast, backward_ast])
+    module = TorchModule("hallo", [forward_ast])
     print(DoesNotLikeTorchPrinter()(module))
