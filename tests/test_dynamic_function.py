@@ -3,8 +3,7 @@ import sympy as sp
 import pystencils
 from pystencils.data_types import TypedSymbol, create_type
 from pystencils_autodiff.framework_integration.astnodes import DynamicFunction
-from pystencils_autodiff.framework_integration.printer import (
-    DebugFrameworkPrinter, FrameworkIntegrationPrinter)
+from pystencils_autodiff.framework_integration.printer import FrameworkIntegrationPrinter
 from pystencils_autodiff.framework_integration.types import CustomCppType, TemplateType
 
 
@@ -32,12 +31,15 @@ def test_dynamic_function():
 
     ast = pystencils.create_kernel(assignments)
     pystencils.show_code(ast, custom_backend=FrameworkIntegrationPrinter())
-    pystencils.show_code(ast, custom_backend=DebugFrameworkPrinter())
 
 
 def test_dynamic_matrix():
     x, y = pystencils.fields('x, y:  float32[3d]')
-    from pystencils.data_types import TypedMatrixSymbol
+    try:
+        from pystencils.data_types import TypedMatrixSymbol
+    except ImportError:
+        import pytest
+        pytest.skip()
 
     a = sp.symbols('a')
 
@@ -56,8 +58,13 @@ def test_dynamic_matrix():
 
 
 def test_typed_matrix():
+    try:
+        from pystencils.data_types import TypedMatrixSymbol
+    except ImportError:
+        import pytest
+        pytest.skip()
+
     x, y = pystencils.fields('x, y:  float32[3d]')
-    from pystencils.data_types import TypedMatrixSymbol
 
     A = TypedMatrixSymbol('A', 3, 1, create_type('double'), CustomCppType('Vector3<real_t>'))
 
@@ -70,8 +77,13 @@ def test_typed_matrix():
 
 
 def test_dynamic_matrix_location_dependent():
+    try:
+        from pystencils.data_types import TypedMatrixSymbol
+    except ImportError:
+        import pytest
+        pytest.skip()
+
     x, y = pystencils.fields('x, y:  float32[3d]')
-    from pystencils.data_types import TypedMatrixSymbol
 
     A = TypedMatrixSymbol('A', 3, 1, create_type('double'), CustomCppType('Vector3<double>'))
 
