@@ -64,7 +64,7 @@ def create_autograd_function(autodiff_obj, use_cuda):
                         field.shape,
                         dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
                         device=next(chain(args, kwargs.values())).device)
-                except:
+                except Exception:
                     shape = next(filter(lambda x: isinstance(x, torch.Tensor), chain(args, kwargs.values()))).shape
                     kwargs[field.name] = torch.zeros(
                         shape,
