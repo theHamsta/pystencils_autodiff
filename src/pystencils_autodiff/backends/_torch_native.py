@@ -59,11 +59,17 @@ def create_autograd_function(autodiff_obj, use_cuda):
 
         for field in autodiff_obj.forward_output_fields:
             if field.name not in kwargs:
-                kwargs[field.name] = torch.zeros(
-                    field.shape,
-                    dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
-                    device='cuda' if use_cuda else 'cpu')  # use device of tensor
-
+                try:
+                    kwargs[field.name] = torch.zeros(
+                        field.shape,
+                        dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
+                        device=next(chain(args, kwargs.values())).device)
+                except:
+                    shape = next(filter(lambda x: isinstance(x, torch.Tensor), chain(args, kwargs.values()))).shape
+                    kwargs[field.name] = torch.zeros(
+                        shape,
+                        dtype=numpy_dtype_to_torch(field.dtype.numpy_dtype),
+                        device=next(chain(args, kwargs.values())).device)
         output_tensors = OrderedDict({f.name:
                                       field_to_tensor_dict.get(f, kwargs[f.name])
                                       for f in autodiff_obj.forward_output_fields})
