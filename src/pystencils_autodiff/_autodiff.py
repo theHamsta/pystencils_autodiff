@@ -134,7 +134,7 @@ def _create_backward_assignments_tf_mad(self, diff_fields_prefix):
                                         ] += sp.diff(forward_assignment.rhs, ra) * diff_write_field[inverted_offset]
 
                 for index in range(diff_read_field.index_shape[0]):
-                    if True:
+                    if self.time_constant_fields is not None and forward_read_field in self._time_constant_fields:
                         # Accumulate in case of time_constant_fields
                         assignment = ps.Assignment(
                             diff_read_field.center_vector[index],
