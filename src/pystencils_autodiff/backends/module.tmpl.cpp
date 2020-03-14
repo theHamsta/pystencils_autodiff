@@ -1,9 +1,8 @@
+#ifdef _MSC_BUILD
+#define RESTRICT __restrict
+#else
 #define RESTRICT __restrict__
-
-//#if GOOGLE_CUDA
-//#define EIGEN_USE_GPU
-//#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
-//#endif
+#endif
 
 {% for header in headers -%}
 #include {{ header }}
