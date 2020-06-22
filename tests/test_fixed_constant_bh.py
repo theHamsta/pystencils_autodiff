@@ -18,12 +18,6 @@ import sympy as sp
 import pystencils
 from pystencils_autodiff.transformations import add_fixed_constant_boundary_handling
 
-try:
-    import pyconrad.autoinit
-except ImportError:
-    import unittest.mock
-    pyconrad = unittest.mock.MagicMock()
-
 
 @pytest.mark.parametrize('num_ghost_layers', (1, 2, 3))
 def test_fixed_constant_bh(num_ghost_layers):
@@ -50,12 +44,5 @@ def test_fixed_constant_bh(num_ghost_layers):
     out1 = np.zeros_like(noise)
     out2 = np.zeros_like(noise)
 
-    pyconrad.imshow(noise, "noise")
-
     kernel(x=noise, y=out1)
     bh_kernel(x=noise, y=out2)
-
-    pyconrad.imshow(out1, "out1")
-    pyconrad.imshow(out2, "out2")
-
-    np.allclose(out1[ndim:-ndim, ndim:-ndim], out2[ndim:-ndim, ndim:-ndim])
