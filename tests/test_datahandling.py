@@ -30,4 +30,3 @@ def test_datahandling():
     kernel = forward_assignments.create_pytorch_op()
 
     dh.run_kernel(kernel, a=3)
-
