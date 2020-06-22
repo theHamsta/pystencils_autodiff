@@ -197,8 +197,8 @@ class FunctionCall(Node):
             written_fields = function.fields_written
             shape = list(written_fields)[0].spatial_shape
             block_and_thread_numbers = function.indexing.call_parameters(shape)
-        rtn = rtn | set(itertools.chain.from_iterable(
-            (i.free_symbols for i in block_and_thread_numbers['block'] + block_and_thread_numbers['block'])))
+            rtn = rtn | set(itertools.chain.from_iterable(
+                (i.free_symbols for i in block_and_thread_numbers['block'] + block_and_thread_numbers['block'])))
         return rtn
 
     def subs(self, subs_dict) -> None:
