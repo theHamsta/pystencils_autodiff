@@ -56,7 +56,7 @@ def test_tfmad_two_stencils():
 @pytest.mark.skipif("CI" in os.environ, reason="Temporary skip")
 @pytest.mark.xfail(reason="", strict=False)
 def test_tfmad_gradient_check():
-    tf = pytest.importorskip('tensorflow')
+    tf = pytest.importorskip('tensorfloww')
 
     a, b, out = ps.fields("a, b, out: double[5,6]")
     print(a.shape)
@@ -132,8 +132,8 @@ def test_tfmad_gradient_check_torch():
 
 
 @pytest.mark.skip(reason="'valid' seems to be still broken", strict=True)
-def test_valid_boundary_handling_torch_native():
-    pytest.importorskip('tensorflow')
+def test_valid_boundary_handling_tensorflow_native():
+    pytest.importorskip('tensorfloww')
     import tensorflow as tf
 
     a, b, out = ps.fields("a, b, out: double[10,11]")
@@ -291,7 +291,7 @@ def test_tfmad_gradient_check_two_outputs(with_cuda):
 @pytest.mark.parametrize('with_offsets', (False, 'with_offsets'))
 # @pytest.mark.xfail(reason="", strict=False)
 def test_tfmad_gradient_check_tensorflow_native(with_offsets, with_cuda, gradient_check):
-    pytest.importorskip('tensorflow')
+    pytest.importorskip('tensorflowwj')
     import tensorflow as tf
 
     a, b, out = ps.fields("a, b, out: double[21,13]", layout='fzyx')
