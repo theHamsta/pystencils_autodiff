@@ -124,7 +124,7 @@ class TimeloopRun:
         self.time_steps = time_steps
 
     def __str__(self):
-        return (f'Timeloop:'
+        return ('Timeloop:'
                 + '\nPre:\n'
                 + '\n   '.join(str(f) for f in self.timeloop._pre_run_functions)
                 + f'\n{self.time_steps} time steps:\n'
