@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     Setup file for pystencils_autodiff.
     Use setup.cfg to configure your project.
