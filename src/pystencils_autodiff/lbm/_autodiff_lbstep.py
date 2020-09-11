@@ -4,7 +4,7 @@ import numpy as np
 
 import pystencils
 import pystencils_autodiff
-from lbmpy.autodiff.adjoint_boundaryconditions import AdjointBoundaryCondition
+from pystencils_autodiff.lbm.adjoint_boundaryconditions import AdjointBoundaryCondition
 from lbmpy.boundaries.boundaryhandling import LatticeBoltzmannBoundaryHandling
 from lbmpy.lbstep import LatticeBoltzmannStep
 from lbmpy.methods.abstractlbmethod import AbstractLbMethod, LbmCollisionRule
