@@ -122,6 +122,7 @@ class TorchModule(JinjaCppFile):
         ast_dict = {
             'kernels': kernel_asts,
             'kernel_wrappers': wrapper_functions,
+            'module_name': module_name,
             'python_bindings': self.PYTHON_BINDINGS_CLASS(module_name,
                                                           [self.PYTHON_FUNCTION_WRAPPING_CLASS(a)
                                                               for a in wrapper_functions])
