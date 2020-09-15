@@ -27,7 +27,7 @@ from pystencils_autodiff.framework_integration.texture_astnodes import NativeTex
 
 class JinjaCppFile(Node):
     TEMPLATE: jinja2.Template = None
-    NOT_PRINT_TYPES = (pystencils.Field, pystencils.TypedSymbol, bool)
+    NOT_PRINT_TYPES = (pystencils.Field, pystencils.TypedSymbol, bool, dict)
 
     def __init__(self, ast_dict={}):
         self.ast_dict = pystencils.utils.DotDict(ast_dict)
@@ -85,7 +85,7 @@ class JinjaCppFile(Node):
         render_dict = {k: (self._print(v)
                            if not isinstance(v, self.NOT_PRINT_TYPES) and v is not None
                            else v)
-                       if not isinstance(v, Iterable) or isinstance(v, str)
+                       if not isinstance(v, Iterable) or isinstance(v, str) or isinstance(v, dict)
                        else [(self._print(a)
                               if not isinstance(a, self.NOT_PRINT_TYPES) and a is not None
                               else a)
