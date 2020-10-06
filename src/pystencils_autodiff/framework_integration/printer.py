@@ -33,6 +33,10 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
         else:
             return super()._print(node)
 
+    def _print_BlockWithoutBraces(self, node):
+        block_contents = "\n".join([self._print(child) for child in node.args])
+        return "\n%s\n" % (''.join(block_contents.splitlines(True)))
+
     def _print_WrapperFunction(self, node):
         super_result = super()._print_KernelFunction(node)
         if self._signatureOnly:
