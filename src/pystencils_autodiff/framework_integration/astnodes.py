@@ -215,9 +215,11 @@ class FunctionCall(Node):
 
 class WrapperFunction(pystencils.astnodes.KernelFunction):
 
-    def __init__(self, body, function_name='wrapper', target='cpu', backend='c'):
+    def __init__(self, body, function_name='wrapper', target='cpu', backend='c', return_type=None, return_value=None):
         super().__init__(body, target, backend, compile_function=None, ghost_layers=0)
         self.function_name = function_name
+        self.return_type = return_type
+        self.return_value = return_value
 
 
 def generate_kernel_call(kernel_function):
