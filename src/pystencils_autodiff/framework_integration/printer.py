@@ -58,7 +58,8 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
             max_threads = node.indexing.max_threads_per_block()
             if max_threads:
                 launch_bounds = f"__launch_bounds__({max_threads}) "
-        func_declaration = f"FUNC_PREFIX {launch_bounds} {self._print(return_type)} {node.function_name}({', '.join(function_arguments)})"  # noqa
+        indent = ',\n' + ' ' * len(f'FUNC_PREFIX {launch_bounds} {self._print(return_type)} {node.function_name}')
+        func_declaration = f"FUNC_PREFIX {launch_bounds} {self._print(return_type)} {node.function_name}({indent.join(function_arguments)})"  # noqa
         if self._signatureOnly:
             return func_declaration
 

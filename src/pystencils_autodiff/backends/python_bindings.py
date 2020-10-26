@@ -170,5 +170,6 @@ class PybindFunctionWrapping(JinjaCppFile):
     def __init__(self, function_node):
         super().__init__({'python_name': function_node.function_name,
                           'cpp_name': function_node.function_name,
-                          'parameters': [p.symbol.name for p in function_node.get_parameters()]
+                          'parameters': [p.symbol.name for p in function_node.get_parameters()
+                              if hasattr(p.symbol, 'dtype') and not 'meshFunctor' in p.symbol.name]
                           })
