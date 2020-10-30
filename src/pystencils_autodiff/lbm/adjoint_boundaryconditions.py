@@ -13,7 +13,7 @@ class AdjointBoundaryCondition(Boundary):
         self._constant_fields = constant_fields
         self._time_constant_fields = time_constant_fields
 
-    def __call__(self, pdf_field: pystencils_autodiff.AdjointField, direction_symbol, lb_method, **kwargs):
+    def __call__(self, pdf_field: pystencils_autodiff.AdjointField, direction_symbol, *args, **kwargs):
 
         # apply heuristics
         if pdf_field.name.startswith('diff'):
@@ -24,13 +24,15 @@ class AdjointBoundaryCondition(Boundary):
             f'{pdf_field} should be a pystencils_autodiff.AdjointField to use AdjointBoundaryCondition'
 
         forward_field = pdf_field.corresponding_forward_field
-        forward_assignments = self._forward_condition(forward_field, direction_symbol, lb_method, **kwargs)
+        forward_assignments = self._forward_condition(forward_field, direction_symbol, *args, **kwargs)
 
         backward_assignments = pystencils_autodiff.create_backward_assignments(
             forward_assignments,
             diff_fields_prefix=pdf_field.name_prefix,
             time_constant_fields=self._time_constant_fields,
             constant_fields=self._constant_fields)
+        assert backward_assignments.all_assignments, ("Must have a at least one read field in forward boundary "
+                                                      "to have an meaningful adjoint boundary condition")
 
         return backward_assignments
 

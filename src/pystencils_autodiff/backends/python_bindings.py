@@ -120,7 +120,8 @@ REGISTER_KERNEL_BUILDER(Name("{{ python_name }}").Device({{ device }}), {{ pytho
 
         render_dict = {'python_name': stringcase.pascalcase(function_node.function_name),  # tf wants PascalCase!
                        'cpp_name': function_node.function_name,
-                       'parameters': [p.symbol.name for p in parameters],
+                       'parameters': [p.symbol.name for p in parameters
+                                      if hasattr(p.symbol, 'dtype') and not str(p.symbol) == 'meshFunctor'],
                        'input_fields': input_fields,
                        'inputs': self.inputs,
                        'output_fields': output_fields,
