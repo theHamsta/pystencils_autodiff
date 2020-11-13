@@ -195,3 +195,4 @@ class DebugFrameworkPrinter(FrameworkIntegrationPrinter):
 
 
 show_code = functools.partial(pystencils.show_code, custom_backend=FrameworkIntegrationPrinter())
+get_code_str = functools.partial(pystencils.get_code_str, custom_backend=FrameworkIntegrationPrinter())
