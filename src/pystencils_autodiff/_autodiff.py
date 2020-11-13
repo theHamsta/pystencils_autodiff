@@ -15,6 +15,7 @@ from pystencils_autodiff.backends import AVAILABLE_BACKENDS
 from pystencils_autodiff.transformations import add_fixed_constant_boundary_handling
 
 REMOVE_CASTS = ReplaceOptim(lambda x: isinstance(x, pystencils.data_types.cast_func), lambda x: x.args[0])
+DEFAULT_OP_NAME = "autodiffop"
 
 
 @pystencils.cache.disk_cache_no_fallback
@@ -220,7 +221,7 @@ Backward:
 
     def __init__(self,
                  forward_assignments: List[ps.Assignment],
-                 op_name: str = "autodiffop",
+                 op_name: str = DEFAULT_OP_NAME,
                  boundary_handling: AutoDiffBoundaryHandling = None,
                  time_constant_fields: List[ps.Field] = None,
                  constant_fields: List[ps.Field] = [],
@@ -604,8 +605,8 @@ Backward:
     def time_constant_fields(self):
         return self._time_constant_fields
 
-    def create_torch_op(self, *args, **kwags):
-        return self.create_tensorflow_op(*args, backend='torch_native', **kwags)
+    def create_torch_op(self, *args, **kwargs):
+        return self.create_tensorflow_op(*args, backend='torch_native', **kwargs)
 
     def create_tensorflow_op(self,
                              inputfield_tensor_dict={},
@@ -685,7 +686,8 @@ Backward:
                 self, inputfield_tensor_dict, forward_loop, backward_loop)
         elif backend == 'torch_native':
             import pystencils_autodiff.backends._torch_native
-            op = pystencils_autodiff.backends._torch_native.create_autograd_function(self, use_cuda)
+            op = pystencils_autodiff.backends._torch_native.create_autograd_function(
+                self, use_cuda, op_name=self.op_name if self.op_name != DEFAULT_OP_NAME else None)
         elif backend == 'tensorflow':
             import pystencils_autodiff.backends._tensorflow
             op = pystencils_autodiff.backends._tensorflow.tensorflowop_from_autodiffop(

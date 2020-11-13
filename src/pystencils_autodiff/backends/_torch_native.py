@@ -7,7 +7,7 @@ from pystencils_autodiff.backends.astnodes import TorchModule
 from pystencils_autodiff.tensorflow_jit import _hash
 
 
-def create_autograd_function(autodiff_obj, use_cuda):
+def create_autograd_function(autodiff_obj, use_cuda, op_name=None):
     import torch
     field_to_tensor_dict = dict()
     # Allocate output tensor for forward and backward pass
@@ -24,10 +24,11 @@ def create_autograd_function(autodiff_obj, use_cuda):
         forward_ast = autodiff_obj.forward_ast_cpu
         backward_ast = autodiff_obj.backward_ast_cpu if autodiff_obj.backward_output_fields else None
 
-    op_name = f'{autodiff_obj.op_name}_{_hash((str(pystencils.show_code(forward_ast)) + str(autodiff_obj)+str(autodiff_obj.constant_fields)).encode()).hexdigest()}'  # noqa
-    forward_ast.function_name = f'{op_name}_{forward_ast.function_name}'
-    if backward_ast:
-        backward_ast.function_name = f'{op_name}_{backward_ast.function_name}'
+    if not op_name:
+        op_name = f'{autodiff_obj.op_name}_{_hash((str(pystencils.get_code_str(forward_ast)) + str(autodiff_obj)+str(autodiff_obj.constant_fields)).encode()).hexdigest()}'  # noqa
+        forward_ast.function_name = f'{op_name}_{forward_ast.function_name}'
+        if backward_ast:
+            backward_ast.function_name = f'{op_name}_{backward_ast.function_name}'
     module = TorchModule(op_name, [forward_ast, backward_ast] if backward_ast else [forward_ast])
     compiled_op = module.compile()
 
