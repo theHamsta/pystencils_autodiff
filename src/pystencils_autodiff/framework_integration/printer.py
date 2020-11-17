@@ -123,9 +123,12 @@ class FrameworkIntegrationPrinter(pystencils.backends.cbackend.CBackend):
                                    + (node.field_suffix if hasattr(node, 'field_suffix') else ''),
                                    node.CLASS_TO_MEMBER_DICT[u.__class__].format(
                                        dtype=(u.dtype.base_type if type(u) == FieldPointerSymbol
-                                              else fields_dtype[u.field_name
-                                                                if hasattr(u, 'field_name')
-                                                                else u.field_names[0]]),
+                                              else ((fields_dtype.get(u.field_name
+                                                                      if hasattr(u, 'field_name')
+                                                                      else u.field_names[0]))
+                                                    or (fields_dtype.get('diff' + u.field_name
+                                                                         if hasattr(u, 'field_name')
+                                                                         else 'diff' + u.field_names[0])))),
                                        field_name=(u.field_name if hasattr(u, "field_name") else ""),
                                        dim=("" if type(u) == FieldPointerSymbol else u.coordinate),
                                        dim_letter=("" if type(u) == FieldPointerSymbol else 'xyz'[u.coordinate])
